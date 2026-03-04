@@ -1,6 +1,24 @@
 /* eslint-disable */
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus, Edit2, Trash2, ShoppingCart, Package, LogOut, Eye, EyeOff, X, CheckCircle, AlertCircle, User, ChevronDown, ChevronUp, Phone, Mail, MapPin, Clock, FileText, TrendingUp, Truck, CreditCard, Users, Home } from "lucide-react";
+
+// ═══════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ═══════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDc0Xb3zgZn9CIjDQEOS_SMSPmpUVAXt9Y",
+  authDomain: "shivdhara-medical-11d24.firebaseapp.com",
+  projectId: "shivdhara-medical-11d24",
+  storageBucket: "shivdhara-medical-11d24.firebasestorage.app",
+  messagingSenderId: "910806749990",
+  appId: "1:910806749990:web:c65d7b2d91c9e7893b27e7"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+const fbGet = async (key) => { try { const snap = await getDoc(doc(db,"store",key)); if(snap.exists()) return JSON.parse(snap.data().value); } catch(_) {} return null; };
+const fbSet = async (key, data) => { try { await setDoc(doc(db,"store",key), {value: JSON.stringify(data)}); } catch(_) {} };
 
 // ═══════════════════════════════════════════════════
 // CONSTANTS
@@ -393,7 +411,12 @@ export default function ShivDharaMedicalStore() {
 
 
   const safeGet = async (key) => {
-    // localStorage — works offline, no cloud needed
+    // Firebase Firestore — sync across all devices
+    try {
+      const snap = await getDoc(doc(db, "store", key));
+      if(snap.exists()) return JSON.parse(snap.data().value);
+    } catch(_) {}
+    // fallback to localStorage
     try {
       const val = localStorage.getItem(key);
       if(val) return JSON.parse(val);
@@ -446,18 +469,20 @@ export default function ShivDharaMedicalStore() {
 
     // Check owner account from localStorage
     let owData = null;
-    try { const loc = localStorage.getItem("owner_account"); if(loc) owData = JSON.parse(loc); } catch(_) {}
+    try { owData = await fbGet("owner_account"); } catch(_) {} if(!owData) { try { const loc = localStorage.getItem("owner_account"); if(loc) owData = JSON.parse(loc); } catch(_) {} }
     if(owData && owData.email) { setOwnerExists(true); setOwnerMode("login"); return; }
     // Check if permanent owner credentials are active (not deleted)
     let permDeleted=false;
-    try{const d=localStorage.getItem("owner_account_deleted");if(d==="true")permDeleted=true;}catch(_){}
+    try{ const dd = await fbGet("owner_account_deleted"); if(dd==="true") permDeleted=true; }catch(_){} if(!permDeleted){try{const d=localStorage.getItem("owner_account_deleted");if(d==="true")permDeleted=true;}catch(_){}}
     if(!permDeleted){ setOwnerExists(true); setOwnerMode("login"); return; }
     setOwnerExists(false); setOwnerMode("register");
   };
 
   const save = async (key, data) => {
     const str = JSON.stringify(data);
-    // localStorage — permanent local storage
+    // Firebase Firestore — sync across all devices
+    try { await setDoc(doc(db, "store", key), {value: str}); } catch(_) {}
+    // also save locally as backup
     try { localStorage.setItem(key, str); } catch(_) {}
     return true;
   };
@@ -523,7 +548,7 @@ export default function ShivDharaMedicalStore() {
     // Fallback: try old per-key storage
     if(!c) {
       try {
-        const cd = localStorage.getItem(`customer_${email}`);
+        const cd = await fbGet(`customer_${email}`) || (() => { try { const v = localStorage.getItem(`customer_${email}`); return v ? JSON.parse(v) : null; } catch(_) { return null; } })();
         if(cd) c = JSON.parse(cd);
       } catch(_) {}
     }
@@ -569,11 +594,11 @@ export default function ShivDharaMedicalStore() {
     const PERM_EMAIL="AVI@GMAIL.COM", PERM_PASS="21122007";
     if(inputEmail===PERM_EMAIL && inputPass===PERM_PASS){
       let deleted=false;
-      try{const loc=localStorage.getItem("owner_account_deleted");if(loc==="true")deleted=true;}catch(_){}
+      try{ const fd=await fbGet("owner_account_deleted"); if(fd==="true")deleted=true; }catch(_){} if(!deleted){try{const loc=localStorage.getItem("owner_account_deleted");if(loc==="true")deleted=true;}catch(_){}}
       if(!deleted){
         const permOwner={name:"Avi",email:"AVI@GMAIL.COM",role:"owner",pharmacyName:"Shiv Dhara Medical Store"};
-        try{if(!localStorage.getItem("owner_account"))localStorage.setItem("owner_account",JSON.stringify({...permOwner,password:PERM_PASS}));}catch(_){}
-        try{const od=localStorage.getItem("owner_account");if(!od)localStorage.setItem("owner_account", JSON.stringify({...permOwner,password:PERM_PASS}));}catch(_){}
+        try{ const ex=await fbGet("owner_account"); if(!ex){ await fbSet("owner_account",{...permOwner,password:PERM_PASS}); localStorage.setItem("owner_account",JSON.stringify({...permOwner,password:PERM_PASS})); }}catch(_){}
+        
         ownerSession.current={...permOwner,password:PERM_PASS};
         setOwnerExists(true);
         setCurrentUser(permOwner);setOwnerInput({email:"",password:""});setShowOwnerPanel(false);showToast("Welcome, Avi!");return;
@@ -606,7 +631,7 @@ export default function ShivDharaMedicalStore() {
       if(od){
         const o = JSON.parse(od);
         if(match(o)){
-          try { localStorage.setItem("owner_account", JSON.stringify(o)); } catch(_) {}
+          try { await fbSet("owner_account", o); fbSet("owner_account", o); localStorage.setItem("owner_account", JSON.stringify(o)); } catch(_) {}
           ownerSession.current = o;
           setCurrentUser(o);setOwnerInput({email:"",password:""});setShowOwnerPanel(false);showToast(`Welcome, ${o.name}!`);return;
         } else if(o && o.email){
@@ -637,9 +662,9 @@ export default function ShivDharaMedicalStore() {
     } catch(_) {}
     const o={name,pharmacyName:pharmacyName||"Shiv Dhara Medical Store",email,phone,password,role:"owner",createdAt:new Date().toISOString()};
     // Save to localStorage (this device) AND shared cloud storage (all devices)
-    try { localStorage.setItem("owner_account", JSON.stringify(o)); } catch(_) {}
+    try { await fbSet("owner_account", o); fbSet("owner_account", o); localStorage.setItem("owner_account", JSON.stringify(o)); } catch(_) {}
     try {
-      localStorage.setItem("owner_account", JSON.stringify(o));
+      fbSet("owner_account", o); localStorage.setItem("owner_account", JSON.stringify(o));
     } catch(err) { console.warn("Cloud storage error:", err); }
     // Always set current user (in-memory session)
     ownerSession.current = o;
@@ -655,7 +680,7 @@ export default function ShivDharaMedicalStore() {
   const handleDeleteOwnerAccount = () => {
     showConfirm("⚠️ Delete owner account? You will need to register again to access owner panel.", async () => {
       // Remove from localStorage and set deleted flag to block permanent fallback
-      try { localStorage.removeItem("owner_account"); localStorage.setItem("owner_account_deleted","true"); } catch(_) {}
+      try { await fbSet("owner_account_deleted","true"); await fbSet("owner_account",null); localStorage.removeItem("owner_account"); localStorage.setItem("owner_account_deleted","true"); } catch(_) {}
       // Remove from shared cloud storage
       try { localStorage.removeItem("owner_account"); } catch(_) {}
       // Clear in-memory session
