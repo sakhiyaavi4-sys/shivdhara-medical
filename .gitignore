@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+dist_electron_final
+.env
+
+# Large binary / node bundles
+node-v*-win-x64/
+node-v*-linux-x64/
+node-v*-darwin-x64/
+*.exe
+*.msi
+
+# Sensitive / secret files
+github-token.txt
+scripts/
+*.key
+*.pem
