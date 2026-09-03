@@ -3890,141 +3890,320 @@ const pending = [];
           </div>
         )}
 
-        {/* BILL LOCK MODAL - MODERN THEME */}
+        {/* BILL LOCK MODAL - FULLSCREEN */}
         {showLockBill && (
-          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", background: "rgba(15, 23, 42, 0.65)", backdropFilter: "blur(4px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-            <div style={{ background: "#ffffff", borderRadius: "14px", width: "100%", maxWidth: "760px", boxShadow: "0 25px 60px -12px rgba(0, 0, 0, 0.35)", overflow: "hidden", display: "flex", flexDirection: "column", border: "1px solid var(--color-border)", animation: "fadeIn 0.2s ease-out" }}>
-              
-              {/* Header */}
-              <div style={{ background: "linear-gradient(135deg, #0f766e 0%, #0d9488 100%)", color: "#ffffff", padding: "14px 22px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "34px", height: "34px", borderRadius: "8px", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "17px" }}>
-                    🔒
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: "100%",
+            height: "100%",
+            background: "#f1f5f9",
+            zIndex: 9999,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            fontFamily: "'Inter', sans-serif"
+          }}>
+            
+            {/* ── TOP HEADER (FULLSCREEN) ── */}
+            <div style={{
+              background: "linear-gradient(135deg, #0f766e 0%, #0d9488 100%)",
+              color: "#ffffff",
+              padding: "12px 24px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: "1px solid rgba(255,255,255,0.15)",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "18px"
+                }}>
+                  🔒
+                </div>
+                <div>
+                  <div style={{ fontWeight: "700", fontSize: "16px", letterSpacing: "-0.2px" }}>Supervisor — Bill Lock Management</div>
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.85)" }}>Secure & lock sales, purchase, cash, and voucher books between specified date ranges</div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowLockBill(false)}
+                style={{
+                  background: "rgba(255,255,255,0.15)",
+                  border: "none",
+                  color: "#ffffff",
+                  borderRadius: "8px",
+                  padding: "6px 14px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  transition: "background 0.15s"
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.25)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+              >
+                <X size={16} /> Close Esc
+              </button>
+            </div>
+
+            {/* ── MAIN CONTENT BODY (FULLSCREEN SCROLLABLE) ── */}
+            <div style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "18px 28px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center"
+            }}>
+              <div style={{ width: "100%", maxWidth: "1050px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                
+                {/* Info Card Banner */}
+                <div style={{
+                  background: "#ffffff",
+                  borderRadius: "12px",
+                  padding: "14px 20px",
+                  border: "1px solid #e2e8f0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "#ecfdf5", display: "flex", alignItems: "center", justifyContent: "center", color: "#059669" }}>
+                      <Check size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: "700", fontSize: "14px", color: "#1e293b" }}>Real-time Transaction Protection Active</div>
+                      <div style={{ fontSize: "12px", color: "#64748b" }}>Once a transaction book is locked, no user can edit, delete, or backdate entries within the locked date period.</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: "700", fontSize: "16px", letterSpacing: "-0.2px" }}>Supervisor — Bill Lock System</div>
-                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}>Lock transaction books between specified dates to prevent modification and deletion</div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={() => {
+                        const allLocked = (lockBillData || []).map(b => ({ ...b, checked: true }));
+                        setLockBillData(allLocked);
+                      }}
+                      style={{ padding: "6px 12px", background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", borderRadius: "8px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={() => {
+                        const allUnlocked = (lockBillData || []).map(b => ({ ...b, checked: false }));
+                        setLockBillData(allUnlocked);
+                      }}
+                      style={{ padding: "6px 12px", background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                    >
+                      Clear All
+                    </button>
                   </div>
                 </div>
-                <button onClick={() => setShowLockBill(false)} style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#ffffff", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  ✕
+
+                {/* Main Table Card */}
+                <div style={{
+                  background: "#ffffff",
+                  borderRadius: "12px",
+                  border: "1px solid #e2e8f0",
+                  overflow: "hidden",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+                }}>
+                  {/* Table Header */}
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "2.8fr 1.5fr 1.5fr 1.2fr",
+                    gap: "12px",
+                    padding: "12px 20px",
+                    background: "#f8fafc",
+                    borderBottom: "1px solid #e2e8f0",
+                    fontWeight: "700",
+                    fontSize: "12px",
+                    color: "#475569",
+                    letterSpacing: "0.5px"
+                  }}>
+                    <div>TRANSACTION BOOK NAME</div>
+                    <div style={{ textAlign: "center" }}>FROM DATE</div>
+                    <div style={{ textAlign: "center" }}>TO DATE</div>
+                    <div style={{ textAlign: "center" }}>CURRENT STATUS</div>
+                  </div>
+
+                  {/* Book Rows */}
+                  <div style={{ padding: "8px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {(lockBillData || []).map((b, idx) => {
+                      const icons = {
+                        sales: "🧾",
+                        salesReturn: "↩️",
+                        purchase: "🛒",
+                        purchaseReturn: "📦",
+                        cash: "💵",
+                        jv: "📑",
+                        bank: "🏦"
+                      };
+                      const icon = icons[b.id] || "📘";
+                      const isLocked = !!b.checked;
+                      return (
+                        <div
+                          key={b.id}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "2.8fr 1.5fr 1.5fr 1.2fr",
+                            gap: "12px",
+                            alignItems: "center",
+                            padding: "10px 14px",
+                            background: isLocked ? "#fff7ed" : "#ffffff",
+                            border: isLocked ? "1px solid #fed7aa" : "1px solid #f1f5f9",
+                            borderRadius: "10px",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          {/* Book & Checkbox */}
+                          <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", margin: 0 }}>
+                            <input
+                              type="checkbox"
+                              checked={isLocked}
+                              onChange={e => {
+                                const newData = [...lockBillData];
+                                newData[idx].checked = e.target.checked;
+                                setLockBillData(newData);
+                              }}
+                              style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "#ea580c" }}
+                            />
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ fontSize: "16px" }}>{icon}</span>
+                              <span style={{ fontWeight: "700", fontSize: "13px", color: isLocked ? "#9a3412" : "#1e293b" }}>{b.label}</span>
+                            </div>
+                          </label>
+
+                          {/* From Date */}
+                          <div>
+                            <input
+                              type="date"
+                              value={b.from || ""}
+                              onChange={e => {
+                                const newData = [...lockBillData];
+                                newData[idx].from = e.target.value;
+                                setLockBillData(newData);
+                              }}
+                              style={{
+                                ...inp,
+                                height: "32px",
+                                padding: "4px 10px",
+                                fontSize: "12px",
+                                background: isLocked ? "#ffffff" : "#f8fafc",
+                                border: isLocked ? "1px solid #fdba74" : "1px solid #cbd5e1"
+                              }}
+                            />
+                          </div>
+
+                          {/* To Date */}
+                          <div>
+                            <input
+                              type="date"
+                              value={b.to || ""}
+                              onChange={e => {
+                                const newData = [...lockBillData];
+                                newData[idx].to = e.target.value;
+                                setLockBillData(newData);
+                              }}
+                              style={{
+                                ...inp,
+                                height: "32px",
+                                padding: "4px 10px",
+                                fontSize: "12px",
+                                background: isLocked ? "#ffffff" : "#f8fafc",
+                                border: isLocked ? "1px solid #fdba74" : "1px solid #cbd5e1"
+                              }}
+                            />
+                          </div>
+
+                          {/* Status Badge */}
+                          <div style={{ textAlign: "center" }}>
+                            <span style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "4px 12px",
+                              borderRadius: "12px",
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              background: isLocked ? "#fee2e2" : "#f1f5f9",
+                              color: isLocked ? "#dc2626" : "#64748b",
+                              border: isLocked ? "1px solid #fca5a5" : "1px solid #e2e8f0"
+                            }}>
+                              {isLocked ? "🔒 LOCKED" : "🔓 ACTIVE / OPEN"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* ── STICKY FOOTER (FULLSCREEN) ── */}
+            <div style={{
+              background: "#ffffff",
+              borderTop: "1px solid #e2e8f0",
+              padding: "12px 32px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              boxShadow: "0 -2px 10px rgba(0,0,0,0.03)"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#64748b" }}>
+                <span>💡</span>
+                <span>Select the books you wish to lock, adjust the date range, then click <strong>Update & Enforce Locks</strong>.</span>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => {
+                    const unlocked = (lockBillData || []).map(b => ({ ...b, checked: false }));
+                    setLockBillData(unlocked);
+                    saveLockBillData(unlocked);
+                    showToast("All book locks have been unlocked!", "success");
+                  }}
+                  style={{ ...btn("#f3e8ff", "#7e22ce"), border: "1px solid #d8b4fe", padding: "8px 16px", fontWeight: "600" }}
+                >
+                  🔓 Unlock All Books
+                </button>
+
+                <button
+                  onClick={() => setShowLockBill(false)}
+                  style={{ ...btn("#f1f5f9", "#475569"), border: "1px solid #cbd5e1", padding: "8px 16px" }}
+                >
+                  ✕ Close
+                </button>
+
+                <button
+                  onClick={() => {
+                    saveLockBillData(lockBillData);
+                    showToast("Bill lock rules saved & enforced successfully!", "success");
+                    setShowLockBill(false);
+                  }}
+                  style={{ ...btn("#0f766e", "#ffffff"), padding: "8px 20px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}
+                >
+                  <Check size={16} /> Update & Enforce Locks
                 </button>
               </div>
-
-              {/* Table / Form */}
-              <div style={{ padding: "16px 22px", background: "#f8fafc", maxHeight: "65vh", overflowY: "auto" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "2.2fr 1.3fr 1.3fr 0.9fr", gap: "10px", padding: "8px 12px", background: "#e2e8f0", borderRadius: "8px", fontWeight: "700", fontSize: "12px", color: "#475569", marginBottom: "8px" }}>
-                  <div>TRANSACTION BOOK</div>
-                  <div style={{ textAlign: "center" }}>FROM DATE</div>
-                  <div style={{ textAlign: "center" }}>TO DATE</div>
-                  <div style={{ textAlign: "center" }}>STATUS</div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  {(lockBillData || []).map((b, idx) => {
-                    const icons = {
-                      sales: "🧾",
-                      salesReturn: "↩️",
-                      purchase: "🛒",
-                      purchaseReturn: "📦",
-                      cash: "💵",
-                      jv: "📑",
-                      bank: "🏦"
-                    };
-                    const icon = icons[b.id] || "📘";
-                    return (
-                      <div key={b.id} style={{ display: "grid", gridTemplateColumns: "2.2fr 1.3fr 1.3fr 0.9fr", gap: "10px", alignItems: "center", padding: "8px 12px", background: b.checked ? "#fff7ed" : "#ffffff", border: b.checked ? "1px solid #fdba74" : "1px solid #e2e8f0", borderRadius: "8px", transition: "all 0.15s" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", margin: 0, fontWeight: "600", fontSize: "12px", color: b.checked ? "#c2410c" : "#1e293b" }}>
-                          <input
-                            type="checkbox"
-                            checked={!!b.checked}
-                            onChange={e => {
-                              const newData = [...lockBillData];
-                              newData[idx].checked = e.target.checked;
-                              setLockBillData(newData);
-                            }}
-                            style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#ea580c" }}
-                          />
-                          <span>{icon} {b.label}</span>
-                        </label>
-
-                        <div>
-                          <input
-                            type="date"
-                            value={b.from || ""}
-                            onChange={e => {
-                              const newData = [...lockBillData];
-                              newData[idx].from = e.target.value;
-                              setLockBillData(newData);
-                            }}
-                            style={{ ...inp, height: "28px", padding: "2px 6px", fontSize: "11px", background: b.checked ? "#ffffff" : "#f1f5f9" }}
-                          />
-                        </div>
-
-                        <div>
-                          <input
-                            type="date"
-                            value={b.to || ""}
-                            onChange={e => {
-                              const newData = [...lockBillData];
-                              newData[idx].to = e.target.value;
-                              setLockBillData(newData);
-                            }}
-                            style={{ ...inp, height: "28px", padding: "2px 6px", fontSize: "11px", background: b.checked ? "#ffffff" : "#f1f5f9" }}
-                          />
-                        </div>
-
-                        <div style={{ textAlign: "center" }}>
-                          <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "10px", fontSize: "10px", fontWeight: "700", background: b.checked ? "#fee2e2" : "#f1f5f9", color: b.checked ? "#dc2626" : "#64748b" }}>
-                            {b.checked ? "🔒 Locked" : "🔓 Open"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Footer Actions */}
-              <div style={{ padding: "12px 22px", background: "#ffffff", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ fontSize: "11px", color: "#64748b" }}>
-                  💡 <strong>Tip:</strong> Check the box and set dates to lock. Locked dates cannot be edited or deleted.
-                </div>
-
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button
-                    onClick={() => {
-                      const unlocked = (lockBillData || []).map(b => ({ ...b, checked: false }));
-                      setLockBillData(unlocked);
-                      saveLockBillData(unlocked);
-                      showToast("All book locks have been unlocked!", "success");
-                    }}
-                    style={{ ...btn("#f3e8ff", "#7e22ce"), border: "1px solid #d8b4fe", fontWeight: "600" }}
-                  >
-                    🔓 Unlock All
-                  </button>
-
-                  <button
-                    onClick={() => setShowLockBill(false)}
-                    style={{ ...btn("#f1f5f9", "#475569"), border: "1px solid #cbd5e1" }}
-                  >
-                    ✕ Close
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      saveLockBillData(lockBillData);
-                      showToast("Bill lock rules saved & enforced successfully!", "success");
-                      setShowLockBill(false);
-                    }}
-                    style={{ ...btn("#0f766e", "#ffffff"), fontWeight: "700" }}
-                  >
-                    ✓ Update & Lock
-                  </button>
-                </div>
-              </div>
-
             </div>
+
           </div>
         )}
 
