@@ -1,7 +1,7 @@
 // @ts-nocheck
 /* eslint-disable */
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Plus, Edit2, Trash2, ShoppingCart, Package, LogOut, Eye, EyeOff, X, CheckCircle, AlertCircle, User, ChevronDown, ChevronUp, Phone, Mail, MapPin, Clock, FileText, TrendingUp, Truck, CreditCard, Users, Home, Printer } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, ShoppingCart, Package, LogOut, Eye, EyeOff, X, CheckCircle, AlertCircle, User, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Clock, FileText, TrendingUp, Truck, CreditCard, Users, Home, Printer } from "lucide-react";
 import React from 'react';
 import PurchaseChallan from './PurchaseChallan';
 import ApplicationSetupModal from './ApplicationSetupModal';
@@ -176,6 +176,51 @@ function CameraBarcodeScanner({ onDetected, onClose }) {
 }
 
 
+const matchesDate = (dateVal, query) => {
+  if (!dateVal || !query) return false;
+  const qClean = query.trim().toLowerCase().replace(/[\/\.]/g, "-");
+  const dStr = String(dateVal).toLowerCase();
+  if (dStr.includes(qClean)) return true;
+  try {
+    const d = new Date(dateVal);
+    if (!isNaN(d.getTime())) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const m = String(d.getMonth() + 1);
+      const dSingle = String(d.getDate());
+
+      const d1 = `${yyyy}-${mm}-${dd}`;
+      const d2 = `${dd}-${mm}-${yyyy}`;
+      const d3 = `${dSingle}-${m}-${yyyy}`;
+      const d4 = `${dd}-${mm}`;
+      const d5 = `${dSingle}-${m}`;
+      const dIndian = d.toLocaleDateString("en-IN").toLowerCase().replace(/[\/\.]/g, "-");
+
+      const monthNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+      const shortMonths = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+      const mName = monthNames[d.getMonth()];
+      const mShort = shortMonths[d.getMonth()];
+
+      if (
+        d1.includes(qClean) ||
+        d2.includes(qClean) ||
+        d3.includes(qClean) ||
+        d4.includes(qClean) ||
+        d5.includes(qClean) ||
+        dIndian.includes(qClean) ||
+        `${dd} ${mName} ${yyyy}`.includes(query.toLowerCase()) ||
+        `${dd} ${mShort} ${yyyy}`.includes(query.toLowerCase()) ||
+        `${dSingle} ${mName}`.includes(query.toLowerCase()) ||
+        `${dSingle} ${mShort}`.includes(query.toLowerCase())
+      ) {
+        return true;
+      }
+    }
+  } catch (_) {}
+  return false;
+};
+
 export default function OwnerPanel() {
   const {
     currentUser, isOwner, activeSection, setActiveSection,
@@ -270,6 +315,19 @@ export default function OwnerPanel() {
   const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [scannerTarget, setScannerTarget] = useState("purchase");
 
+  // ── Sidebar State ──
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // ── Search Dropdowns ──
+  const [salesBillSearchDropdown, setSalesBillSearchDropdown] = useState(false);
+  const [salesBillSearchHighlight, setSalesBillSearchHighlight] = useState(0);
+
+  const [purchaseBillSearchDropdown, setPurchaseBillSearchDropdown] = useState(false);
+  const [purchaseBillSearchHighlight, setPurchaseBillSearchHighlight] = useState(0);
+
+  const [itemSearchDropdown, setItemSearchDropdown] = useState(false);
+  const [itemSearchHighlight, setItemSearchHighlight] = useState(0);
+
   // ── Lock Bill States ──
   const [showLockBill, setShowLockBill] = useState(false);
   const [lockBillData, setLockBillData] = useState([
@@ -343,30 +401,38 @@ export default function OwnerPanel() {
       
       {/* ─── MODERN SIDEBAR ─── */}
       {isOwner && (
-        <div style={{ width: "260px", background: "white", borderRight: "1px solid var(--color-border)", display: "flex", flexDirection: "column", flexShrink: 0, zIndex: 100 }}>
-          <div style={{ padding: "24px 20px", display: "flex", alignItems: "center", gap: "10px", borderBottom: "1px solid var(--color-border)" }}>
-            <div style={{ width: "32px", height: "32px", background: "var(--color-primary)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-text-dark)", fontWeight: "bold", fontSize: "18px" }}>S</div>
-            <div style={{ fontSize: "20px", fontWeight: "800", color: "var(--color-text-dark)", letterSpacing: "-0.5px" }}>Shivdhara</div>
+        <div style={{ width: isSidebarOpen ? "260px" : "80px", background: "white", borderRight: "1px solid var(--color-border)", display: "flex", flexDirection: "column", flexShrink: 0, zIndex: 100, transition: "width 0.3s ease" }}>
+          <div style={{ padding: isSidebarOpen ? "24px 20px" : "24px 0", display: "flex", alignItems: "center", justifyContent: isSidebarOpen ? "flex-start" : "center", gap: "10px", borderBottom: "1px solid var(--color-border)", position: "relative" }}>
+            <div style={{ width: "32px", height: "32px", background: "var(--color-primary)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-text-dark)", fontWeight: "bold", fontSize: "18px", flexShrink: 0 }}>S</div>
+            {isSidebarOpen && <div style={{ fontSize: "20px", fontWeight: "800", color: "var(--color-text-dark)", letterSpacing: "-0.5px" }}>Shivdhara</div>}
+            
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              style={{ position: "absolute", right: isSidebarOpen ? "15px" : "-12px", top: "50%", marginTop: "-12px", width: "24px", height: "24px", background: "#f8fafc", border: "1px solid var(--color-border)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--color-text-muted)", zIndex: 10 }}
+            >
+              {isSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+            </button>
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
-            <div style={{ fontSize: "11px", fontWeight: "700", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px", paddingLeft: "12px" }}>Dashboard</div>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "16px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+            {isSidebarOpen && <div style={{ fontSize: "11px", fontWeight: "700", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px", paddingLeft: "12px" }}>Dashboard</div>}
             {ownerNavItems.map(t => {
               const isActive = activeSection === t.id;
               return (
                 <button key={t.id}
                   onClick={() => { setActiveSection(t.id); setOwnerSubTab(""); }}
+                  title={!isSidebarOpen ? t.label : ""}
                   style={{
-                    padding: "12px 16px", border: "none", background: isActive ? "#e0f7fa" : "transparent",
+                    padding: isSidebarOpen ? "12px 16px" : "12px", border: "none", background: isActive ? "#e0f7fa" : "transparent",
                     cursor: "pointer", fontWeight: isActive ? "700" : "500", fontSize: "14px",
                     color: isActive ? "var(--color-primary)" : "var(--color-text-muted)",
-                    display: "flex", alignItems: "center", gap: "12px", borderRadius: "12px",
+                    display: "flex", alignItems: "center", justifyContent: isSidebarOpen ? "flex-start" : "center", gap: "12px", borderRadius: "12px",
                     transition: "all 0.2s"
                   }}
                   onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.color = "var(--color-text-dark)"; } }}
                   onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-text-muted)"; } }}
                 >
-                  <div style={{ color: isActive ? "var(--color-primary)" : "#64748b" }}>{t.icon}</div>
-                  {t.label}
+                  <div style={{ color: isActive ? "var(--color-primary)" : "#64748b", flexShrink: 0 }}>{t.icon}</div>
+                  {isSidebarOpen && <span style={{ whiteSpace: "nowrap" }}>{t.label}</span>}
                 </button>
               );
             })}
@@ -1007,8 +1073,54 @@ const pending = [];
                   {/* Search */}
                   <div style={{ background: "white", borderRadius: "12px", padding: "14px 16px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", display: "flex", gap: "10px", flexWrap: "wrap" }}>
                     <div style={{ flex: 1, minWidth: "160px", position: "relative" }}>
-                      <Search size={12} style={{ position: "absolute", left: "9px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
-                      <input value={itemSearch} onChange={e => setItemSearch(e.target.value)} placeholder="Search..." style={{ ...inp, paddingLeft: "28px", padding: "8px 8px 8px 28px" }} />
+                      <Search size={12} style={{ position: "absolute", left: "9px", top: "18px", transform: "translateY(-50%)", color: "#64748b" }} />
+                      {(() => {
+                        const q = (itemSearch || "").toLowerCase();
+                        const filtered = q ? items.filter(i => (i.name || "").toLowerCase().includes(q) || (i.barcode || "") === q || (i.company || "").toLowerCase().includes(q)).slice(0, 15) : [];
+                        return (
+                          <>
+                            <input
+                              value={itemSearch}
+                              onChange={e => {
+                                setItemSearch(e.target.value);
+                                setItemSearchDropdown(true);
+                                setItemSearchHighlight(0);
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === "ArrowDown") { e.preventDefault(); setItemSearchHighlight(prev => Math.min(prev + 1, filtered.length - 1)); }
+                                else if (e.key === "ArrowUp") { e.preventDefault(); setItemSearchHighlight(prev => Math.max(prev - 1, 0)); }
+                                else if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  if (filtered.length > 0 && itemSearchDropdown) {
+                                    openItemForm(filtered[itemSearchHighlight].division || "", filtered[itemSearchHighlight]);
+                                    setItemSearchDropdown(false);
+                                    setItemSearch("");
+                                  } else if (q) {
+                                    showToast("No item found matching: " + itemSearch, "error");
+                                  }
+                                }
+                              }}
+                              onFocus={() => setItemSearchDropdown(true)}
+                              onBlur={() => setTimeout(() => setItemSearchDropdown(false), 200)}
+                              placeholder="Search Item or Barcode... + Enter"
+                              style={{ ...inp, paddingLeft: "28px", padding: "8px 8px 8px 28px", width: "100%" }}
+                            />
+                            {itemSearchDropdown && filtered.length > 0 && (
+                              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden" }}>
+                                {filtered.map((i, idx) => (
+                                  <div key={i.id} onClick={() => { openItemForm(i.division || "", i); setItemSearchDropdown(false); setItemSearch(""); }} style={{ padding: "8px 12px", cursor: "pointer", background: idx === itemSearchHighlight ? "#f1f5f9" : "white", borderBottom: "1px solid #f1f5f9" }} onMouseEnter={() => setItemSearchHighlight(idx)}>
+                                    <div style={{ fontSize: "12px", fontWeight: "600", color: "#1e293b", display: "flex", justifyContent: "space-between" }}>
+                                      <span>{i.name}</span>
+                                      <span style={{ color: "#3b82f6" }}>₹{i.price}</span>
+                                    </div>
+                                    <div style={{ fontSize: "10px", color: "#64748b" }}>Stock: {i.stock} {i.unit} | {i.company}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ ...inp, width: "auto" }}>
                       <option value="name">Name A-Z</option>
@@ -1055,47 +1167,13 @@ const pending = [];
                       </div>
                     </div>
                   )}
-                  {/* Items Grid */}
-                  {filteredItems("").length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "50px", color: "#64748b" }}><div style={{ fontSize: "44px" }}>📦</div><p>No items found</p><button onClick={() => openItemForm("")} style={{ ...btn("var(--color-primary)"), margin: "12px auto 0" }}><Plus size={13} />Add Item</button></div>
-                  ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: "10px" }}>
-                      {filteredItems("").map(item => {
-                        const exp = isExpired(item.expiryDate), expSoon = isExpiringSoon(item.expiryDate);
-                        const batchCount = itemBatches(item.id).length;
-                        const itemDiv = DIVISIONS.find(d => d.id === item.division) || DIVISIONS[0];
-                        return (
-                          <div key={item.id} style={{ background: "white", borderRadius: "12px", padding: "16px", border: `1px solid ${exp ? "#fca5a5" : expSoon ? "#fdba74" : itemDiv.border}`, boxShadow: "var(--shadow-sm)", transition: "all 0.2s" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "7px" }}>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: "700", fontSize: "13px", color: "#1e293b", display: "flex", alignItems: "center", gap: "5px" }}>
-                                  {item.name}
-                                  {item.scheduleH && <span style={{ background: "#fef9c3", color: "#854d0e", fontSize: "9px", padding: "1px 4px", borderRadius: "4px", fontWeight: "700" }}>Sch.H</span>}
-                                  {item.rxRequired && <span style={{ background: "#fce7f3", color: "#be185d", fontSize: "9px", padding: "1px 4px", borderRadius: "4px", fontWeight: "700" }}>Rx</span>}
-                                </div>
-                                {item.company && <div style={{ fontSize: "11px", color: "#64748b" }}>{item.company}</div>}
-                              </div>
-                              {(exp || expSoon) && <AlertCircle size={14} color={exp ? "#ef4444" : "#fd7e14"} />}
-                            </div>
-                            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "7px" }}>
-                              {item.pRate > 0 && <span style={{ background: "#f1f5f9", color: "#475569", padding: "2px 6px", borderRadius: "5px", fontSize: "10px" }}>PTR ₹{item.pRate}</span>}
-                              <span style={{ background: itemDiv.bg, color: itemDiv.color, padding: "2px 7px", borderRadius: "5px", fontSize: "11px", fontWeight: "700" }}>₹{item.price}</span>
-                              {item.mrp > 0 && item.mrp > item.price && <span style={{ background: "#f1f5f9", color: "#64748b", padding: "2px 7px", borderRadius: "5px", fontSize: "11px", textDecoration: "line-through" }}>₹{item.mrp}</span>}
-                              {item.gst > 0 && <span style={{ background: "#f0fdf4", color: "#16a34a", padding: "2px 6px", borderRadius: "5px", fontSize: "11px" }}>GST {item.gst}%</span>}
-                              <span style={{ background: item.stock <= 0 ? "#fef2f2" : "#f8fafc", color: item.stock <= 0 ? "#ef4444" : "#475569", padding: "2px 6px", borderRadius: "5px", fontSize: "11px" }}>{item.stock <= 0 ? "Out" : item.stock + " " + (item.unit || "pcs")}</span>
-                              {batchCount > 0 && <span style={{ background: "#f0fdf4", color: "#16a34a", padding: "2px 6px", borderRadius: "5px", fontSize: "10px" }}>{batchCount} batches</span>}
-                            </div>
-                            {item.expiryDate && <div style={{ fontSize: "10px", color: exp ? "#ef4444" : expSoon ? "#fd7e14" : "#64748b", marginBottom: "7px" }}>📅 {item.expiryDate} {exp ? "(Expired)" : expSoon ? "(Expiring Soon)" : ""}</div>}
-                            <div style={{ display: "flex", gap: "5px" }}>
-                              <button onClick={() => { setQuickStockItem(item); setQuickQty(""); }} style={{ ...btn("var(--color-primary)"), fontSize: "11px", padding: "5px 8px" }}>+📦</button>
-                              <button onClick={() => { setLabelItem(item); setLabelQty(1); setShowLabelPrint(true); }} style={{ ...btn("#7c3aed"), fontSize: "11px", padding: "5px 8px" }}>🏷️</button>
-                              <button onClick={() => openItemForm("", item)} style={{ ...btn(), fontSize: "11px", padding: "5px 8px" }}><Edit2 size={11} /></button>
-                              <button onClick={() => handlePrintLabel(item)} style={{ ...btn("#7c3aed"), fontSize: "11px", padding: "5px 8px", marginRight: "4px" }} title="Print Label">🏷️</button>
-                              <button onClick={() => handleDeleteItem(item.id)} style={{ ...btn("#ef4444"), fontSize: "11px", padding: "5px 8px" }}><Trash2 size={11} /></button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                  {/* Items Grid is Hidden (Search to Edit Workflow) */}
+                  {!showItemForm && (
+                    <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)", marginTop: "20px" }}>
+                      <div style={{ fontSize: "44px", opacity: 0.5 }}>📦</div>
+                      <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Item Name or Barcode to Edit</p>
+                      <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit an existing item.</p>
+                      <button onClick={() => openItemForm("")} style={{ ...btn("var(--color-primary)"), margin: "16px auto 0" }}><Plus size={13} />Add New Item</button>
                     </div>
                   )}
                 </>
@@ -1113,12 +1191,57 @@ const pending = [];
               <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800" }}>🛒 Purchase Bills ({purchaseBills.length})</h2>
               <div style={{ position: "relative" }}>
                 <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "#64748b" }} />
-                <input
-                  placeholder="Search Bill# / Party / Entry..."
-                  value={purchaseBillSearch || ""}
-                  onChange={e => setPurchaseBillSearch(e.target.value)}
-                  style={{ ...inp, width: "280px", paddingLeft: "30px", borderRadius: "20px", background: "#f8fafc" }}
-                />
+                {(() => {
+                  const q = (purchaseBillSearch || "").toLowerCase();
+                  const filtered = q ? purchaseBills.filter(b => (String(b.entryNo) || "").toLowerCase().includes(q) || (b.billNo || "").toLowerCase().includes(q) || (b.partyName || "").toLowerCase().includes(q) || matchesDate(b.billDate || b.date, q)).slice(0, 15) : [];
+                  return (
+                    <>
+                      <input
+                        placeholder="Search Bill# / Party / Entry / Date... + Enter"
+                        value={purchaseBillSearch || ""}
+                        onChange={e => {
+                          setPurchaseBillSearch(e.target.value);
+                          setPurchaseBillSearchDropdown(true);
+                          setPurchaseBillSearchHighlight(0);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "ArrowDown") { e.preventDefault(); setPurchaseBillSearchHighlight(prev => Math.min(prev + 1, filtered.length - 1)); }
+                          else if (e.key === "ArrowUp") { e.preventDefault(); setPurchaseBillSearchHighlight(prev => Math.max(prev - 1, 0)); }
+                          else if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (filtered.length > 0 && purchaseBillSearchDropdown) {
+                              openPurchaseForm(filtered[purchaseBillSearchHighlight]);
+                              setPurchaseBillSearchDropdown(false);
+                              setPurchaseBillSearch("");
+                            } else if (q) {
+                              const match = purchaseBills.find(b => (String(b.entryNo) || "").toLowerCase() === q || (b.billNo || "").toLowerCase() === q || (b.partyName || "").toLowerCase() === q || matchesDate(b.billDate || b.date, q));
+                              if (match) {
+                                openPurchaseForm(match);
+                                setPurchaseBillSearchDropdown(false);
+                                setPurchaseBillSearch("");
+                              } else {
+                                showToast("No purchase bill found matching: " + purchaseBillSearch, "error");
+                              }
+                            }
+                          }
+                        }}
+                        onFocus={() => setPurchaseBillSearchDropdown(true)}
+                        onBlur={() => setTimeout(() => setPurchaseBillSearchDropdown(false), 200)}
+                        style={{ ...inp, width: "300px", paddingLeft: "30px", borderRadius: "20px", background: "#f8fafc" }}
+                      />
+                      {purchaseBillSearchDropdown && filtered.length > 0 && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden" }}>
+                          {filtered.map((b, idx) => (
+                            <div key={b.id} onClick={() => { openPurchaseForm(b); setPurchaseBillSearchDropdown(false); setPurchaseBillSearch(""); }} style={{ padding: "8px 12px", cursor: "pointer", background: idx === purchaseBillSearchHighlight ? "#f1f5f9" : "white", borderBottom: "1px solid #f1f5f9" }} onMouseEnter={() => setPurchaseBillSearchHighlight(idx)}>
+                              <div style={{ fontSize: "12px", fontWeight: "600", color: "#1e293b" }}>Entry #{b.entryNo} — {b.partyName}</div>
+                              <div style={{ fontSize: "10px", color: "#64748b" }}>Bill: {b.billNo || "N/A"} | Amt: ₹{fmt(b.total)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
               <button onClick={openPurchaseForm} style={{ ...btn() }}><Plus size={14} />New Purchase</button>
             </div>
@@ -1289,53 +1412,14 @@ const pending = [];
             )}
 
             {/* Purchase Bills List */}
-            {purchaseBills.length === 0 && !showPurchaseForm ? (
-              <div style={{ textAlign: "center", padding: "60px", color: "#64748b" }}><div style={{ fontSize: "44px" }}>🛒</div><p>No purchase bills found</p></div>
-            ) : [...purchaseBills].reverse().filter(bill => {
-              const q = purchaseBillSearch.toLowerCase();
-              return !q || (bill.billNo || "").toLowerCase().includes(q) || (bill.partyName || "").toLowerCase().includes(q) || (bill.entryNo || "").toString().includes(q);
-            }).map(bill => (
-              <div key={bill.id} style={{ background: "white", borderRadius: "12px", marginBottom: "12px", border: "1px solid var(--color-border)", overflow: "hidden", boxShadow: "var(--shadow-sm)", transition: "all 0.2s" }}>
-                <div style={{ padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setExpandedPurchase(expandedPurchase === bill.id ? null : bill.id)}>
-                  <div>
-                    <div style={{ fontWeight: "700", fontSize: "13px" }}>Entry #{bill.entryNo} — {bill.partyName}</div>
-                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>Bill: {bill.billNo || "N/A"} · {bill.billDate} · {bill.items?.length || 0} items · {bill.taxType}</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontWeight: "800", fontSize: "14px" }}>₹{fmt(bill.total)}</div>
-                      <span style={{ background: (STATUS_STYLE[bill.status] || STATUS_STYLE.Pending).bg, color: (STATUS_STYLE[bill.status] || STATUS_STYLE.Pending).color, padding: "2px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "600" }}>{bill.status || "Paid"}</span>
-                    </div>
-                    <button onClick={e => { e.stopPropagation(); handleDeletePurchaseBill(bill); }} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "6px", padding: "5px 8px", cursor: "pointer", fontSize: "12px" }} title="Delete">🗑️</button>
-                    {expandedPurchase === bill.id ? <ChevronUp size={15} color="#64748b" /> : <ChevronDown size={15} color="#64748b" />}
-                  </div>
-                </div>
-                {expandedPurchase === bill.id && (
-                  <div style={{ borderTop: "1px solid #f1f5f9", padding: "12px 14px", background: "#fafafa", overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "600px" }}>
-                      <thead><tr style={{ background: "#f1f5f9" }}>{["Item", "Batch", "Exp", "Qty", "Free", "MRP", "PTR", "GST", "Disc", "Amount"].map(h => <th key={h} style={{ padding: "6px 8px", textAlign: ["Qty", "Free", "PTR", "MRP", "GST", "Disc", "Amount"].includes(h) ? "right" : "left", fontWeight: "600", color: "var(--color-text-dark)", fontSize: "12px", textTransform: "uppercase" }}>{h}</th>)}</tr></thead>
-                      <tbody>
-                        {(bill.items || []).map((pi, i) => (
-                          <tr key={i} style={{ borderBottom: "1px solid var(--color-border)" }}>
-                            <td style={{ padding: "6px 8px", fontWeight: "600" }}>{pi.itemName || items.find(x => x.id === pi.itemId)?.name || "—"}</td>
-                            <td style={{ padding: "6px 8px" }}>{pi.batchNo || "—"}</td>
-                            <td style={{ padding: "6px 8px", fontSize: "11px", color: isExpired(pi.expiryDate) ? "#ef4444" : "inherit" }}>{pi.expiryDate || "—"}</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{pi.qty}</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{pi.freeQty || 0}</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>₹{fmt(pi.ptr)}</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>₹{fmt(pi.mrp)}</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{pi.gst || 0}%</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{pi.disc || 0}%</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "700", color: "#3b82f6" }}>₹{fmt(pi.amount)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot><tr><td colSpan="9" style={{ padding: "8px", textAlign: "right", fontWeight: "700" }}>Total:</td><td style={{ padding: "8px", textAlign: "right", fontWeight: "800", color: "#16a34a" }}>₹{fmt(bill.total)}</td></tr></tfoot>
-                    </table>
-                  </div>
-                )}
+            {!showPurchaseForm && (
+              <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)" }}>
+                <div style={{ fontSize: "44px", opacity: 0.5 }}>🛒</div>
+                <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Bill#, Party, or Entry# to Open</p>
+                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit an existing purchase bill.</p>
               </div>
-            ))}
+            )}
+
           </>
         )}
 
@@ -1349,12 +1433,57 @@ const pending = [];
                 <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800" }}>🧾 Sales Bills ({salesBills.length})</h2>
                 <div style={{ position: "relative" }}>
                   <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "#64748b" }} />
-                  <input
-                    placeholder="Search Patient / Bill# / Mobile..."
-                    value={salesBillSearch}
-                    onChange={e => setSalesBillSearch(e.target.value)}
-                    style={{ ...inp, width: "280px", paddingLeft: "30px", borderRadius: "20px", background: "#f8fafc" }}
-                  />
+                  {(() => {
+                    const q = (salesBillSearch || "").toLowerCase();
+                    const filtered = q ? salesBills.filter(b => (String(b.billNo) || "").toLowerCase().includes(q) || (b.mobile || "").includes(q) || (b.patientName || "").toLowerCase().includes(q) || matchesDate(b.date, q)).slice(0, 15) : [];
+                    return (
+                      <>
+                        <input
+                          placeholder="Search Patient / Bill# / Mobile / Date... + Enter"
+                          value={salesBillSearch}
+                          onChange={e => {
+                            setSalesBillSearch(e.target.value);
+                            setSalesBillSearchDropdown(true);
+                            setSalesBillSearchHighlight(0);
+                          }}
+                          onKeyDown={e => {
+                            if (e.key === "ArrowDown") { e.preventDefault(); setSalesBillSearchHighlight(prev => Math.min(prev + 1, filtered.length - 1)); }
+                            else if (e.key === "ArrowUp") { e.preventDefault(); setSalesBillSearchHighlight(prev => Math.max(prev - 1, 0)); }
+                            else if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (filtered.length > 0 && salesBillSearchDropdown) {
+                                openSalesForm(filtered[salesBillSearchHighlight].isReturn, filtered[salesBillSearchHighlight]);
+                                setSalesBillSearchDropdown(false);
+                                setSalesBillSearch("");
+                              } else if (q) {
+                                const match = salesBills.find(b => (String(b.billNo) || "").toLowerCase() === q || (b.mobile || "") === q || (b.patientName || "").toLowerCase() === q || matchesDate(b.date, q));
+                                if (match) {
+                                  openSalesForm(match.isReturn, match);
+                                  setSalesBillSearchDropdown(false);
+                                  setSalesBillSearch("");
+                                } else {
+                                  showToast("No bill found matching: " + salesBillSearch, "error");
+                                }
+                              }
+                            }
+                          }}
+                          onFocus={() => setSalesBillSearchDropdown(true)}
+                          onBlur={() => setTimeout(() => setSalesBillSearchDropdown(false), 200)}
+                          style={{ ...inp, width: "300px", paddingLeft: "30px", borderRadius: "20px", background: "#f8fafc" }}
+                        />
+                        {salesBillSearchDropdown && filtered.length > 0 && (
+                          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden" }}>
+                            {filtered.map((b, idx) => (
+                              <div key={b.id} onClick={() => { openSalesForm(b.isReturn, b); setSalesBillSearchDropdown(false); setSalesBillSearch(""); }} style={{ padding: "8px 12px", cursor: "pointer", background: idx === salesBillSearchHighlight ? "#f1f5f9" : "white", borderBottom: "1px solid #f1f5f9" }} onMouseEnter={() => setSalesBillSearchHighlight(idx)}>
+                                <div style={{ fontSize: "12px", fontWeight: "600", color: "#1e293b" }}>Bill #{b.billNo} {b.patientName ? ` - ${b.patientName}` : ""}</div>
+                                <div style={{ fontSize: "10px", color: "#64748b" }}>Date: {new Date(b.date).toLocaleDateString("en-IN")} | Net: ₹{fmt(Math.abs(num(b.netAmount)))}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
               <div style={{ display: "flex", gap: "8px" }}>
@@ -1430,15 +1559,22 @@ const pending = [];
                               const selectItem = (i) => { setSalesItems(prev => { const updated = [...prev]; const si2 = { ...emptySalesItem(), itemId: i.id, itemName: i.name, mrp: num(i.mrp) || num(i.price), rate: num(i.price), gst: num(i.gst) || 0 }; si2.amount = calcSalesItemAmt(si2); updated[idx] = { ...updated[idx], ...si2 }; return updated; }); setSalesItemSearch(prev => ({ ...prev, [idx]: undefined })); setSalesItemHighlight(prev => ({ ...prev, [idx]: 0 })); setSalesItemDropdown(null); };
                               return (<>
                                 <input
+                                  id={`sales-item-${idx}`}
                                   value={salesItemSearch[idx] !== undefined ? salesItemSearch[idx] : (si.itemName || "")}
                                   onChange={e => { const r = e.target.getBoundingClientRect(); setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) }); setSalesItemSearch({ ...salesItemSearch, [idx]: e.target.value }); setSalesItemHighlight({ ...salesItemHighlight, [idx]: 0 }); setSalesItemDropdown(idx); }}
                                   onFocus={e => { const r = e.target.getBoundingClientRect(); setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) }); setSalesItemSearch(prev => ({ ...prev, [idx]: prev[idx] ?? "" })); setSalesItemHighlight(prev => ({ ...prev, [idx]: 0 })); setSalesItemDropdown(idx); }}
                                   onBlur={() => setTimeout(() => setSalesItemDropdown(null), 200)}
                                   onKeyDown={e => {
-                                    if (salesItemDropdown !== idx || filtered.length === 0) return;
-                                    if (e.key === "ArrowDown") { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.min((prev[idx] || 0) + 1, filtered.length - 1) })) }
-                                    else if (e.key === "ArrowUp") { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.max((prev[idx] || 0) - 1, 0) })) }
-                                    else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); const item = filtered[hi]; if (item) selectItem(item); }
+                                    if (e.key === "Enter") {
+                                      e.preventDefault(); e.stopPropagation();
+                                      if (salesItemDropdown === idx && filtered.length > 0) {
+                                        const item = filtered[hi]; if (item) { selectItem(item); setTimeout(() => document.getElementById(`sales-batch-${idx}`)?.focus(), 50); }
+                                      } else {
+                                        document.getElementById(`sales-batch-${idx}`)?.focus();
+                                      }
+                                    }
+                                    else if (e.key === "ArrowDown" && salesItemDropdown === idx && filtered.length > 0) { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.min((prev[idx] || 0) + 1, filtered.length - 1) })) }
+                                    else if (e.key === "ArrowUp" && salesItemDropdown === idx && filtered.length > 0) { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.max((prev[idx] || 0) - 1, 0) })) }
                                   }}
                                   placeholder="Search item..."
                                   style={{ ...inp, minWidth: "150px", padding: "6px 8px" }}
@@ -1461,12 +1597,12 @@ const pending = [];
                               </>);
                             })()}
                           </td>
-                          <td style={{ padding: "4px" }}><input type="text" value={si.batchNo || ""} onChange={e => updateSalesItem(idx, "batchNo", e.target.value)} placeholder="Batch No" style={{ ...inp, width: "90px", padding: "6px 7px" }} /></td>
-                          {[{ f: "qty", t: "number", w: "55px" }, { f: "mrp", t: "number", w: "65px" }, { f: "rate", t: "number", w: "65px" }].map(f => (
-                            <td key={f.f} style={{ padding: "4px" }}><input type={f.t} value={si[f.f] || ""} onChange={e => updateSalesItem(idx, f.f, e.target.value)} style={{ ...inp, width: f.w, padding: "6px 7px" }} /></td>
+                          <td style={{ padding: "4px" }}><input id={`sales-batch-${idx}`} type="text" value={si.batchNo || ""} onChange={e => updateSalesItem(idx, "batchNo", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-qty-${idx}`)?.focus(); } }} placeholder="Batch No" style={{ ...inp, width: "90px", padding: "6px 7px" }} /></td>
+                          {[{ f: "qty", t: "number", w: "55px", next: "mrp" }, { f: "mrp", t: "number", w: "65px", next: "rate" }, { f: "rate", t: "number", w: "65px", next: "gst" }].map(f => (
+                            <td key={f.f} style={{ padding: "4px" }}><input id={`sales-${f.f}-${idx}`} type={f.t} value={si[f.f] || ""} onChange={e => updateSalesItem(idx, f.f, e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-${f.next}-${idx}`)?.focus(); } }} style={{ ...inp, width: f.w, padding: "6px 7px" }} /></td>
                           ))}
-                          <td style={{ padding: "4px" }}><select value={si.gst || "0"} onChange={e => updateSalesItem(idx, "gst", e.target.value)} style={{ ...inp, width: "60px", padding: "6px 5px" }}>{GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}</select></td>
-                          <td style={{ padding: "4px" }}><input type="number" value={si.disc || "0"} onChange={e => updateSalesItem(idx, "disc", e.target.value)} style={{ ...inp, width: "55px", padding: "6px 7px" }} /></td>
+                          <td style={{ padding: "4px" }}><select id={`sales-gst-${idx}`} value={si.gst || "0"} onChange={e => updateSalesItem(idx, "gst", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-disc-${idx}`)?.focus(); } }} style={{ ...inp, width: "60px", padding: "6px 5px" }}>{GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}</select></td>
+                          <td style={{ padding: "4px" }}><input id={`sales-disc-${idx}`} type="number" value={si.disc || "0"} onChange={e => updateSalesItem(idx, "disc", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSalesItem(); setTimeout(() => document.getElementById(`sales-item-${idx + 1}`)?.focus(), 100); } }} style={{ ...inp, width: "55px", padding: "6px 7px" }} /></td>
                           <td style={{ padding: "6px 8px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap" }}>₹{fmt(si.amount || 0)}</td>
                           <td style={{ padding: "4px" }}><button onClick={() => removeSalesItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "5px", padding: "5px 7px", cursor: "pointer" }}><X size={12} /></button></td>
                         </tr>
@@ -1501,65 +1637,102 @@ const pending = [];
                     </div>
                   );
                 })()}
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  <button onClick={addSalesItem} style={{ ...btn("var(--color-primary)"), fontSize: "12px" }}><Plus size={13} />Add Row</button>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
                   <button onClick={() => { setScannerTarget("sales"); setShowCameraScanner(true); }}
                     style={{ ...btn("var(--color-primary)"), fontSize: "12px" }}>📷 Scan — Sales</button>
-                  <button onClick={handleSaveSales} style={{ ...btn(isReturn ? "#ef4444" : "#16a34a") }}><CheckCircle size={14} />{isReturn ? "Save Return" : "Save & Print"}</button>
-                  <button onClick={() => setShowSalesForm(false)} style={{ ...btn("var(--color-border)", "var(--color-text-dark)") }}><X size={13} />Cancel</button>
+                  <button onClick={handleSaveSales} style={{ ...btn(isReturn ? "#ef4444" : "#16a34a"), fontSize: "13px", fontWeight: "700" }}>
+                    <CheckCircle size={14} />{salesForm.id ? "Update Bill" : (isReturn ? "Save Return" : "Save Bill")}
+                  </button>
+                  <button onClick={() => {
+                    const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
+                    const grossAmount = validItems.reduce((s, si) => s + num(si.amount || 0), 0);
+                    const lessDisc = grossAmount * num(salesForm.discount) / 100;
+                    const netAmount = grossAmount - lessDisc;
+                    const sign = isReturn ? -1 : 1;
+                    const b = {
+                      id: salesForm.id || "preview",
+                      billNo: salesForm.billNo || (salesBills.length + 1),
+                      date: salesForm.date || today(),
+                      ...salesForm,
+                      items: validItems.length > 0 ? validItems : salesItems,
+                      grossAmount: grossAmount * sign,
+                      lessDisc: lessDisc * sign,
+                      netAmount: (netAmount - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue)) * sign,
+                      isReturn,
+                      status: "Completed"
+                    };
+                    handlePrintSalesBill(b);
+                  }} style={{ ...btn("#2563eb"), fontSize: "13px", fontWeight: "600" }}>
+                    🖨️ Print Bill
+                  </button>
+                  <button onClick={() => {
+                    const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
+                    const grossAmount = validItems.reduce((s, si) => s + num(si.amount || 0), 0);
+                    const lessDisc = grossAmount * num(salesForm.discount) / 100;
+                    const netAmount = grossAmount - lessDisc;
+                    const sign = isReturn ? -1 : 1;
+                    const b = {
+                      id: salesForm.id || "preview",
+                      billNo: salesForm.billNo || (salesBills.length + 1),
+                      date: salesForm.date || today(),
+                      ...salesForm,
+                      items: validItems.length > 0 ? validItems : salesItems,
+                      grossAmount: grossAmount * sign,
+                      lessDisc: lessDisc * sign,
+                      netAmount: (netAmount - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue)) * sign,
+                      isReturn,
+                      status: "Completed"
+                    };
+                    if (!b.mobile) {
+                      showToast("Please enter patient mobile number for WhatsApp", "error");
+                      return;
+                    }
+                    handleWhatsAppBill(b);
+                  }} style={{ ...btn("#15803d"), fontSize: "13px", fontWeight: "600" }}>
+                    💬 Send WhatsApp
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (salesForm.id) {
+                        handleDeleteSalesBill(salesForm);
+                      } else {
+                        showConfirm("Discard this bill?", () => {
+                          setSalesForm(emptySalesForm());
+                          setSalesItems([emptySalesItem()]);
+                          setShowSalesForm(false);
+                          showToast("Bill discarded");
+                        });
+                      }
+                    }}
+                    style={{
+                      background: "#fef2f2",
+                      border: "1px solid #fecaca",
+                      color: "#ef4444",
+                      borderRadius: "8px",
+                      padding: "8px 11px",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginLeft: "auto"
+                    }}
+                    title={salesForm.id ? "Delete this Bill" : "Discard Bill"}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Sales Bills List */}
-            {salesBills.length === 0 && !showSalesForm ? (
-              <div style={{ textAlign: "center", padding: "60px", color: "#64748b" }}><div style={{ fontSize: "44px" }}>🧾</div><p>No sales bills found</p></div>
-            ) : [...salesBills].reverse().filter(bill => {
-              const q = salesBillSearch.toLowerCase();
-              return !q || (bill.billNo || "").toLowerCase().includes(q) || (bill.patientName || "").toLowerCase().includes(q) || (bill.mobile || "").includes(q);
-            }).map(bill => (
-              <div key={bill.id} style={{ background: "white", borderRadius: "5px", marginBottom: "10px", border: `1px solid ${bill.isReturn ? "#fecaca" : "#e2e8f0"}`, overflow: "hidden" }}>
-                <div style={{ padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setExpandedSale(expandedSale === bill.id ? null : bill.id)}>
-                  <div>
-                    <div style={{ fontWeight: "700", fontSize: "13px" }}>Bill #{bill.billNo} {bill.isReturn && <span style={{ color: "#ef4444", fontSize: "11px" }}>(RETURN)</span>}</div>
-                    <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>{bill.patientName || "—"}{bill.patientArea ? ` (${bill.patientArea})` : ""}{bill.doctorName ? ` · Dr. ${bill.doctorName}` : ""}{bill.salesMan ? ` · ${bill.salesMan}` : ""} · {bill.mobile || "—"} · {bill.paymentMode?.toUpperCase()} · {new Date(bill.date).toLocaleDateString("en-IN")}</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontWeight: "800", fontSize: "14px", color: bill.isReturn ? "#ef4444" : "#1e293b" }}>{bill.isReturn ? "-" : ""}₹{fmt(Math.abs(num(bill.netAmount)))}</div>
-                    </div>
-                    <button onClick={e => { e.stopPropagation(); handlePrintSalesBill(bill); }} style={{ background: "#f1f5f9", border: "none", padding: "5px 8px", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }} title="Print">🖨️</button>
-                    <button onClick={e => { e.stopPropagation(); handleWhatsAppBill(bill); }} style={{ background: "#dcfce7", border: "none", padding: "5px 8px", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }} title="WhatsApp Bill">💬</button>
-                    <button onClick={e => { e.stopPropagation(); handleDeleteSalesBill(bill); }} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "6px", padding: "5px 8px", cursor: "pointer", fontSize: "12px" }} title="Delete">🗑️</button>
-                    {expandedSale === bill.id ? <ChevronUp size={15} color="#64748b" /> : <ChevronDown size={15} color="#64748b" />}
-                  </div>
-                </div>
-                {expandedSale === bill.id && (
-                  <div style={{ borderTop: "1px solid #f1f5f9", padding: "12px 14px", background: "#fafafa", overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "500px" }}>
-                      <thead><tr style={{ background: "#f1f5f9" }}>{["Item", "Batch", "Qty", "Rate", "GST", "Amount"].map(h => <th key={h} style={{ padding: "6px 8px", textAlign: ["Qty", "Rate", "GST", "Amount"].includes(h) ? "right" : "left", fontWeight: "600", color: "var(--color-text-dark)", fontSize: "12px", textTransform: "uppercase" }}>{h}</th>)}</tr></thead>
-                      <tbody>
-                        {(bill.items || []).filter(si => si.itemId).map((si, i) => (
-                          <tr key={i} style={{ borderBottom: "1px solid var(--color-border)" }}>
-                            <td style={{ padding: "6px 8px", fontWeight: "600" }}>{si.itemName || "—"}</td>
-                            <td style={{ padding: "6px 8px" }}>{si.batchNo || "—"}</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{si.qty}</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>₹{fmt(si.rate)}</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right" }}>{si.gst || 0}%</td>
-                            <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "700", color: "#3b82f6" }}>₹{fmt(si.amount)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr><td colSpan="5" style={{ padding: "6px 8px", textAlign: "right", fontWeight: "600" }}>Gross:</td><td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "700" }}>₹{fmt(Math.abs(num(bill.grossAmount)))}</td></tr>
-                        {num(bill.lessDisc) > 0 && <tr><td colSpan="5" style={{ padding: "4px 8px", textAlign: "right", color: "#ef4444" }}>Less Disc:</td><td style={{ padding: "4px 8px", textAlign: "right", color: "#ef4444" }}>-₹{fmt(Math.abs(num(bill.lessDisc)))}</td></tr>}
-                        <tr><td colSpan="5" style={{ padding: "8px", textAlign: "right", fontWeight: "800", fontSize: "14px" }}>NET:</td><td style={{ padding: "8px", textAlign: "right", fontWeight: "800", fontSize: "14px", color: "#16a34a" }}>₹{fmt(Math.abs(num(bill.netAmount)))}</td></tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                )}
+            {/* Sales Bills List is Hidden (Search to Edit Workflow) */}
+            {!showSalesForm && (
+              <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)" }}>
+                <div style={{ fontSize: "44px", opacity: 0.5 }}>🧾</div>
+                <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Bill# or Patient Name to Open</p>
+                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit an existing bill.</p>
               </div>
-            ))}
+            )}
+
           </>
         )}
 

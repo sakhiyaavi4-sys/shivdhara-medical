@@ -1181,11 +1181,27 @@ export function MedicalStoreProvider({ children }) {
     const lessDisc = grossAmount * num(salesForm.discount) / 100;
     const netAmount = grossAmount - lessDisc;
     const sign = isReturn ? -1 : 1;
-    const bill = { id: salesForm.id || uid(), billNo: salesForm.billNo || (salesBills.length + 1), date: salesForm.date || nowStr(), ...salesForm, items: validItems, grossAmount: grossAmount * sign, lessDisc: lessDisc * sign, netAmount: netAmount * sign, isReturn, createdAt: salesForm.createdAt || nowStr(), status: "Completed" };
+    const isEdit = Boolean(salesForm.id);
+    const billId = isEdit ? salesForm.id : uid();
+    const billNo = salesForm.billNo || (salesBills.length + 1);
+    const bill = {
+      ...salesForm,
+      id: billId,
+      billNo,
+      date: salesForm.date || nowStr(),
+      items: validItems,
+      grossAmount: grossAmount * sign,
+      lessDisc: lessDisc * sign,
+      netAmount: (netAmount - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue)) * sign,
+      isReturn,
+      createdAt: salesForm.createdAt || nowStr(),
+      status: "Completed"
+    };
 
     // Save to DB (Transactional: Bill + Items + Stock)
     try {
       const payload = {
+        id: isEdit ? billId : undefined,
         bill_no: bill.billNo,
         patient_name: bill.patientName,
         patient_area: bill.patientArea,
@@ -1205,45 +1221,56 @@ export function MedicalStoreProvider({ children }) {
         items: validItems,
         isReturn
       };
-      const res = await fetch(`${API_BASE}/sales-bills`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        loadAll();
-        showToast(isReturn ? "Return Bill synced (DB)!" : "Sales Bill synced (DB)!");
+
+      let res;
+      if (isEdit) {
+        res = await fetch(`${API_BASE}/sales-bills/${billId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 404) {
+          // Fallback if running server hasn't been restarted with PUT route yet:
+          try { await fetch(`${API_BASE}/sales-bills/${billId}`, { method: 'DELETE' }); } catch (_) {}
+          res = await fetch(`${API_BASE}/sales-bills`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
       } else {
-        const existingIdx = salesBills.findIndex(b => b.id === bill.id);
+        res = await fetch(`${API_BASE}/sales-bills`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (res && res.ok) {
+        await loadAll();
+        showToast(isReturn ? "Return Bill saved!" : (isEdit ? "Sales Bill updated!" : "Sales Bill saved!"));
+      } else {
+        const existingIdx = salesBills.findIndex(b => String(b.id) === String(bill.id));
         if (existingIdx >= 0) {
           const updated = [...salesBills]; updated[existingIdx] = bill;
           saveSalesBills(updated);
         } else {
           saveSalesBills([...salesBills, bill]);
         }
-        showToast(isReturn ? "Return Bill saved locally!" : "Sales Bill saved locally!");
+        showToast(isReturn ? "Return Bill saved locally!" : (isEdit ? "Sales Bill updated locally!" : "Sales Bill saved locally!"));
       }
     } catch (e) {
-      const existingIdx = salesBills.findIndex(b => b.id === bill.id);
+      const existingIdx = salesBills.findIndex(b => String(b.id) === String(bill.id));
       if (existingIdx >= 0) {
         const updated = [...salesBills]; updated[existingIdx] = bill;
         saveSalesBills(updated);
       } else {
         saveSalesBills([...salesBills, bill]);
       }
-      showToast(isReturn ? "Return Bill saved locally!" : "Sales Bill saved locally!");
+      showToast(isReturn ? "Return Bill saved locally!" : (isEdit ? "Sales Bill updated locally!" : "Sales Bill saved locally!"));
     }
 
     setShowSalesForm(false);
-
-    // Auto-open dot matrix print preview after saving a sales bill
-    if (!isReturn) { setTimeout(() => handlePrintSalesBill(bill), 350); }
-
-    // Auto-send bill to customer's WhatsApp after saving (if mobile number exists)
-    const ph = (bill.mobile || "").replace(/\D/g, "");
-    if (ph && !isReturn) {
-      setTimeout(() => handleWhatsAppBill(bill), 800);
-    }
   };
 
   const handlePrintSalesBill = (bill) => {
@@ -1345,7 +1372,10 @@ export function MedicalStoreProvider({ children }) {
       await saveSalesBills(salesBills.filter(b => b.id !== bill.id));
       const sign = bill.isReturn ? -1 : 1; let newItems = [...items];
       (bill.items || []).filter(si => si.itemId).forEach(si => { newItems = newItems.map(i => i.id === si.itemId ? { ...i, stock: int(i.stock) + (int(si.qty) * sign) } : i); });
-      await saveItems(newItems); showToast("Sales bill deleted & stock restored");
+      await saveItems(newItems);
+      setShowSalesForm(false);
+      await loadAll();
+      showToast("Sales bill deleted & stock restored");
     });
   };
 
@@ -2791,14 +2821,16 @@ ${footerLines}</pre>
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bill #${bill.billNo || bill.id}</title>
 <style>
-  @page { size: 10in 4in landscape; margin: 1.5mm 3mm; }
+  @page { size: 10in 4in; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 9.8in; margin: 0 auto; padding: 0; background: #fff; color: #000; }
+  html, body { width: 100%; margin: 0; padding: 0; background: #fff; color: #000; }
   .bill-page {
     page-break-after: always;
     break-after: page;
-    min-height: 3.88in;
+    min-height: 4in;
     box-sizing: border-box;
+    padding-top: 1.5mm;
+    padding-left: 3mm;
   }
   .bill-page:last-child {
     page-break-after: auto;
@@ -2807,7 +2839,7 @@ ${footerLines}</pre>
   pre {
     font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace !important;
     font-size: 13px !important;
-    font-weight: 400 !important;
+    font-weight: 800 !important;
     line-height: 1.15 !important;
     letter-spacing: 0.1px !important;
     color: #000000 !important;

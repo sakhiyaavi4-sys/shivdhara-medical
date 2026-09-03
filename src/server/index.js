@@ -473,6 +473,80 @@ app.post('/api/sales-bills', async (req, res) => {
   }
 });
 
+app.put('/api/sales-bills/:id', async (req, res) => {
+  const billId = req.params.id;
+  const { bill_no, patient_name, patient_area, doctor_name, mobile, address, date, payment_mode, gross_amount, less_disc, net_amount, salesman, refill_date, pay_rec, remarks, status, items, isReturn } = req.body;
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Revert previous items' stock
+    const [oldBills] = await connection.query('SELECT is_return FROM sales_bills WHERE id = ?', [billId]);
+    const oldSign = (oldBills[0] && oldBills[0].is_return) ? -1 : 1;
+    const [oldItems] = await connection.query('SELECT itemId, batchNo, qty FROM sales_invoice_items WHERE sales_bill_id = ?', [billId]);
+    for (const old of oldItems) {
+      const oQty = parseInt(old.qty) || 0;
+      if (old.itemId && !isNaN(old.itemId)) {
+        await connection.query('UPDATE items SET stock = stock + ? WHERE id = ?', [oQty * oldSign, Number(old.itemId)]);
+      }
+      if (old.batchNo) {
+        await connection.query('UPDATE batches SET qty = qty + ? WHERE itemId = ? AND batchNo = ?', [oQty * oldSign, old.itemId, old.batchNo]);
+      }
+    }
+
+    // 2. Delete old invoice items
+    await connection.query('DELETE FROM sales_invoice_items WHERE sales_bill_id = ?', [billId]);
+
+    // 3. Update sales_bills header
+    const sign = isReturn ? -1 : 1;
+    const formattedDate = date ? date.replace('T', ' ').replace(/\..*$/, '').replace('Z', '') : null;
+    const formattedRefillDate = refill_date ? refill_date.split('T')[0] : null;
+
+    await connection.query(
+      'UPDATE sales_bills SET bill_no = ?, patient_name = ?, patient_area = ?, doctor_name = ?, mobile = ?, address = ?, date = ?, payment_mode = ?, gross_amount = ?, less_disc = ?, net_amount = ?, salesman = ?, refill_date = ?, pay_rec = ?, remarks = ?, status = ?, is_return = ? WHERE id = ?',
+      [bill_no, patient_name, patient_area, doctor_name, mobile, address, formattedDate, payment_mode, gross_amount || 0, less_disc || 0, net_amount, salesman, formattedRefillDate, pay_rec || 0, remarks, status, isReturn ? 1 : 0, billId]
+    );
+
+    // 4. Insert new items and deduct stock
+    for (const item of items) {
+      const qty = parseInt(item.qty) || 0;
+      const mrp = parseFloat(item.mrp) || 0;
+      const rate = parseFloat(item.rate) || 0;
+      const gst = parseFloat(item.gst) || 0;
+      const disc = parseFloat(item.disc) || 0;
+      const amt = parseFloat(item.amount) || 0;
+
+      await connection.query(
+        'INSERT INTO sales_invoice_items (sales_bill_id, itemId, itemName, batchNo, qty, mrp, rate, gst, disc, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [billId, item.itemId, item.itemName, item.batchNo, qty, mrp, rate, gst, disc, amt]
+      );
+
+      if (item.itemId && !isNaN(item.itemId)) {
+        await connection.query(
+          'UPDATE items SET stock = stock - ? WHERE id = ?',
+          [qty * sign, Number(item.itemId)]
+        );
+      }
+      if (item.batchNo) {
+        await connection.query(
+          'UPDATE batches SET qty = qty - ? WHERE itemId = ? AND batchNo = ?',
+          [qty * sign, item.itemId, item.batchNo]
+        );
+      }
+    }
+
+    await connection.commit();
+    await logAudit(salesman || 'Sales POS', isReturn ? 'UPDATE_SALES_RETURN' : 'UPDATE_SALES_BILL', `Bill #${bill_no} updated for ${patient_name || 'Walk-in'} (Total: ₹${net_amount})`, req.ip);
+    res.json({ id: billId, message: 'Sales bill updated successfully' });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Update sales bill error:', error);
+    res.status(500).json({ error: 'Failed' });
+  } finally {
+    connection.release();
+  }
+});
+
 app.delete('/api/sales-bills/:id', async (req, res) => {
   const connection = await pool.getConnection();
   try {
