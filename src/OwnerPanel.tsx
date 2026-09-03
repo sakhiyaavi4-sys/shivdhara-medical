@@ -309,6 +309,7 @@ export default function OwnerPanel() {
     labelBatch, setLabelBatch, handlePrintLabel, generateLabelHTML,
     getGSTR1, getGSTR3B,
     handleWhatsAppBill, healthCards, getHealthCard,
+    lockBillData, setLockBillData, saveLockBillData, isDateLocked,
   } = useMedicalStore();
 
   // ── Camera Scanner States ──
@@ -330,15 +331,6 @@ export default function OwnerPanel() {
 
   // ── Lock Bill States ──
   const [showLockBill, setShowLockBill] = useState(false);
-  const [lockBillData, setLockBillData] = useState([
-    { id: "sales", label: "SALES BOOK", checked: true, from: today(), to: today() },
-    { id: "salesReturn", label: "SALES RETURN BOOK", checked: true, from: today(), to: today() },
-    { id: "purchase", label: "PURCHASE BOOK", checked: true, from: today(), to: today() },
-    { id: "purchaseReturn", label: "PURCHASE RETURN BOOK", checked: true, from: today(), to: today() },
-    { id: "cash", label: "CASH BOOK", checked: true, from: today(), to: today() },
-    { id: "jv", label: "J.V.BOOK", checked: true, from: today(), to: today() },
-    { id: "bank", label: "BANK BOOK", checked: true, from: today(), to: today() }
-  ]);
 
   // ── Data Utility States ──
   const [showDataUtility, setShowDataUtility] = useState(false);
@@ -1254,6 +1246,17 @@ const pending = [];
                   <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "700" }}>🛒 New Purchase Entry</h3>
                   <button onClick={() => setShowPurchaseForm(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={16} /></button>
                 </div>
+                {/* Lock Status Banner */}
+                {(() => {
+                  const check = isDateLocked("purchase", purchaseForm.billDate || purchaseForm.entryDate || today());
+                  if (!check.isLocked) return null;
+                  return (
+                    <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "8px 12px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px", color: "#dc2626", fontSize: "12px", fontWeight: "600" }}>
+                      <span>🔒</span>
+                      <span>This date ({new Date(purchaseForm.billDate || purchaseForm.entryDate || today()).toLocaleDateString("en-IN")}) is <strong>LOCKED by Supervisor</strong> ({check.label}). Saving and deletion are blocked.</span>
+                    </div>
+                  );
+                })()}
                 {/* Header fields */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))", gap: "6px", marginBottom: "8px", background: "#f8fafc", borderRadius: "8px", padding: "8px 12px", border: "1px solid var(--color-border)" }}>
                   <div>
@@ -1500,6 +1503,17 @@ const pending = [];
                   <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "700" }}>{isReturn ? "↩️ Sales Return" : "🧾 New Sales Bill"}</h3>
                   <button onClick={() => setShowSalesForm(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={16} /></button>
                 </div>
+                {/* Lock Status Banner */}
+                {(() => {
+                  const check = isDateLocked(isReturn ? "salesReturn" : "sales", salesForm.date || today());
+                  if (!check.isLocked) return null;
+                  return (
+                    <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "8px 12px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px", color: "#dc2626", fontSize: "12px", fontWeight: "600" }}>
+                      <span>🔒</span>
+                      <span>This date ({new Date(salesForm.date || today()).toLocaleDateString("en-IN")}) is <strong>LOCKED by Supervisor</strong> ({check.label}). Edits and deletions are blocked.</span>
+                    </div>
+                  );
+                })()}
                 {/* Patient/Doctor details */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: "6px", marginBottom: "8px", background: "#f8fafc", borderRadius: "8px", padding: "8px 12px", border: "1px solid var(--color-border)" }}>
                   {[

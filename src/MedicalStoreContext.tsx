@@ -355,6 +355,43 @@ export function MedicalStoreProvider({ children }) {
     return () => window.removeEventListener("keydown", handleKeyZoom);
   }, [uiScale]);
 
+  // ─── BILL LOCK CONFIGURATION (SUPERVISOR) ───────────
+  const [lockBillData, setLockBillData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('store_lock_bills');
+      if (saved) return JSON.parse(saved);
+    } catch (_) {}
+    return [
+      { id: "sales", label: "SALES BOOK", checked: false, from: today(), to: today() },
+      { id: "salesReturn", label: "SALES RETURN BOOK", checked: false, from: today(), to: today() },
+      { id: "purchase", label: "PURCHASE BOOK", checked: false, from: today(), to: today() },
+      { id: "purchaseReturn", label: "PURCHASE RETURN BOOK", checked: false, from: today(), to: today() },
+      { id: "cash", label: "CASH BOOK", checked: false, from: today(), to: today() },
+      { id: "jv", label: "J.V. BOOK", checked: false, from: today(), to: today() },
+      { id: "bank", label: "BANK BOOK", checked: false, from: today(), to: today() }
+    ];
+  });
+
+  const saveLockBillData = (newData) => {
+    setLockBillData(newData);
+    try {
+      localStorage.setItem('store_lock_bills', JSON.stringify(newData));
+    } catch (_) {}
+  };
+
+  const isDateLocked = (bookId: string, dateStr: string) => {
+    if (!dateStr) return { isLocked: false };
+    const targetDate = String(dateStr).slice(0, 10);
+    const book = (lockBillData || []).find(b => b.id === bookId);
+    if (!book || !book.checked) return { isLocked: false };
+    const from = String(book.from || "").slice(0, 10);
+    const to = String(book.to || "").slice(0, 10);
+    if (from && to && targetDate >= from && targetDate <= to) {
+      return { isLocked: true, from, to, label: book.label };
+    }
+    return { isLocked: false };
+  };
+
   // ─── KHATA / UDHAR SYSTEM ─────────────────────────
   const [khataEntries, setKhataEntries] = useState((() => { try { return JSON.parse(localStorage.getItem('store_khata') || 'null') || []; } catch (_) { return []; } })());
   const [showKhataForm, setShowKhataForm] = useState(false);
@@ -1047,6 +1084,11 @@ export function MedicalStoreProvider({ children }) {
   };
 
   const handleSavePurchase = async () => {
+    const lockCheck = isDateLocked("purchase", purchaseForm.billDate || purchaseForm.entryDate || today());
+    if (lockCheck.isLocked) {
+      showToast(`🔒 ${lockCheck.label} is locked from ${lockCheck.from} to ${lockCheck.to} by Supervisor!`, "error");
+      return;
+    }
     if (!purchaseForm.partyName) { showToast("Party name is required", "error"); return; }
     const validItems = purchaseItems.filter(pi => pi.itemId && int(pi.qty) > 0);
     if (!validItems.length) { showToast("Please add at least 1 item", "error"); return; }
@@ -1174,6 +1216,11 @@ export function MedicalStoreProvider({ children }) {
   });
 
   const handleSaveSales = async () => {
+    const lockCheck = isDateLocked(isReturn ? "salesReturn" : "sales", salesForm.date || today());
+    if (lockCheck.isLocked) {
+      showToast(`🔒 ${lockCheck.label} is locked from ${lockCheck.from} to ${lockCheck.to} by Supervisor!`, "error");
+      return;
+    }
     if (!salesForm.patientName && !salesForm.mobile) { showToast("Please enter patient name or mobile", "error"); return; }
     const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
     if (!validItems.length) { showToast("Please add at least 1 item", "error"); return; }
@@ -1356,6 +1403,11 @@ export function MedicalStoreProvider({ children }) {
   const showConfirm = (msg, onOk) => setConfirmDialog({ msg, onOk });
 
   const handleDeletePurchaseBill = async (bill) => {
+    const lockCheck = isDateLocked("purchase", bill.billDate || bill.date || bill.entryDate);
+    if (lockCheck.isLocked) {
+      showToast(`🔒 Cannot delete! ${lockCheck.label} is locked from ${lockCheck.from} to ${lockCheck.to} by Supervisor.`, "error");
+      return;
+    }
     showConfirm("Delete this purchase bill? Stock will be reversed.", async () => {
       try { await fetch(`${API_BASE}/purchase-bills/${bill.id}`, { method: 'DELETE' }); } catch (e) { }
       savePurchaseBills(purchaseBills.filter(b => b.id !== bill.id));
@@ -1367,6 +1419,11 @@ export function MedicalStoreProvider({ children }) {
   };
 
   const handleDeleteSalesBill = async (bill) => {
+    const lockCheck = isDateLocked(bill.isReturn ? "salesReturn" : "sales", bill.date);
+    if (lockCheck.isLocked) {
+      showToast(`🔒 Cannot delete! ${lockCheck.label} is locked from ${lockCheck.from} to ${lockCheck.to} by Supervisor.`, "error");
+      return;
+    }
     showConfirm("Delete this sales bill? Stock will be restored.", async () => {
       try { await fetch(`${API_BASE}/sales-bills/${bill.id}`, { method: 'DELETE' }); } catch (e) { }
       await saveSalesBills(salesBills.filter(b => b.id !== bill.id));
@@ -3169,6 +3226,7 @@ ${renderedPages}
     reportSearch, setReportSearch,
     // UI Density & Screen Scale
     uiScale, setUiScale, changeUiScale, zoomIn, zoomOut, resetZoom, setPresetScale,
+    lockBillData, setLockBillData, saveLockBillData, isDateLocked,
     // Enterprise Hardening & Features
     auditLogs, setAuditLogs, loadAuditLogs, showAuditModal, setShowAuditModal,
     triggerAutoDbBackup, sendSmsBillSummary, dotMatrixMode, setDotMatrixMode, generateDotMatrixInvoiceHTML,
