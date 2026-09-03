@@ -253,13 +253,16 @@ export default function ApplicationSetupModal() {
   return (
     <div style={{
       position: "fixed",
-      inset: 0,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: "100%",
+      height: "100%",
       background: "#ffffff",
       zIndex: 9999,
       display: "flex",
       flexDirection: "column",
-      width: "100vw",
-      height: "100vh",
       overflow: "hidden",
       fontFamily: "'Inter', system-ui, sans-serif"
     }}>
@@ -268,7 +271,7 @@ export default function ApplicationSetupModal() {
         <div style={{
           background: "linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%)",
           color: "#ffffff",
-          padding: "14px 24px",
+          padding: "10px 18px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -521,7 +524,7 @@ export default function ApplicationSetupModal() {
         <div style={{
           flex: 1,
           overflowY: "auto",
-          padding: "20px 24px",
+          padding: "10px 16px",
           background: "#f1f5f9"
         }}>
 
@@ -529,33 +532,33 @@ export default function ApplicationSetupModal() {
               TAB 1: PRINTING OPTION
               ══════════════════════════════════════════════════ */}
           {appSetupTab === "printing" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px" }}>
                 
                 {/* Store Header & Addresses */}
                 <div style={{
                   background: "#ffffff",
-                  borderRadius: "12px",
-                  padding: "20px",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
                   border: "1px solid #e2e8f0",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px" }}>
-                    <FileText size={18} color="#0d9488" />
-                    <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px" }}>
+                    <FileText size={16} color="#0d9488" />
+                    <span style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>
                       Store Identity & Bill Header Details
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <InputCard label="Address Line 1" optKey="address1" placeholder="20, GIRIRAJ COMPLEX NIKOL GAAM ROAD ,NIKOL,AHMEDABAD" />
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                       <InputCard label="Address Line 2" optKey="address2" placeholder="Near City Center / Landmark" />
                       <InputCard label="Address Line 3" optKey="address3" placeholder="Area / City / Pincode" />
                     </div>
                     <InputCard label="Address Line 4 (Contact / Phone)" optKey="address4" placeholder="Ph: +91 98765 43210, Email: store@example.com" />
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "4px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginTop: "2px" }}>
                       <InputCard label="GSTIN Number" optKey="gstNo" placeholder="GST NO:24AJFPP4074M1ZU" />
                       <InputCard label="Drug License (DL) No." optKey="dlNo" placeholder="DL NO:20 GARA 588, 21 GARA 588" />
                     </div>

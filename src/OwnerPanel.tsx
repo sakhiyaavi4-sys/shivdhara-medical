@@ -444,7 +444,7 @@ export default function OwnerPanel() {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         
         {/* ─── MODERN TOP NAVBAR ─── */}
-        <div style={{ background: "white", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", zIndex: 90 }}>
+        <div style={{ background: "white", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", zIndex: 90 }}>
           
           {/* Legacy Menus Re-added (Full) */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1, paddingLeft: "10px", flexWrap: "nowrap" }}>
@@ -685,7 +685,7 @@ export default function OwnerPanel() {
       {/* ─────────────────────────────────── */}
       {/* OWNER CONTENT SECTIONS               */}
       {/* ─────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px", width: "100%", paddingBottom: "32px", boxSizing: "border-box", background: "var(--bg-body)", color: "var(--color-text-dark)" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "8px 16px", width: "100%", paddingBottom: "16px", boxSizing: "border-box", background: "var(--bg-body)", color: "var(--color-text-dark)" }}>
 
         {isOwner && activeSection === "home" && (
           <>
@@ -1247,14 +1247,15 @@ const pending = [];
             </div>
 
             {/* Purchase Form */}
+            {/* Purchase Form */}
             {showPurchaseForm && (
-              <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
-                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "700" }}>🛒 New Purchase Entry</h3>
-                  <button onClick={() => setShowPurchaseForm(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={18} /></button>
+              <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", marginBottom: "8px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "center" }}>
+                  <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "700" }}>🛒 New Purchase Entry</h3>
+                  <button onClick={() => setShowPurchaseForm(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={16} /></button>
                 </div>
                 {/* Header fields */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(170px,1fr))", gap: "10px", marginBottom: "16px", background: "#f8fafc", borderRadius: "12px", padding: "20px", border: "1px solid var(--color-border)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))", gap: "6px", marginBottom: "8px", background: "#f8fafc", borderRadius: "8px", padding: "8px 12px", border: "1px solid var(--color-border)" }}>
                   <div>
                     <label style={{ ...lbl, color: "var(--color-text-muted)", fontWeight: "600" }}>Entry No</label>
                     <input value={purchaseForm.entryNo || ""} readOnly style={{ ...inp, background: "#ecfdf5", color: "var(--color-text-dark)", fontWeight: "700", cursor: "default", border: "none" }} />
@@ -1271,30 +1272,30 @@ const pending = [];
                   <div><label style={{ ...lbl, color: "var(--color-text-muted)", fontWeight: "600" }}>Payment Mode</label><select value={purchaseForm.paymentMode || "cash"} onChange={e => setPurchaseForm({ ...purchaseForm, paymentMode: e.target.value })} style={inp}><option value="cash">Cash</option><option value="credit">Credit</option><option value="cheque">Cheque</option><option value="neft">NEFT/UPI</option></select></div>
                   <div><label style={{ ...lbl, color: "var(--color-text-muted)", fontWeight: "600" }}>Tax Zone</label><select value={purchaseForm.taxZone || "sgst_ugst"} onChange={e => setPurchaseForm({ ...purchaseForm, taxZone: e.target.value })} style={inp}><option value="sgst_ugst">RD Within State - SGST/UGST</option><option value="igst">RD Outside State - IGST</option><option value="exempt">Tax Exempt</option></select></div>
                   <div><label style={{ ...lbl, color: "var(--color-text-muted)", fontWeight: "600" }}>Address F4 / Credit Note F5</label><input value={purchaseForm.addressF4 || ""} onChange={e => setPurchaseForm({ ...purchaseForm, addressF4: e.target.value })} placeholder="Address / Ref" style={inp} /></div>
-                  <div style={{ display: "flex", gap: "16px", alignItems: "center", paddingTop: "18px" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
-                      <input type="checkbox" checked={!!purchaseForm.gstInclusive} onChange={e => setPurchaseForm({ ...purchaseForm, gstInclusive: e.target.checked })} style={{ width: "14px", height: "14px" }} />
+                  <div style={{ display: "flex", gap: "12px", alignItems: "center", paddingTop: "6px" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
+                      <input type="checkbox" checked={!!purchaseForm.gstInclusive} onChange={e => setPurchaseForm({ ...purchaseForm, gstInclusive: e.target.checked })} style={{ width: "13px", height: "13px" }} />
                       GST Inclusive
                     </label>
-                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
-                      <input type="checkbox" checked={!!purchaseForm.gstOnFree} onChange={e => setPurchaseForm({ ...purchaseForm, gstOnFree: e.target.checked })} style={{ width: "14px", height: "14px" }} />
+                    <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
+                      <input type="checkbox" checked={!!purchaseForm.gstOnFree} onChange={e => setPurchaseForm({ ...purchaseForm, gstOnFree: e.target.checked })} style={{ width: "13px", height: "13px" }} />
                       GST on Free
                     </label>
                   </div>
                 </div>
                 {/* Purchase Items Table */}
-                <div style={{ overflowX: "auto", marginBottom: "14px" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "900px" }}>
+                <div style={{ overflowX: "auto", marginBottom: "8px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                     <thead><tr style={{ background: "#f1f5f9" }}>
                       {["Sr", "Item *", "Batch No", "Exp Dt", "Qty", "Free", "MRP", "PTR", "GST%", "Disc%", "Disc Amt", "BASE", "Amount", ""].map(h => (
-                        <th key={h} style={{ padding: "7px 8px", textAlign: ["Disc Amt", "BASE", "Amount"].includes(h) ? "right" : h === "Sr" ? "center" : "left", fontWeight: "600", color: "var(--color-text-dark)", fontSize: "12px", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+                        <th key={h} style={{ padding: "4px 6px", textAlign: ["Disc Amt", "BASE", "Amount"].includes(h) ? "right" : h === "Sr" ? "center" : "left", fontWeight: "600", color: "var(--color-text-dark)", fontSize: "11px", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
                       ))}
                     </tr></thead>
                     <tbody>
                       {purchaseItems.map((pi, idx) => (
                         <tr key={idx} style={{ borderBottom: "1px solid #e9ecef" }}>
-                          <td style={{ padding: "6px 8px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "12px", whiteSpace: "nowrap" }}>{idx + 1}</td>
-                          <td style={{ padding: "4px", position: "relative", minWidth: "160px" }}>
+                          <td style={{ padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", width: "26px", whiteSpace: "nowrap" }}>{idx + 1}</td>
+                          <td style={{ padding: "3px", position: "relative", minWidth: "140px" }}>
                             {(() => {
                               const q = (purchaseItemSearch[idx] || "").toLowerCase();
                               const filtered = items.filter(i => { return !q || (i.name || "").toLowerCase().includes(q) || (i.company || "").toLowerCase().includes(q); });
@@ -1307,7 +1308,7 @@ const pending = [];
                                   onFocus={e => { const r = e.target.getBoundingClientRect(); setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) }); setPurchaseItemSearch(prev => ({ ...prev, [idx]: prev[idx] ?? "" })); setPurchaseItemHighlight(prev => ({ ...prev, [idx]: 0 })); setPurchaseItemDropdown(idx); }}
                                   onBlur={() => setTimeout(() => setPurchaseItemDropdown(null), 200)}
                                   placeholder="Search item..."
-                                  style={{ ...inp, minWidth: "150px", padding: "6px 8px" }}
+                                  style={{ ...inp, minWidth: "130px", padding: "3px 6px", height: "26px", fontSize: "12px" }}
                                   autoComplete="off"
                                   data-pf={`${idx}-item`}
                                   onKeyDown={e => {
@@ -1335,42 +1336,42 @@ const pending = [];
                               </>);
                             })()}
                           </td>
-                          {[{ f: "batchNo", ph: "Batch", w: "80px" }, { f: "expiryDate", t: "text", ph: "MM/YY", w: "75px" }, { f: "qty", t: "number", ph: "Qty", w: "60px" }, { f: "freeQty", t: "number", ph: "Free", w: "55px" }, { f: "mrp", t: "number", ph: "MRP", w: "70px" }, { f: "ptr", t: "number", ph: "PTR", w: "70px" }].map(f => (
-                            <td key={f.f} style={{ padding: "4px" }}><input type={f.t || "text"} value={pi[f.f] || ""} onChange={e => { let v = e.target.value; if (f.f === "expiryDate") { v = v.replace(/[^0-9/]/g, ""); if (v.length === 2 && !v.includes("/") && pi[f.f]?.length !== 3) v = v + "/"; if (v.length > 5) return; } updatePurchaseItem(idx, f.f, v); }} onKeyDown={e => focusNext(e, idx, f.f)} placeholder={f.ph} data-pf={`${idx}-${f.f}`} style={{ ...inp, width: f.w, padding: "6px 7px", letterSpacing: f.f === "expiryDate" ? "1px" : "normal" }} /></td>
+                          {[{ f: "batchNo", ph: "Batch", w: "70px" }, { f: "expiryDate", t: "text", ph: "MM/YY", w: "65px" }, { f: "qty", t: "number", ph: "Qty", w: "48px" }, { f: "freeQty", t: "number", ph: "Free", w: "45px" }, { f: "mrp", t: "number", ph: "MRP", w: "55px" }, { f: "ptr", t: "number", ph: "PTR", w: "55px" }].map(f => (
+                            <td key={f.f} style={{ padding: "3px" }}><input type={f.t || "text"} value={pi[f.f] || ""} onChange={e => { let v = e.target.value; if (f.f === "expiryDate") { v = v.replace(/[^0-9/]/g, ""); if (v.length === 2 && !v.includes("/") && pi[f.f]?.length !== 3) v = v + "/"; if (v.length > 5) return; } updatePurchaseItem(idx, f.f, v); }} onKeyDown={e => focusNext(e, idx, f.f)} placeholder={f.ph} data-pf={`${idx}-${f.f}`} style={{ ...inp, width: f.w, padding: "3px 4px", height: "26px", fontSize: "12px", letterSpacing: f.f === "expiryDate" ? "1px" : "normal" }} /></td>
                           ))}
-                          <td style={{ padding: "4px" }}>
-                            <select value={pi.gst || "5"} onChange={e => updatePurchaseItem(idx, "gst", e.target.value)} onKeyDown={e => focusNext(e, idx, "gst")} data-pf={`${idx}-gst`} style={{ ...inp, width: "65px", padding: "6px 5px" }}>
+                          <td style={{ padding: "3px" }}>
+                            <select value={pi.gst || "5"} onChange={e => updatePurchaseItem(idx, "gst", e.target.value)} onKeyDown={e => focusNext(e, idx, "gst")} data-pf={`${idx}-gst`} style={{ ...inp, width: "55px", padding: "2px 4px", height: "26px", fontSize: "11px" }}>
                               {GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}
                             </select>
                           </td>
-                          <td style={{ padding: "4px" }}><input type="number" value={pi.disc || "0"} onChange={e => updatePurchaseItem(idx, "disc", e.target.value)} onKeyDown={e => focusNext(e, idx, "disc")} data-pf={`${idx}-disc`} style={{ ...inp, width: "55px", padding: "6px 7px" }} /></td>
-                          <td style={{ padding: "6px 8px", fontWeight: "700", color: "#ef4444", whiteSpace: "nowrap", textAlign: "right" }}>₹{fmt(num(pi.ptr) * int(pi.qty) * num(pi.disc) / 100)}</td>
-                          <td style={{ padding: "6px 8px", fontWeight: "700", color: "var(--color-primary)", whiteSpace: "nowrap", textAlign: "right" }}>₹{fmt(num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100))}</td>
-                          <td style={{ padding: "4px 8px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right" }}>₹{fmt(pi.amount || 0)}</td>
-                          <td style={{ padding: "4px" }}><button onClick={() => removePurchaseItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "5px", padding: "5px 8px", cursor: "pointer" }}><X size={12} /></button></td>
+                          <td style={{ padding: "3px" }}><input type="number" value={pi.disc || "0"} onChange={e => updatePurchaseItem(idx, "disc", e.target.value)} onKeyDown={e => focusNext(e, idx, "disc")} data-pf={`${idx}-disc`} style={{ ...inp, width: "45px", padding: "3px 4px", height: "26px", fontSize: "12px" }} /></td>
+                          <td style={{ padding: "3px 6px", fontWeight: "700", color: "#ef4444", whiteSpace: "nowrap", textAlign: "right", fontSize: "11px" }}>₹{fmt(num(pi.ptr) * int(pi.qty) * num(pi.disc) / 100)}</td>
+                          <td style={{ padding: "3px 6px", fontWeight: "700", color: "var(--color-primary)", whiteSpace: "nowrap", textAlign: "right", fontSize: "11px" }}>₹{fmt(num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100))}</td>
+                          <td style={{ padding: "3px 6px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right", fontSize: "11px" }}>₹{fmt(pi.amount || 0)}</td>
+                          <td style={{ padding: "3px", textAlign: "center", width: "26px" }}><button onClick={() => removePurchaseItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "3px 5px", cursor: "pointer" }}><X size={11} /></button></td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot>
                       <tr style={{ borderTop: "2px solid var(--color-border)", background: "#f8fafc" }}>
-                        <td colSpan="10" style={{ padding: "10px 8px", fontWeight: "700", textAlign: "right", fontSize: "12px", color: "#64748b" }}>TOTALS →</td>
-                        <td style={{ padding: "10px 8px", fontWeight: "800", textAlign: "right", fontSize: "13px", color: "#ef4444", whiteSpace: "nowrap" }}>₹{fmt(purchaseItems.reduce((s, pi) => s + num(pi.ptr) * int(pi.qty) * num(pi.disc) / 100, 0))}</td>
-                        <td style={{ padding: "10px 8px", fontWeight: "800", textAlign: "right", fontSize: "13px", color: "var(--color-primary)", whiteSpace: "nowrap" }}>₹{fmt(purchaseItems.reduce((s, pi) => s + num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100), 0))}</td>
-                        <td style={{ padding: "10px 8px", fontWeight: "800", textAlign: "right", fontSize: "14px", color: "#16a34a", whiteSpace: "nowrap" }}>₹{fmt(purchaseItems.reduce((s, pi) => s + num(pi.amount || 0), 0))}</td>
+                        <td colSpan="10" style={{ padding: "6px 8px", fontWeight: "700", textAlign: "right", fontSize: "11px", color: "#64748b" }}>TOTALS →</td>
+                        <td style={{ padding: "6px 8px", fontWeight: "800", textAlign: "right", fontSize: "12px", color: "#ef4444", whiteSpace: "nowrap" }}>₹{fmt(purchaseItems.reduce((s, pi) => s + num(pi.ptr) * int(pi.qty) * num(pi.disc) / 100, 0))}</td>
+                        <td style={{ padding: "6px 8px", fontWeight: "800", textAlign: "right", fontSize: "12px", color: "var(--color-primary)", whiteSpace: "nowrap" }}>₹{fmt(purchaseItems.reduce((s, pi) => s + num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100), 0))}</td>
+                        <td style={{ padding: "6px 8px", fontWeight: "800", textAlign: "right", fontSize: "12px", color: "#16a34a", whiteSpace: "nowrap" }}>₹{fmt(purchaseItems.reduce((s, pi) => s + num(pi.amount || 0), 0))}</td>
                         <td></td>
                       </tr>
                       <tr style={{ background: "#eff6ff", borderTop: "1px solid #bfdbfe" }}>
-                        <td colSpan="10" style={{ padding: "8px 8px", fontWeight: "700", textAlign: "right", fontSize: "12px", color: "#1d4ed8" }}>GST SUMMARY →</td>
-                        <td style={{ padding: "8px 8px", fontSize: "11px", color: "#475569", textAlign: "right" }}></td>
-                        <td colSpan="2" style={{ padding: "8px 8px", fontWeight: "700", fontSize: "12px", color: "#1d4ed8", whiteSpace: "nowrap", textAlign: "right" }}>
-                          {(() => { const gT = purchaseItems.reduce((s, pi) => s + num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100) * num(pi.gst) / 100, 0); return `SGST: ₹${fmt(gT / 2)}  |  CGST: ₹${fmt(gT / 2)}  |  IGST: ₹${fmt(gT)}`; })()}
+                        <td colSpan="10" style={{ padding: "6px 8px", fontWeight: "700", textAlign: "right", fontSize: "11px", color: "#1d4ed8" }}>GST SUMMARY →</td>
+                        <td style={{ padding: "6px 8px", fontSize: "11px", color: "#475569", textAlign: "right" }}></td>
+                        <td colSpan="2" style={{ padding: "6px 8px", fontWeight: "700", fontSize: "11px", color: "#1d4ed8", whiteSpace: "nowrap", textAlign: "right" }}>
+                          {(() => { const gT = purchaseItems.reduce((s, pi) => s + num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100) * num(pi.gst) / 100, 0); return `SGST: ₹${fmt(gT / 2)} | CGST: ₹${fmt(gT / 2)} | IGST: ₹${fmt(gT)}`; })()}
                         </td>
                         <td></td>
                       </tr>
                     </tfoot>
                   </table>
                 </div>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
                   <button onClick={addPurchaseItem} style={{ ...btn("var(--color-primary)"), fontSize: "12px" }}><Plus size={13} />Add Row</button>
                   <button onClick={() => { setScannerTarget("purchase"); setShowCameraScanner(true); }}
                     style={{ ...btn("var(--color-primary)"), fontSize: "12px" }}>📷 Scan — Purchase</button>
@@ -1386,23 +1387,23 @@ const pending = [];
                   const sgst = gstTotal / 2, cgst = gstTotal / 2;
                   const total = taxable + gstTotal;
                   return (
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px", minWidth: "280px", fontSize: "12px" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "3px 16px" }}>
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
+                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "6px 12px", minWidth: "240px", fontSize: "11px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 14px" }}>
                           <span>Base Amount:</span><span style={{ textAlign: "right", fontWeight: "600" }}>₹{fmt(base)}</span>
                           <span style={{ color: "#ef4444" }}>Less Disc:</span><span style={{ textAlign: "right", color: "#ef4444" }}>-₹{fmt(discAmt)}</span>
                           <span>Taxable Amount:</span><span style={{ textAlign: "right" }}>₹{fmt(taxable)}</span>
                           <span style={{ color: "#64748b" }}>SGST:</span><span style={{ textAlign: "right", color: "#64748b" }}>₹{fmt(sgst)}</span>
                           <span style={{ color: "#64748b" }}>CGST:</span><span style={{ textAlign: "right", color: "#64748b" }}>₹{fmt(cgst)}</span>
                           <span style={{ color: "#64748b" }}>IGST (SGST+CGST):</span><span style={{ textAlign: "right", color: "#1d4ed8", fontWeight: "700" }}>₹{fmt(gstTotal)}</span>
-                          <span style={{ color: "#64748b" }}>Half Scheme:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.halfScheme || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, halfScheme: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ color: "#64748b" }}>Oct on Free:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.octOnFree || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, octOnFree: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ color: "#64748b" }}>Other +/-:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.otherAdj || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, otherAdj: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ color: "#ef4444" }}>Less Disc:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.lessDisc || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, lessDisc: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ color: "#64748b" }}>Cr Note:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.crNote || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, crNote: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ color: "#64748b" }}>TCS Value:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.tcsValue || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, tcsValue: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ fontWeight: "800", borderTop: "2px solid #e2e8f0", paddingTop: "6px" }}>TOTAL:</span>
-                          <span style={{ textAlign: "right", fontWeight: "800", color: "var(--color-primary)", fontSize: "14px", borderTop: "2px solid #e2e8f0", paddingTop: "6px" }}>₹{fmt(total - num(purchaseForm.lessDisc) - num(purchaseForm.crNote) + num(purchaseForm.otherAdj) + num(purchaseForm.tcsValue))}</span>
+                          <span style={{ color: "#64748b" }}>Half Scheme:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.halfScheme || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, halfScheme: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ color: "#64748b" }}>Oct on Free:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.octOnFree || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, octOnFree: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ color: "#64748b" }}>Other +/-:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.otherAdj || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, otherAdj: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ color: "#ef4444" }}>Less Disc:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.lessDisc || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, lessDisc: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ color: "#64748b" }}>Cr Note:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.crNote || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, crNote: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ color: "#64748b" }}>TCS Value:</span><span style={{ textAlign: "right" }}><input type="number" value={purchaseForm.tcsValue || "0"} onChange={e => setPurchaseForm({ ...purchaseForm, tcsValue: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ fontWeight: "800", borderTop: "1px solid #e2e8f0", paddingTop: "4px" }}>TOTAL:</span>
+                          <span style={{ textAlign: "right", fontWeight: "800", color: "var(--color-primary)", fontSize: "13px", borderTop: "1px solid #e2e8f0", paddingTop: "4px" }}>₹{fmt(total - num(purchaseForm.lessDisc) - num(purchaseForm.crNote) + num(purchaseForm.otherAdj) + num(purchaseForm.tcsValue))}</span>
                         </div>
                       </div>
                     </div>
@@ -1494,13 +1495,13 @@ const pending = [];
 
             {/* Sales Form */}
             {showSalesForm && (
-              <div style={{ background: "white", borderRadius: "6px", padding: "20px", marginBottom: "16px", border: `2px solid ${isReturn ? "#fecaca" : "#bbf7d0"}`, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px" }}>
-                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "700" }}>{isReturn ? "↩️ Sales Return" : "🧾 New Sales Bill"}</h3>
-                  <button onClick={() => setShowSalesForm(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={18} /></button>
+              <div style={{ background: "white", borderRadius: "6px", padding: "10px 14px", marginBottom: "8px", border: `2px solid ${isReturn ? "#fecaca" : "#bbf7d0"}`, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "center" }}>
+                  <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "700" }}>{isReturn ? "↩️ Sales Return" : "🧾 New Sales Bill"}</h3>
+                  <button onClick={() => setShowSalesForm(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={16} /></button>
                 </div>
                 {/* Patient/Doctor details */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: "10px", marginBottom: "14px", background: "#f8fafc", borderRadius: "12px", padding: "20px", border: "1px solid var(--color-border)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: "6px", marginBottom: "8px", background: "#f8fafc", borderRadius: "8px", padding: "8px 12px", border: "1px solid var(--color-border)" }}>
                   {[
                     { k: "patientName", l: "Patient Name", t: "text", ph: "Patient name" }, { k: "patientArea", l: "Patient Area", t: "text", ph: "Area/Locality" },
                     { k: "mobile", l: "Mobile No", t: "tel", ph: "Mobile no" }, { k: "address", l: "Address", t: "text", ph: "Address" },
@@ -1517,41 +1518,41 @@ const pending = [];
                   </div>
                   <div><label style={lbl}>Payment Mode</label><select value={salesForm.paymentMode || "cash"} onChange={e => { setSalesForm({ ...salesForm, paymentMode: e.target.value }); setSplitPayMode(false); }} style={inp}><option value="cash">Cash</option><option value="split">Split (Cash+UPI)</option><option value="card">Card/CD</option><option value="upi">UPI/NEFT</option><option value="credit">Credit/Khata</option><option value="cheque">Cheque</option></select></div>
                   {salesForm.paymentMode === "split" && (
-                    <div style={{ gridColumn: "span 2", background: "rgba(255,255,255,0.1)", borderRadius: "6px", padding: "10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    <div style={{ gridColumn: "span 2", background: "rgba(255,255,255,0.1)", borderRadius: "6px", padding: "6px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                       <div><label style={{ ...lbl, color: "#d97706" }}>💵 Cash Amount ₹</label><input type="number" value={splitCash} onChange={e => { setSplitCash(e.target.value); }} placeholder="Cash" style={inp} /></div>
                       <div><label style={{ ...lbl, color: "#2563eb" }}>📱 UPI Amount ₹</label><input type="number" value={splitUpi} onChange={e => setSplitUpi(e.target.value)} placeholder="UPI" style={inp} /></div>
                       <div style={{ gridColumn: "span 2" }}><label style={{ ...lbl, color: "#64748b" }}>UPI Txn ID</label><input value={splitUpiTxn} onChange={e => setSplitUpiTxn(e.target.value.toUpperCase())} placeholder="Transaction ID" style={inp} /></div>
                     </div>
                   )}
                   {salesForm.paymentMode === "credit" && salesForm.patientName && (
-                    <div style={{ gridColumn: "span 2", background: "rgba(250,204,21,0.15)", borderRadius: "6px", padding: "8px", border: "1px solid rgba(250,204,21,0.3)" }}>
+                    <div style={{ gridColumn: "span 2", background: "rgba(250,204,21,0.15)", borderRadius: "6px", padding: "6px", border: "1px solid rgba(250,204,21,0.3)" }}>
                       <span style={{ fontSize: "11px", color: "#facc15", fontWeight: "700" }}>📒 {salesForm.patientName} - Current Khata Balance: ₹{fmt(getKhataBalance(salesForm.patientName))}</span>
                     </div>
                   )}
                   <div><label style={lbl}>Extra Discount %</label><input type="number" value={salesForm.discount || "0"} onChange={e => setSalesForm({ ...salesForm, discount: e.target.value })} style={inp} /></div>
                   <div><label style={lbl}>Refill Due Date (Optional)</label><input type="date" value={salesForm.refillDate || ""} onChange={e => setSalesForm({ ...salesForm, refillDate: e.target.value })} style={inp} /></div>
                   <div><label style={lbl}>Pay Rec / Refund (₹)</label><input type="number" value={salesForm.payRec || "0"} onChange={e => setSalesForm({ ...salesForm, payRec: e.target.value })} placeholder="0.00" style={inp} /></div>
-                  <div style={{ display: "flex", gap: "16px", alignItems: "center", paddingTop: "18px" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
-                      <input type="checkbox" checked={!!isReturn} disabled style={{ width: "14px", height: "14px" }} />
+                  <div style={{ display: "flex", gap: "12px", alignItems: "center", paddingTop: "6px" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
+                      <input type="checkbox" checked={!!isReturn} disabled style={{ width: "13px", height: "13px" }} />
                       Return Bill
                     </label>
-                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
-                      <input type="checkbox" checked={!!salesForm.quotation} onChange={e => setSalesForm({ ...salesForm, quotation: e.target.checked })} style={{ width: "14px", height: "14px" }} />
+                    <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
+                      <input type="checkbox" checked={!!salesForm.quotation} onChange={e => setSalesForm({ ...salesForm, quotation: e.target.checked })} style={{ width: "13px", height: "13px" }} />
                       Quotation
                     </label>
                   </div>
                 </div>
                 {/* Item search + table */}
 
-                <div style={{ overflowX: "auto", marginBottom: "14px" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "680px" }}>
-                    <thead><tr style={{ background: "#f1f5f9" }}>{["Sr", "Item", "Batch No", "Qty", "MRP", "Rate", "GST%", "Disc%", "Amount", ""].map(h => <th key={h} style={{ padding: "6px 8px", textAlign: "left", fontWeight: "600", color: "var(--color-text-dark)", fontSize: "12px", textTransform: "uppercase" }}>{h}</th>)}</tr></thead>
+                <div style={{ overflowX: "auto", marginBottom: "8px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                    <thead><tr style={{ background: "#f1f5f9" }}>{["Sr", "Item", "Batch No", "Qty", "MRP", "Rate", "GST%", "Disc%", "Amount", ""].map(h => <th key={h} style={{ padding: "4px 6px", textAlign: h === "Sr" ? "center" : h === "Amount" ? "right" : "left", fontWeight: "600", color: "var(--color-text-dark)", fontSize: "11px", textTransform: "uppercase" }}>{h}</th>)}</tr></thead>
                     <tbody>
                       {salesItems.map((si, idx) => (
                         <tr key={idx} style={{ borderBottom: "1px solid #e9ecef" }}>
-                          <td style={{ padding: "6px 8px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "12px", whiteSpace: "nowrap" }}>{idx + 1}</td>
-                          <td style={{ padding: "4px", position: "relative", minWidth: "160px" }}>
+                          <td style={{ padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", width: "26px", whiteSpace: "nowrap" }}>{idx + 1}</td>
+                          <td style={{ padding: "3px", position: "relative", minWidth: "140px" }}>
                             {(() => {
                               const q = (salesItemSearch[idx] || "").toLowerCase();
                               const filtered = items.filter(i => { const alreadyAdded = salesItems.some((s, sidx) => sidx !== idx && s.itemId === i.id); if (alreadyAdded) return false; return !q || (i.name || "").toLowerCase().includes(q) || (i.company || "").toLowerCase().includes(q); });
@@ -1577,7 +1578,7 @@ const pending = [];
                                     else if (e.key === "ArrowUp" && salesItemDropdown === idx && filtered.length > 0) { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.max((prev[idx] || 0) - 1, 0) })) }
                                   }}
                                   placeholder="Search item..."
-                                  style={{ ...inp, minWidth: "150px", padding: "6px 8px" }}
+                                  style={{ ...inp, minWidth: "130px", padding: "3px 6px", height: "26px", fontSize: "12px" }}
                                   autoComplete="off"
                                   data-pf="skip"
                                 />
@@ -1597,14 +1598,14 @@ const pending = [];
                               </>);
                             })()}
                           </td>
-                          <td style={{ padding: "4px" }}><input id={`sales-batch-${idx}`} type="text" value={si.batchNo || ""} onChange={e => updateSalesItem(idx, "batchNo", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-qty-${idx}`)?.focus(); } }} placeholder="Batch No" style={{ ...inp, width: "90px", padding: "6px 7px" }} /></td>
-                          {[{ f: "qty", t: "number", w: "55px", next: "mrp" }, { f: "mrp", t: "number", w: "65px", next: "rate" }, { f: "rate", t: "number", w: "65px", next: "gst" }].map(f => (
-                            <td key={f.f} style={{ padding: "4px" }}><input id={`sales-${f.f}-${idx}`} type={f.t} value={si[f.f] || ""} onChange={e => updateSalesItem(idx, f.f, e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-${f.next}-${idx}`)?.focus(); } }} style={{ ...inp, width: f.w, padding: "6px 7px" }} /></td>
+                          <td style={{ padding: "3px", width: "75px" }}><input id={`sales-batch-${idx}`} type="text" value={si.batchNo || ""} onChange={e => updateSalesItem(idx, "batchNo", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-qty-${idx}`)?.focus(); } }} placeholder="Batch No" style={{ ...inp, width: "100%", padding: "3px 5px", height: "26px", fontSize: "12px" }} /></td>
+                          {[{ f: "qty", t: "number", w: "48px", next: "mrp" }, { f: "mrp", t: "number", w: "55px", next: "rate" }, { f: "rate", t: "number", w: "55px", next: "gst" }].map(f => (
+                            <td key={f.f} style={{ padding: "3px", width: f.w }}><input id={`sales-${f.f}-${idx}`} type={f.t} value={si[f.f] || ""} onChange={e => updateSalesItem(idx, f.f, e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-${f.next}-${idx}`)?.focus(); } }} style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "12px" }} /></td>
                           ))}
-                          <td style={{ padding: "4px" }}><select id={`sales-gst-${idx}`} value={si.gst || "0"} onChange={e => updateSalesItem(idx, "gst", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-disc-${idx}`)?.focus(); } }} style={{ ...inp, width: "60px", padding: "6px 5px" }}>{GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}</select></td>
-                          <td style={{ padding: "4px" }}><input id={`sales-disc-${idx}`} type="number" value={si.disc || "0"} onChange={e => updateSalesItem(idx, "disc", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSalesItem(); setTimeout(() => document.getElementById(`sales-item-${idx + 1}`)?.focus(), 100); } }} style={{ ...inp, width: "55px", padding: "6px 7px" }} /></td>
-                          <td style={{ padding: "6px 8px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap" }}>₹{fmt(si.amount || 0)}</td>
-                          <td style={{ padding: "4px" }}><button onClick={() => removeSalesItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "5px", padding: "5px 7px", cursor: "pointer" }}><X size={12} /></button></td>
+                          <td style={{ padding: "3px", width: "55px" }}><select id={`sales-gst-${idx}`} value={si.gst || "0"} onChange={e => updateSalesItem(idx, "gst", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-disc-${idx}`)?.focus(); } }} style={{ ...inp, width: "100%", padding: "2px 4px", height: "26px", fontSize: "11px" }}>{GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}</select></td>
+                          <td style={{ padding: "3px", width: "48px" }}><input id={`sales-disc-${idx}`} type="number" value={si.disc || "0"} onChange={e => updateSalesItem(idx, "disc", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSalesItem(); setTimeout(() => document.getElementById(`sales-item-${idx + 1}`)?.focus(), 100); } }} style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "12px" }} /></td>
+                          <td style={{ padding: "3px 6px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right", width: "65px", fontSize: "12px" }}>₹{fmt(si.amount || 0)}</td>
+                          <td style={{ padding: "3px", width: "26px", textAlign: "center" }}><button onClick={() => removeSalesItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "3px 5px", cursor: "pointer" }}><X size={11} /></button></td>
                         </tr>
                       ))}
                     </tbody>
@@ -1618,20 +1619,20 @@ const pending = [];
                   const sgst = salesItems.reduce((s, si) => { const b = num(si.rate) * int(si.qty) * (1 - num(si.disc) / 100); return s + b * num(si.gst) / 200; }, 0);
                   const cgst = sgst;
                   return (
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "14px" }}>
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 16px", minWidth: "270px", fontSize: "12px" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "3px 16px" }}>
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
+                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "6px 12px", minWidth: "240px", fontSize: "11px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 14px" }}>
                           <span style={{ color: "#64748b" }}>SGST:</span><span style={{ textAlign: "right" }}>₹{fmt(sgst)}</span>
                           <span style={{ color: "#64748b" }}>CGST:</span><span style={{ textAlign: "right" }}>₹{fmt(cgst)}</span>
                           <span style={{ fontWeight: "600" }}>Gross Amount:</span><span style={{ textAlign: "right", fontWeight: "600" }}>₹{fmt(gross)}</span>
-                          <span style={{ color: "#495057" }}>Half Scheme:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.halfScheme || "0"} onChange={e => setSalesForm({ ...salesForm, halfScheme: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ color: "#495057" }}>Oct on Free:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.octOnFree || "0"} onChange={e => setSalesForm({ ...salesForm, octOnFree: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ color: "#495057" }}>Other +/-:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.otherAdj || "0"} onChange={e => setSalesForm({ ...salesForm, otherAdj: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
+                          <span style={{ color: "#495057" }}>Half Scheme:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.halfScheme || "0"} onChange={e => setSalesForm({ ...salesForm, halfScheme: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ color: "#495057" }}>Oct on Free:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.octOnFree || "0"} onChange={e => setSalesForm({ ...salesForm, octOnFree: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ color: "#495057" }}>Other +/-:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.otherAdj || "0"} onChange={e => setSalesForm({ ...salesForm, otherAdj: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
                           <span style={{ color: "#ef4444" }}>Less Disc ({salesForm.discount || 0}%):</span><span style={{ textAlign: "right", color: "#ef4444" }}>-₹{fmt(lessDisc)}</span>
-                          <span style={{ color: "#495057" }}>Cr Note:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.crNote || "0"} onChange={e => setSalesForm({ ...salesForm, crNote: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ color: "#495057" }}>TCS Value:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.tcsValue || "0"} onChange={e => setSalesForm({ ...salesForm, tcsValue: e.target.value })} style={{ ...inp, width: "80px", padding: "2px 6px", fontSize: "11px" }} /></span>
-                          <span style={{ fontWeight: "800", fontSize: "14px", borderTop: "1px solid var(--color-border)", paddingTop: "6px" }}>NET:</span>
-                          <span style={{ textAlign: "right", fontWeight: "800", fontSize: "14px", color: "var(--color-primary)", borderTop: "1px solid var(--color-border)", paddingTop: "6px" }}>₹{fmt(net - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue))}</span>
+                          <span style={{ color: "#495057" }}>Cr Note:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.crNote || "0"} onChange={e => setSalesForm({ ...salesForm, crNote: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ color: "#495057" }}>TCS Value:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.tcsValue || "0"} onChange={e => setSalesForm({ ...salesForm, tcsValue: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
+                          <span style={{ fontWeight: "800", fontSize: "13px", borderTop: "1px solid var(--color-border)", paddingTop: "4px" }}>NET:</span>
+                          <span style={{ textAlign: "right", fontWeight: "800", fontSize: "13px", color: "var(--color-primary)", borderTop: "1px solid var(--color-border)", paddingTop: "4px" }}>₹{fmt(net - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue))}</span>
                         </div>
                       </div>
                     </div>
@@ -3240,7 +3241,7 @@ const pending = [];
         </div>
       )}
 {showUserMaster && (
-  <div style={{ position: "fixed", inset: 0, background: "#ffffff", zIndex: 9999, display: "flex", flexDirection: "column", width: "100vw", height: "100vh", overflow: "hidden", fontFamily: "Inter, sans-serif" }}>
+  <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", background: "#ffffff", zIndex: 9999, display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "Inter, sans-serif" }}>
       
       {/* Header */}
       <div style={{ background: "linear-gradient(90deg, #1e3a8a, #0f172a)", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -3934,7 +3935,7 @@ const pending = [];
 
         {/* GROUP/USER RIGHTS MODAL */}
 {showGroupRights && (
-  <div style={{ position: "fixed", inset: 0, background: "#ffffff", zIndex: 9999, display: "flex", flexDirection: "column", width: "100vw", height: "100vh", overflow: "hidden", fontFamily: "Inter, sans-serif" }}>
+  <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", background: "#ffffff", zIndex: 9999, display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "Inter, sans-serif" }}>
       
       {/* Header */}
       <div style={{ background: "linear-gradient(90deg, #1e3a8a, #0f172a)", padding: "14px 22px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>

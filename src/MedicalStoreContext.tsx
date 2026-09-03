@@ -48,9 +48,9 @@ export const int = (v) => parseInt(v) || 0;
 // ═══════════════════════════════════════════════════
 // SHARED STYLES (exported so panels can use same look)
 // ═══════════════════════════════════════════════════
-export const inp: React.CSSProperties = { width: "100%", padding: "8px 12px", border: "1px solid var(--color-border)", borderRadius: "8px", fontSize: "14px", outline: "none", fontFamily: "var(--font-family)", background: "white", boxSizing: "border-box", color: "var(--color-text-dark)", textTransform: "uppercase", transition: "border-color 0.2s" };
-export const lbl: React.CSSProperties = { display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "12px", color: "var(--color-text-muted)" };
-export const btn = (bg = "var(--color-primary)", c = "var(--color-text-dark)"): React.CSSProperties => ({ background: bg, color: c, border: "none", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontWeight: "500", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px", transition: "all 0.2s", boxShadow: "var(--shadow-sm)" });
+export const inp: React.CSSProperties = { width: "100%", padding: "4px 8px", border: "1px solid var(--color-border)", borderRadius: "6px", fontSize: "12px", height: "28px", outline: "none", fontFamily: "var(--font-family)", background: "white", boxSizing: "border-box", color: "var(--color-text-dark)", textTransform: "uppercase", transition: "border-color 0.2s" };
+export const lbl: React.CSSProperties = { display: "block", marginBottom: "3px", fontWeight: "600", fontSize: "11px", color: "var(--color-text-muted)" };
+export const btn = (bg = "var(--color-primary)", c = "var(--color-text-dark)"): React.CSSProperties => ({ background: bg, color: c, border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "500", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px", transition: "all 0.2s", boxShadow: "var(--shadow-sm)" });
 
 // ═══════════════════════════════════════════════════
 // CONTEXT

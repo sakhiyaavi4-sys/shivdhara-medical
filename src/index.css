@@ -35,10 +35,10 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
+  height: 100vh;
   background-color: var(--bg-body);
   color: var(--color-text-dark);
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 * {
