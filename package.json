@@ -55,7 +55,7 @@
     "appId": "com.shivdhara.medical",
     "productName": "Shivdhara Medical Store",
     "directories": {
-      "output": "dist_electron_final"
+      "output": "C:/temp_dist"
     },
     "files": [
       "dist/**/*",
