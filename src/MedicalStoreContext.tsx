@@ -453,7 +453,40 @@ export function MedicalStoreProvider({ children }) {
   const [expiryCalYear, setExpiryCalYear] = useState(new Date().getFullYear());
 
   // ─── AUDIT TRAIL & SECURITY ───────────────────────
-  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLogs, setAuditLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('store_audit_logs');
+      if (saved) return JSON.parse(saved);
+    } catch (_) {}
+    return [];
+  });
+
+  const logUserChange = (action, details, refNo = '') => {
+    const user_name = currentUser?.name || currentUser?.username || 'Admin';
+    const timestamp = new Date().toISOString();
+    const entry = {
+      id: uid(),
+      user_name,
+      action,
+      details: typeof details === 'object' ? JSON.stringify(details) : String(details),
+      ref_no: String(refNo),
+      created_at: timestamp
+    };
+    setAuditLogs(prev => [entry, ...(prev || [])]);
+    try {
+      const saved = JSON.parse(localStorage.getItem('store_audit_logs') || '[]');
+      saved.unshift(entry);
+      localStorage.setItem('store_audit_logs', JSON.stringify(saved.slice(0, 500)));
+    } catch (_) {}
+
+    try {
+      fetch(`${API_BASE}/audit-logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_name, action, details: entry.details })
+      }).catch(() => {});
+    } catch (_) {}
+  };
   const [showAuditModal, setShowAuditModal] = useState(false);
 
   // ─── PRINTER SETTINGS ─────────────────────────────
@@ -1432,6 +1465,7 @@ export function MedicalStoreProvider({ children }) {
       await saveItems(newItems);
       setShowSalesForm(false);
       await loadAll();
+      logUserChange("BILL DELETED", { billNo: bill.billNo, patient: bill.patientName, netAmount: bill.netAmount }, `Bill #${bill.billNo}`);
       showToast("Sales bill deleted & stock restored");
     });
   };
@@ -3228,7 +3262,7 @@ ${renderedPages}
     uiScale, setUiScale, changeUiScale, zoomIn, zoomOut, resetZoom, setPresetScale,
     lockBillData, setLockBillData, saveLockBillData, isDateLocked,
     // Enterprise Hardening & Features
-    auditLogs, setAuditLogs, loadAuditLogs, showAuditModal, setShowAuditModal,
+    auditLogs, setAuditLogs, loadAuditLogs, logUserChange, showAuditModal, setShowAuditModal,
     triggerAutoDbBackup, sendSmsBillSummary, dotMatrixMode, setDotMatrixMode, generateDotMatrixInvoiceHTML,
   };
 
