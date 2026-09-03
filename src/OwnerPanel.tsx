@@ -1,7 +1,7 @@
 // @ts-nocheck
 /* eslint-disable */
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Plus, Edit2, Trash2, ShoppingCart, Package, LogOut, Eye, EyeOff, X, CheckCircle, AlertCircle, User, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Clock, FileText, TrendingUp, Truck, CreditCard, Users, Home, Printer } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, ShoppingCart, Package, LogOut, Eye, EyeOff, X, Check, CheckCircle, AlertCircle, User, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Clock, FileText, TrendingUp, Truck, CreditCard, Users, Home, Printer } from "lucide-react";
 import React from 'react';
 import PurchaseChallan from './PurchaseChallan';
 import ApplicationSetupModal from './ApplicationSetupModal';
