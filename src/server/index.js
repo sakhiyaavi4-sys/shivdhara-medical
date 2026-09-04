@@ -613,6 +613,58 @@ app.post('/api/change-bill-number', async (req, res) => {
   }
 });
 
+// ─── API ROUTE FOR DATA MERGE FACILITY (SUPERVISOR) ───
+app.post('/api/merge-data', async (req, res) => {
+  const { category, sourceId, sourceName, targetId, targetName, deleteSource, changedBy } = req.body;
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    if (category === 'item') {
+      // 1. Move batches from source item to target item
+      await connection.query('UPDATE batches SET itemId = ? WHERE itemId = ?', [targetId, sourceId]);
+      // 2. Move sales invoice items
+      await connection.query('UPDATE sales_invoice_items SET itemId = ? WHERE itemId = ?', [targetId, sourceId]);
+      // 3. Move purchase invoice items
+      await connection.query('UPDATE purchase_invoice_items SET itemId = ? WHERE itemId = ?', [targetId, sourceId]);
+      // 4. Consolidate stock
+      const [sourceItems] = await connection.query('SELECT stock FROM items WHERE id = ?', [sourceId]);
+      const sStock = (sourceItems[0] && sourceItems[0].stock) || 0;
+      await connection.query('UPDATE items SET stock = stock + ? WHERE id = ?', [sStock, targetId]);
+      // 5. Delete source if requested
+      if (deleteSource) {
+        await connection.query('DELETE FROM items WHERE id = ?', [sourceId]);
+      }
+    } else if (category === 'company') {
+      await connection.query('UPDATE items SET company = ? WHERE company = ?', [targetName, sourceName]);
+    } else if (category === 'supplier') {
+      await connection.query('UPDATE purchase_bills SET supplier_id = ?, party_name = ? WHERE supplier_id = ? OR party_name = ?', [targetId, targetName, sourceId, sourceName]);
+      await connection.query('UPDATE payments SET supplier_id = ?, account_name = ? WHERE supplier_id = ? OR account_name = ?', [targetId, targetName, sourceId, sourceName]);
+      if (deleteSource && sourceId) {
+        await connection.query('DELETE FROM suppliers WHERE id = ?', [sourceId]);
+      }
+    } else if (category === 'debtor') {
+      await connection.query('UPDATE sales_bills SET patient_name = ? WHERE patient_name = ?', [targetName, sourceName]);
+      await connection.query('UPDATE khata_entries SET customer_name = ? WHERE customer_name = ?', [targetName, sourceName]);
+    } else if (category === 'generic') {
+      await connection.query('UPDATE items SET generic = ? WHERE generic = ?', [targetName, sourceName]);
+    } else if (category === 'doctor') {
+      await connection.query('UPDATE sales_bills SET doctor_name = ? WHERE doctor_name = ?', [targetName, sourceName]);
+      if (deleteSource && sourceId) {
+        await connection.query('DELETE FROM doctors WHERE id = ?', [sourceId]);
+      }
+    }
+    await connection.commit();
+    await logAudit(changedBy || 'Admin', `MERGE_${(category || '').toUpperCase()}`, `Merged ${category} "${sourceName}" into "${targetName}" (Delete source: ${deleteSource ? 'Yes' : 'No'})`, req.ip);
+    res.json({ success: true, message: `Successfully merged ${category} from "${sourceName}" into "${targetName}"` });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Data merge error:', error);
+    res.status(500).json({ error: 'Failed to merge records in database' });
+  } finally {
+    connection.release();
+  }
+});
+
 app.get('/api/payments', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM payments ORDER BY date DESC');
