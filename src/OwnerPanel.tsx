@@ -5259,9 +5259,9 @@ const pending = [];
             }}>
               <div style={{ display: "flex", gap: "6px" }}>
                 {[
-                  { id: "single", label: "Single Bill Change (એક બિલ સુધારો)", icon: "🔄" },
-                  { id: "batch", label: "Batch / Series Renumber (શ્રેણીબદ્ધ સુધારો)", icon: "🔢" },
-                  { id: "logs", label: `Audit History (${billChangeLogs.length}) (સુધારેલા બિલોની હિસ્ટ્રી)`, icon: "📜" }
+                  { id: "single", label: "Single Bill Change", icon: "🔄" },
+                  { id: "batch", label: "Batch / Series Renumber", icon: "🔢" },
+                  { id: "logs", label: `Audit History (${billChangeLogs.length})`, icon: "📜" }
                 ].map(t => {
                   const isActive = billChangeActiveTab === t.id;
                   return (
@@ -5351,7 +5351,7 @@ const pending = [];
                     {/* Bill Type Selector */}
                     <div>
                       <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
-                        1. Select Bill Type (બિલ પ્રકાર પસંદ કરો)
+                        1. Select Bill Type
                       </label>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                         <button
@@ -5372,7 +5372,7 @@ const pending = [];
                             transition: "0.15s"
                           }}
                         >
-                          <ShoppingCart size={16} /> Sales Bill (વેચાણ)
+                          <ShoppingCart size={16} /> Sales Bill
                         </button>
                         <button
                           onClick={() => { setBillChangeType("purchase"); setBillChangeSelected(null); setBillChangeNewNo(""); setBillChangeStatus(null); }}
@@ -5392,7 +5392,7 @@ const pending = [];
                             transition: "0.15s"
                           }}
                         >
-                          <Package size={16} /> Purchase Bill (ખરીદ)
+                          <Package size={16} /> Purchase Bill
                         </button>
                       </div>
                     </div>
@@ -5400,7 +5400,7 @@ const pending = [];
                     {/* Find Bill Input & Quick Search Dropdown */}
                     <div style={{ position: "relative" }}>
                       <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>
-                        2. Search / Select Bill (હાલનો બિલ નંબર અથવા નામ શોધો)
+                        2. Search / Select Bill
                       </label>
                       <div style={{ position: "relative" }}>
                         <Search size={16} color="#94a3b8" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
@@ -5503,7 +5503,7 @@ const pending = [];
                       border: billChangeSelected ? "1px solid #99f6e4" : "1px dashed #cbd5e1"
                     }}>
                       <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", marginBottom: "4px" }}>
-                        Selected Current Bill (પસંદ કરેલું બિલ)
+                        Selected Current Bill
                       </div>
                       {billChangeSelected ? (
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -5537,7 +5537,7 @@ const pending = [];
                     {/* New Bill Number Input */}
                     <div>
                       <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>
-                        3. New Bill Number (નવો બિલ નંબર દાખલ કરો) *
+                        3. New Bill Number *
                       </label>
                       <input
                         type="text"
@@ -5590,7 +5590,7 @@ const pending = [];
                     {/* Reason for Change */}
                     <div>
                       <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>
-                        4. Reason for Change (સુધારાનું કારણ)
+                        4. Reason for Change
                       </label>
                       <select
                         value={billChangeReason}
@@ -5606,12 +5606,12 @@ const pending = [];
                           color: "#334155"
                         }}
                       >
-                        <option value="Correction of Bill Number">Correction of Bill Number (નંબર ટાઈપિંગ સુધારો)</option>
-                        <option value="Series Gap / Alignment">Series Gap / Alignment (ક્રમ સીરિઝ સેટ કરવી)</option>
-                        <option value="Cancelled Bill Renumbering">Cancelled Bill Renumbering (રદ થયેલ બિલ બદલવું)</option>
-                        <option value="Audit / CA Verification">Audit / CA Verification (ઓડિટ સુધારો)</option>
-                        <option value="Party Request / Replacement">Party Request / Replacement (ગ્રાહક વિનંતી)</option>
-                        <option value="Other">Other (અન્ય કારણ)</option>
+                        <option value="Correction of Bill Number">Correction of Bill Number</option>
+                        <option value="Series Gap / Alignment">Series Gap / Alignment</option>
+                        <option value="Cancelled Bill Renumbering">Cancelled Bill Renumbering</option>
+                        <option value="Audit / CA Verification">Audit / CA Verification</option>
+                        <option value="Party Request / Replacement">Party Request / Replacement</option>
+                        <option value="Other">Other</option>
                       </select>
 
                       {billChangeReason === "Other" && (
@@ -5761,7 +5761,7 @@ const pending = [];
                         {/* Items Table inside selected bill */}
                         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
                           <h4 style={{ margin: "0 0 10px 0", fontSize: "13px", fontWeight: "700", color: "#334155" }}>
-                            Items Contained in This Bill (આ બિલમાં રહેલી દવાઓ):
+                            Items Contained in This Bill:
                           </h4>
                           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                             <thead>
@@ -5813,7 +5813,7 @@ const pending = [];
                         }}>
                           <div>
                             <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#1e293b" }}>
-                              Recent {billChangeType === "sales" ? "Sales" : "Purchase"} Bills (તાજેતરના બિલો)
+                              Recent {billChangeType === "sales" ? "Sales" : "Purchase"} Bills
                             </h3>
                             <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
                               Click "Select" on any bill below to change its bill number
@@ -5922,7 +5922,7 @@ const pending = [];
                       <span style={{ fontSize: "24px" }}>🔢</span>
                       <div>
                         <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
-                          Batch Series Renumbering (શ્રેણીબદ્ધ ક્રમ સુધારો)
+                          Batch Series Renumbering
                         </h3>
                         <div style={{ fontSize: "12px", color: "#64748b" }}>
                           Renumber a sequential range of bills (e.g. shift from #101-#120 to #201-#220)
@@ -5940,14 +5940,14 @@ const pending = [];
                           onChange={e => setBillChangeType(e.target.value as any)}
                           style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px" }}
                         >
-                          <option value="sales">Sales Bills (વેચાણ બિલો)</option>
-                          <option value="purchase">Purchase Bills (ખરીદ બિલો)</option>
+                          <option value="sales">Sales Bills</option>
+                          <option value="purchase">Purchase Bills</option>
                         </select>
                       </div>
 
                       <div>
                         <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
-                          New Starting Number (નવો પ્રારંભિક નંબર)
+                          New Starting Number
                         </label>
                         <input
                           type="number"
@@ -5960,7 +5960,7 @@ const pending = [];
 
                       <div>
                         <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
-                          From Bill No (આ નંબરથી)
+                          From Bill No
                         </label>
                         <input
                           type="number"
@@ -5973,7 +5973,7 @@ const pending = [];
 
                       <div>
                         <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
-                          To Bill No (આ નંબર સુધી)
+                          To Bill No
                         </label>
                         <input
                           type="number"
