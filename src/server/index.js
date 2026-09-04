@@ -566,6 +566,53 @@ app.delete('/api/sales-bills/:id', async (req, res) => {
   }
 });
 
+// ─── API ROUTE FOR CHANGING BILL NUMBER (SUPERVISOR) ───
+app.post('/api/change-bill-number', async (req, res) => {
+  const { type, billId, oldBillNo, newBillNo, reason, changedBy } = req.body;
+  if (!oldBillNo || !newBillNo) {
+    return res.status(400).json({ error: 'Both old and new bill number are required' });
+  }
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    if (type === 'sales') {
+      // Check if new bill number already exists
+      const [existing] = await connection.query('SELECT id, bill_no FROM sales_bills WHERE bill_no = ? AND id != ?', [newBillNo, billId || 0]);
+      if (existing.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({ error: `Sales bill number #${newBillNo} already exists!` });
+      }
+      if (billId) {
+        await connection.query('UPDATE sales_bills SET bill_no = ? WHERE id = ?', [newBillNo, billId]);
+      } else {
+        await connection.query('UPDATE sales_bills SET bill_no = ? WHERE bill_no = ?', [newBillNo, oldBillNo]);
+      }
+      await logAudit(changedBy || 'Admin', 'CHANGE_BILL_NO', `Sales Bill #${oldBillNo} changed to #${newBillNo} (Reason: ${reason || 'Correction'})`, req.ip);
+    } else if (type === 'purchase') {
+      // Check if new purchase bill already exists
+      const [existing] = await connection.query('SELECT id, bill_no FROM purchase_bills WHERE bill_no = ? AND id != ?', [newBillNo, billId || 0]);
+      if (existing.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({ error: `Purchase bill number #${newBillNo} already exists!` });
+      }
+      if (billId) {
+        await connection.query('UPDATE purchase_bills SET bill_no = ? WHERE id = ?', [newBillNo, billId]);
+      } else {
+        await connection.query('UPDATE purchase_bills SET bill_no = ? WHERE bill_no = ?', [newBillNo, oldBillNo]);
+      }
+      await logAudit(changedBy || 'Admin', 'CHANGE_PURCHASE_BILL_NO', `Purchase Bill #${oldBillNo} changed to #${newBillNo} (Reason: ${reason || 'Correction'})`, req.ip);
+    }
+    await connection.commit();
+    res.json({ success: true, message: `Bill number changed from #${oldBillNo} to #${newBillNo} successfully` });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Change bill number error:', error);
+    res.status(500).json({ error: 'Failed to update bill number in database' });
+  } finally {
+    connection.release();
+  }
+});
+
 app.get('/api/payments', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM payments ORDER BY date DESC');
