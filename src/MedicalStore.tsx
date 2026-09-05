@@ -110,16 +110,21 @@ function ShivDharaApp() {
       {toast&&<div style={{position:"fixed",top:"18px",right:"18px",background:toast.type==="error"?"#fee2e2":"#d1fae5",color:toast.type==="error"?"#dc2626":"#059669",padding:"11px 16px",borderRadius:"5px",fontWeight:"600",fontSize:"13px",zIndex:9999,boxShadow:"0 4px 15px rgba(0,0,0,0.2)"}}>{toast.msg}</div>}
 
       {updaterMsg && (
-        <div style={{position:"fixed",bottom:"20px",left:"20px",background:"#1e293b",color:"white",padding:"16px",borderRadius:"8px",zIndex:9999,boxShadow:"0 10px 25px rgba(0,0,0,0.3)",width:"300px",display:"flex",flexDirection:"column",gap:"8px"}}>
+        <div style={{position:"fixed",bottom:"24px",left:"24px",background:"linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",color:"white",padding:"18px",borderRadius:"12px",zIndex:99999,boxShadow:"0 12px 36px rgba(0,0,0,0.4), 0 0 0 2px #38bdf8",width:"320px",display:"flex",flexDirection:"column",gap:"10px",border:"1px solid #334155"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <span style={{fontSize:"13px",fontWeight:"600"}}>{updaterMsg.text}</span>
-            <span style={{fontSize:"12px",color:"#94a3b8"}}>{updaterMsg.percent}%</span>
+            <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+              <span style={{fontSize:"18px"}}>🚀</span>
+              <span style={{fontSize:"13px",fontWeight:"700",color:"#f8fafc"}}>{updaterMsg.text}</span>
+            </div>
+            <span style={{fontSize:"12px",fontWeight:"700",color:"#38bdf8",background:"rgba(56,189,248,0.15)",padding:"2px 6px",borderRadius:"4px"}}>{updaterMsg.percent}%</span>
           </div>
-          <div style={{width:"100%",height:"4px",background:"#334155",borderRadius:"2px",overflow:"hidden"}}>
-            <div style={{width:`${updaterMsg.percent}%`,height:"100%",background:"var(--color-primary)",transition:"width 0.2s ease"}}/>
+          <div style={{width:"100%",height:"6px",background:"#334155",borderRadius:"3px",overflow:"hidden"}}>
+            <div style={{width:`${updaterMsg.percent}%`,height:"100%",background:"linear-gradient(90deg, #38bdf8, #22c55e)",transition:"width 0.2s ease"}}/>
           </div>
           {updaterMsg.ready && (
-            <button onClick={() => { if(window.require) window.require('electron').ipcRenderer.send('install-update'); }} style={{marginTop:"8px",padding:"6px 12px",background:"var(--color-primary)",color:"white",border:"none",borderRadius:"4px",cursor:"pointer",fontSize:"12px",fontWeight:"bold"}}>Install Now</button>
+            <button onClick={() => { if(window.require) window.require('electron').ipcRenderer.send('install-update'); }} style={{marginTop:"6px",padding:"8px 14px",background:"linear-gradient(135deg, #16a34a, #15803d)",color:"white",border:"none",borderRadius:"6px",cursor:"pointer",fontSize:"13px",fontWeight:"800",boxShadow:"0 2px 8px rgba(22,163,74,0.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:"6px"}}>
+              🔄 Restart & Install Now
+            </button>
           )}
         </div>
       )}

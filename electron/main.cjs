@@ -91,14 +91,17 @@ app.whenReady().then(async () => {
     createWindow();
 
     // Configure Auto Updater
-    let ghToken = '';
+    let ghToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
     const tokenPath1 = path.join(path.dirname(app.getPath('exe')), 'github-token.txt');
     const tokenPath2 = path.join(app.getPath('home'), 'shivdhara-token.txt');
+    const tokenPath3 = path.join(process.cwd(), 'github-token.txt');
     
     if (fs.existsSync(tokenPath1)) {
       ghToken = fs.readFileSync(tokenPath1, 'utf8').trim();
     } else if (fs.existsSync(tokenPath2)) {
       ghToken = fs.readFileSync(tokenPath2, 'utf8').trim();
+    } else if (fs.existsSync(tokenPath3)) {
+      ghToken = fs.readFileSync(tokenPath3, 'utf8').trim();
     }
     
     if (ghToken) {
@@ -114,8 +117,15 @@ app.whenReady().then(async () => {
     autoUpdater.autoInstallOnAppQuit = true;
     
     // Add event listeners for the auto-updater to show UI messages
+    autoUpdater.on('checking-for-update', () => {
+      log.info('Checking for update...');
+      if (mainWindow) {
+        mainWindow.webContents.send('updater-message', { type: 'checking-for-update' });
+      }
+    });
+
     autoUpdater.on('update-available', (info) => {
-      log.info('Update available.');
+      log.info('Update available:', info);
       if (mainWindow) {
         mainWindow.webContents.send('updater-message', { type: 'update-available', info });
       }
@@ -125,6 +135,10 @@ app.whenReady().then(async () => {
       if (mainWindow) {
         mainWindow.webContents.send('updater-message', { type: 'download-progress', progress: progressObj });
       }
+    });
+
+    ipcMain.on('check-for-update', () => {
+      autoUpdater.checkForUpdatesAndNotify().catch(e => log.error('Manual update check error:', e));
     });
 
     ipcMain.on('install-update', () => {
@@ -164,7 +178,10 @@ app.whenReady().then(async () => {
       log.error('Error in auto-updater:', err);
     });
 
-    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.checkForUpdatesAndNotify().catch(e => log.error('Initial update check error:', e));
+    setInterval(() => {
+      autoUpdater.checkForUpdatesAndNotify().catch(e => log.error('Interval update check error:', e));
+    }, 120000);
 
   } catch (err) {
     fs.writeFileSync(path.join(app.getPath('userData'), 'crash.log'), err.stack || err.toString());
