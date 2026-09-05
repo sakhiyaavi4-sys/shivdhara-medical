@@ -1279,6 +1279,44 @@ export default function OwnerPanel() {
   const [kitQuickDosage, setKitQuickDosage] = useState("1-0-1");
   const [kitQuickDays, setKitQuickDays] = useState(5);
 
+  // ─── DOCTOR MASTER ADVANCED STATES (Matching Legacy Screenshot) ───
+  const defaultFullDoctorForm = {
+    id: "",
+    srNo: 1,
+    code: "DOC001",
+    regNo: "",
+    name: "",
+    degree: "",
+    password: "",
+    address: "",
+    address2: "",
+    area: "",
+    salesPercent: 10,
+    city: "SURAT",
+    returnPercent: 10,
+    mobile: "",
+    contact: "",
+    email: "",
+    remarks: "",
+    isPermanent: false,
+    date1: "",
+    note1: "",
+    date2: "",
+    note2: "",
+    date3: "",
+    note3: "",
+    linkedItems: []
+  };
+
+  const [docMasterForm, setDocMasterForm] = useState(defaultFullDoctorForm);
+  const [editingDocId, setEditingDocId] = useState(null);
+  const [docViewMode, setDocViewMode] = useState("editor"); // "editor" | "list"
+  const [docSearch, setDocSearch] = useState("");
+  const [docFilterPermanent, setDocFilterPermanent] = useState(false);
+  const [showItemLinkModal, setShowItemLinkModal] = useState(false);
+  const [itemLinkSearch, setItemLinkSearch] = useState("");
+  const [itemLinkDropdown, setItemLinkDropdown] = useState(false);
+
 
 
 
@@ -8904,62 +8942,1062 @@ const pending = [];
               );
             })()}
 
-            {/* Doctors */}
-            {ownerSubTab === "doctors" && (
-              <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                    <h2 style={{ margin: 0, fontSize: "17px", fontWeight: "800" }}>🩺 Doctor Master ({doctors.length})</h2>
-                    <div style={{ position: "relative" }}>
-                      <Search size={13} style={{ position: "absolute", left: "10px", top: "10px", color: "#64748b" }} />
-                      <input
-                        placeholder="Search Doctor..."
-                        value={masterSearch}
-                        onChange={e => setMasterSearch(e.target.value)}
-                        style={{ ...inp, width: "180px", paddingLeft: "28px", borderRadius: "20px", background: "#f8fafc" }}
-                      />
+            {/* ═════════════════════════════════════════════════════════════
+                DOCTOR MASTER (Matching Legacy Screenshot & Inventory Light Theme)
+            ═════════════════════════════════════════════════════════════ */}
+            {ownerSubTab === "doctors" && (() => {
+              // Ensure doctors have consistent data
+              const allDoctors = (doctors || []).map((d, idx) => ({
+                ...defaultFullDoctorForm,
+                ...d,
+                srNo: d.srNo || idx + 1,
+                code: d.code || ("DOC" + String(idx + 1).padStart(3, "0")),
+                regNo: d.regNo || "",
+                degree: d.degree || d.speciality || d.specialization || "",
+                remarks: d.remarks || d.note || "",
+                salesPercent: d.salesPercent ?? 10,
+                returnPercent: d.returnPercent ?? 10,
+                city: d.city || "SURAT",
+                linkedItems: d.linkedItems || []
+              }));
+
+              // Filtering for directory list
+              const qd = (docSearch || "").trim().toLowerCase();
+              const filteredDoctors = allDoctors.filter(d => {
+                if (docFilterPermanent && !d.isPermanent) return false;
+                if (!qd) return true;
+                return (
+                  (d.name || "").toLowerCase().includes(qd) ||
+                  (d.code || "").toLowerCase().includes(qd) ||
+                  (d.regNo || "").toLowerCase().includes(qd) ||
+                  (d.degree || "").toLowerCase().includes(qd) ||
+                  (d.area || "").toLowerCase().includes(qd) ||
+                  (d.city || "").toLowerCase().includes(qd) ||
+                  (d.mobile || "").includes(qd) ||
+                  (d.contact || "").includes(qd) ||
+                  String(d.srNo || "").includes(qd)
+                );
+              });
+
+              // Inventory matches for Item Link Modal
+              const qLink = (itemLinkSearch || "").trim().toLowerCase();
+              const matchingInventoryForLink = qLink ? (items || []).filter(i =>
+                (i.name || "").toLowerCase().includes(qLink) ||
+                (i.barcode || "").includes(qLink) ||
+                (i.company || "").toLowerCase().includes(qLink)
+              ).slice(0, 8) : [];
+
+              // Handlers
+              const handleNewDoctor = () => {
+                const nextSr = allDoctors.length > 0 ? Math.max(...allDoctors.map(d => Number(d.srNo || 0))) + 1 : 1;
+                const nextCode = "DOC" + String(nextSr).padStart(3, "0");
+                setEditingDocId(null);
+                setDocMasterForm({
+                  ...defaultFullDoctorForm,
+                  id: uid(),
+                  srNo: nextSr,
+                  code: nextCode,
+                  linkedItems: []
+                });
+                setDocViewMode("editor");
+                showToast("New Doctor entry form ready");
+              };
+
+              const handleOpenDoctorForEdit = (doc) => {
+                setEditingDocId(doc.id);
+                setDocMasterForm({
+                  ...defaultFullDoctorForm,
+                  ...doc
+                });
+                setDocViewMode("editor");
+              };
+
+              const handleSaveDoctorRecord = () => {
+                if (!docMasterForm.name || !docMasterForm.name.trim()) {
+                  showToast("Doctor Name is required!", "error");
+                  return;
+                }
+
+                const docId = editingDocId || docMasterForm.id || uid();
+                const recordData = {
+                  ...docMasterForm,
+                  id: docId,
+                  name: docMasterForm.name.trim().toUpperCase(),
+                  code: (docMasterForm.code || "DOC" + String(docMasterForm.srNo || 1).padStart(3, "0")).trim().toUpperCase(),
+                  regNo: (docMasterForm.regNo || "").trim().toUpperCase(),
+                  degree: (docMasterForm.degree || "").trim().toUpperCase(),
+                  speciality: (docMasterForm.degree || "").trim().toUpperCase(),
+                  address: (docMasterForm.address || "").trim().toUpperCase(),
+                  address2: (docMasterForm.address2 || "").trim().toUpperCase(),
+                  area: (docMasterForm.area || "").trim().toUpperCase(),
+                  city: (docMasterForm.city || "SURAT").trim().toUpperCase(),
+                  remarks: (docMasterForm.remarks || "").trim(),
+                  note: (docMasterForm.remarks || "").trim(),
+                  mobile: (docMasterForm.mobile || "").trim(),
+                  contact: (docMasterForm.contact || "").trim(),
+                  email: (docMasterForm.email || "").trim(),
+                  password: (docMasterForm.password || "").trim(),
+                  salesPercent: Number(docMasterForm.salesPercent) || 0,
+                  returnPercent: Number(docMasterForm.returnPercent) || 0,
+                  isPermanent: !!docMasterForm.isPermanent,
+                  srNo: Number(docMasterForm.srNo) || (allDoctors.length + 1),
+                  linkedItems: docMasterForm.linkedItems || [],
+                  updatedAt: new Date().toISOString()
+                };
+
+                handleSaveDoctor(recordData, editingDocId, () => {
+                  setDocMasterForm(recordData);
+                  setEditingDocId(docId);
+                  showToast(editingDocId ? `Doctor "${recordData.name}" updated!` : `Doctor "${recordData.name}" added successfully!`);
+                });
+              };
+
+              const handleDeleteDoctorRecord = (docToDelete = docMasterForm) => {
+                if (!docToDelete || !docToDelete.id) return;
+                showConfirm(`Are you sure you want to delete Doctor "${docToDelete.name || docToDelete.code}"?`, () => {
+                  handleDeleteDoctor(docToDelete.id);
+                  if (allDoctors.length > 1) {
+                    const remaining = allDoctors.filter(d => d.id !== docToDelete.id);
+                    setDocMasterForm({ ...remaining[0] });
+                    setEditingDocId(remaining[0].id);
+                  } else {
+                    handleNewDoctor();
+                  }
+                });
+              };
+
+              const handleNavigateDoctor = (direction) => {
+                if (allDoctors.length === 0) return;
+                const currentId = editingDocId || docMasterForm.id;
+                const curIdx = allDoctors.findIndex(d => d.id === currentId);
+                let targetIdx = 0;
+                if (direction === "prev") {
+                  targetIdx = curIdx > 0 ? curIdx - 1 : allDoctors.length - 1;
+                } else {
+                  targetIdx = curIdx < allDoctors.length - 1 ? curIdx + 1 : 0;
+                }
+                handleOpenDoctorForEdit(allDoctors[targetIdx]);
+              };
+
+              const handleTogglePermanent = () => {
+                const nextState = !docMasterForm.isPermanent;
+                setDocMasterForm({ ...docMasterForm, isPermanent: nextState });
+                showToast(nextState ? "Marked as Permanent Doctor for Sales Bill" : "Permanent status removed");
+              };
+
+              const handleAddLinkedMedicine = (inventoryItem) => {
+                if (!inventoryItem) return;
+                const exists = (docMasterForm.linkedItems || []).some(li => String(li.itemId) === String(inventoryItem.id));
+                if (exists) {
+                  showToast("Medicine already linked to this Doctor", "error");
+                  return;
+                }
+
+                const newItem = {
+                  id: uid(),
+                  itemId: inventoryItem.id,
+                  itemName: inventoryItem.name,
+                  company: inventoryItem.company || "General",
+                  sRate: Number(inventoryItem.sRate || inventoryItem.price || inventoryItem.mrp || 0),
+                  note: "Preferred Brand"
+                };
+
+                const updatedLinks = [...(docMasterForm.linkedItems || []), newItem];
+                setDocMasterForm({ ...docMasterForm, linkedItems: updatedLinks });
+                setItemLinkSearch("");
+                setItemLinkDropdown(false);
+                showToast(`Linked ${inventoryItem.name}`);
+              };
+
+              const handleRemoveLinkedMedicine = (linkId) => {
+                const updatedLinks = (docMasterForm.linkedItems || []).filter(li => li.id !== linkId);
+                setDocMasterForm({ ...docMasterForm, linkedItems: updatedLinks });
+              };
+
+              const handlePrintDoctorProfile = () => {
+                const printWindow = window.open("", "_blank");
+                if (!printWindow) {
+                  showToast("Please allow popups to print doctor profile", "error");
+                  return;
+                }
+
+                const linkedHTML = (docMasterForm.linkedItems || []).map((li, idx) => `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px; text-align: center;">${idx + 1}</td>
+                    <td style="padding: 6px; font-weight: bold;">${li.itemName}</td>
+                    <td style="padding: 6px; color: #475569;">${li.company || "-"}</td>
+                    <td style="padding: 6px; text-align: right; color: #2563eb; font-weight: bold;">₹${Number(li.sRate || 0).toFixed(2)}</td>
+                    <td style="padding: 6px; color: #64748b;">${li.note || "-"}</td>
+                  </tr>
+                `).join("");
+
+                printWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <title>Doctor Profile - ${docMasterForm.name}</title>
+                    <style>
+                      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 25px; color: #0f172a; }
+                      .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 15px; }
+                      .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 12px; background: #f8fafc; padding: 14px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+                      table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+                      th { background: #0f172a; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; text-align: left; }
+                      @media print { body { padding: 0; } }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      <h2 style="margin: 0; font-size: 20px;">SHIV DHARA MEDICAL STORE</h2>
+                      <p style="margin: 2px 0; font-size: 12px; color: #475569;">Registered Pharmacy & Healthcare Provider</p>
+                      <p style="margin: 0; font-size: 11px; font-weight: 700; color: #2563eb;">DOCTOR REFERRAL & PRESCRIPTION PROFILE</p>
+                    </div>
+
+                    <div class="grid">
+                      <div><strong>Doctor Name:</strong> ${docMasterForm.name}</div>
+                      <div><strong>Doctor Code:</strong> ${docMasterForm.code || "-"} | <strong>Sr.No:</strong> ${docMasterForm.srNo || 1}</div>
+                      <div><strong>Degree / Spec:</strong> ${docMasterForm.degree || "N/A"}</div>
+                      <div><strong>Council Reg. No:</strong> ${docMasterForm.regNo || "N/A"}</div>
+                      <div><strong>Primary Mobile:</strong> ${docMasterForm.mobile || "N/A"}</div>
+                      <div><strong>Clinic Contact:</strong> ${docMasterForm.contact || "N/A"}</div>
+                      <div><strong>Email:</strong> ${docMasterForm.email || "N/A"}</div>
+                      <div><strong>Permanent POS Status:</strong> ${docMasterForm.isPermanent ? "YES (Permanent Doctor)" : "NO"}</div>
+                      <div><strong>Area / Locality:</strong> ${docMasterForm.area || "-"}, ${docMasterForm.city || "-"}</div>
+                      <div><strong>Sales Commission:</strong> ${docMasterForm.salesPercent}% | <strong>Return:</strong> ${docMasterForm.returnPercent}%</div>
+                      ${docMasterForm.address ? `<div style="grid-column: span 2;"><strong>Address:</strong> ${docMasterForm.address} ${docMasterForm.address2 || ""}</div>` : ""}
+                      ${docMasterForm.remarks ? `<div style="grid-column: span 2; color: #b45309;"><strong>Visiting Hours / Remarks:</strong> ${docMasterForm.remarks}</div>` : ""}
+                    </div>
+
+                    ${(docMasterForm.date1 || docMasterForm.date2 || docMasterForm.date3) ? `
+                      <h4 style="margin: 0 0 8px; font-size: 12px; text-transform: uppercase; color: #475569;">Important Doctor Dates & Occasions:</h4>
+                      <table style="margin-bottom: 20px;">
+                        <thead>
+                          <tr><th style="width: 120px;">Date</th><th>Occasion / Event Note</th></tr>
+                        </thead>
+                        <tbody>
+                          ${docMasterForm.date1 ? `<tr><td style="padding: 6px; font-weight: bold;">${docMasterForm.date1}</td><td style="padding: 6px;">${docMasterForm.note1 || "Birthday / Event"}</td></tr>` : ""}
+                          ${docMasterForm.date2 ? `<tr><td style="padding: 6px; font-weight: bold;">${docMasterForm.date2}</td><td style="padding: 6px;">${docMasterForm.note2 || "Anniversary / Opening"}</td></tr>` : ""}
+                          ${docMasterForm.date3 ? `<tr><td style="padding: 6px; font-weight: bold;">${docMasterForm.date3}</td><td style="padding: 6px;">${docMasterForm.note3 || "Renewal / Note"}</td></tr>` : ""}
+                        </tbody>
+                      </table>
+                    ` : ""}
+
+                    <h4 style="margin: 0 0 8px; font-size: 12px; text-transform: uppercase; color: #475569;">Preferred Prescribed Medicines:</h4>
+                    <table>
+                      <thead>
+                        <tr><th style="width: 30px;">#</th><th>Medicine / Brand</th><th>Manufacturer</th><th style="text-align: right;">S.Rate</th><th>Notes</th></tr>
+                      </thead>
+                      <tbody>
+                        ${linkedHTML || '<tr><td colspan="5" style="padding: 15px; text-align: center; color: #64748b;">No preferred medicines linked yet.</td></tr>'}
+                      </tbody>
+                    </table>
+
+                    <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 11px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+                      <div>Generated on ${new Date().toLocaleString()}</div>
+                      <div style="font-weight: bold; text-align: right;">Shiv Dhara Medical Store</div>
+                    </div>
+                  </body>
+                  </html>
+                `);
+                printWindow.document.close();
+                setTimeout(() => printWindow.print(), 300);
+              };
+
+              return (
+                <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
+                  {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "26px" }}>🩺</span>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Doctor Master</h2>
+                      <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>Consulting Doctors, Medical Reg. No., Referral Commissions & Preferred Brands</p>
+                    </div>
+
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => setDocViewMode(docViewMode === "editor" ? "list" : "editor")}
+                        style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <FileText size={13} /> {docViewMode === "editor" ? "View Doctor Directory (List)" : "Back to Doctor Form"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleNewDoctor}
+                        style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Plus size={13} /> Add Doctor
+                      </button>
                     </div>
                   </div>
-                  <button onClick={() => { setDoctorForm({ name: "", area: "", mobile: "", speciality: "" }); setEditDoctorId(null); setShowDoctorForm(true); }} style={{ ...btn("#3b82f6"), fontSize: "12px" }}>+ Add Doctor</button>
-                </div>
-                {showDoctorForm && (
-                  <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "16px" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                      <div><label style={lbl}>Doctor Name *</label><input value={doctorForm.name} onChange={e => setDoctorForm({ ...doctorForm, name: e.target.value.toUpperCase() })} placeholder="DR. NAME" style={inp} /></div>
-                      <div><label style={lbl}>Speciality</label><input value={doctorForm.speciality} onChange={e => setDoctorForm({ ...doctorForm, speciality: e.target.value.toUpperCase() })} placeholder="GENERAL / ORTHO" style={inp} /></div>
-                      <div><label style={lbl}>Area / Location</label><input value={doctorForm.area} onChange={e => setDoctorForm({ ...doctorForm, area: e.target.value.toUpperCase() })} placeholder="AREA" style={inp} /></div>
-                      <div><label style={lbl}>Mobile</label><input value={doctorForm.mobile} onChange={e => setDoctorForm({ ...doctorForm, mobile: e.target.value })} placeholder="Mobile no." style={{ ...inp, textTransform: "none" }} /></div>
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <button onClick={() => {
-                        handleSaveDoctor(doctorForm, editDoctorId, () => { setShowDoctorForm(false); setEditDoctorId(null); });
-                      }} style={{ ...btn("#16a34a") }}><CheckCircle size={13} />{editDoctorId ? "Update" : "Save"} Doctor</button>
-                      <button onClick={() => { setShowDoctorForm(false); setEditDoctorId(null); }} style={{ ...btn("var(--color-border)", "var(--color-text-dark)") }}>Cancel</button>
-                    </div>
-                  </div>
-                )}
-                {doctors.length === 0 ?
-                  <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-                    <div style={{ fontSize: "40px", marginBottom: "8px" }}>🩺</div>
-                    <p>No doctors added yet</p>
-                  </div> :
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: "10px" }}>
-                    {doctors.filter(d => !masterSearch || d.name?.toLowerCase().includes(masterSearch.toLowerCase()) || d.speciality?.toLowerCase().includes(masterSearch.toLowerCase())).map(d => (
-                      <div key={d.id} style={{ background: "white", borderRadius: "8px", padding: "14px", border: "1px solid #e2e8f0" }}>
-                        <div style={{ fontWeight: "700", fontSize: "14px", color: "var(--color-text-dark)", marginBottom: "4px" }}>🩺 {d.name}</div>
-                        {d.speciality && <div style={{ fontSize: "11px", background: "#eff6ff", color: "#3b82f6", padding: "2px 8px", borderRadius: "10px", display: "inline-block", marginBottom: "6px" }}>{d.speciality}</div>}
-                        {d.area && <div style={{ fontSize: "12px", color: "#64748b" }}>📍 {d.area}</div>}
-                        {d.mobile && <div style={{ fontSize: "12px", color: "#64748b" }}>📞 {d.mobile}</div>}
-                        <div style={{ display: "flex", gap: "6px", marginTop: "10px" }}>
-                          <button onClick={() => { setDoctorForm({ name: d.name, area: d.area || "", mobile: d.mobile || "", speciality: d.speciality || "" }); setEditDoctorId(d.id); setShowDoctorForm(true); }} style={{ ...btn("var(--color-primary)"), fontSize: "11px", padding: "4px 10px" }}>Edit</button>
-                          <button onClick={() => showConfirm("Delete doctor?", () => { const nd = doctors.filter(x => x.id !== d.id); setDoctors(nd); save("store_doctors", nd); showToast("Doctor deleted"); })} style={{ ...btn("#ef4444"), fontSize: "11px", padding: "4px 10px" }}>Delete</button>
+
+                  {/* ═══════════════════════════════════════════════════════════
+                      VIEW MODE 1: DOCTORS DIRECTORY LIST VIEW
+                  ═══════════════════════════════════════════════════════════ */}
+                  {docViewMode === "list" && (
+                    <div style={{ animation: "fadeIn 0.15s ease-out" }}>
+                      {/* Search Bar & Filters */}
+                      <div style={{ background: "white", borderRadius: "12px", padding: "14px 16px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                        <div style={{ flex: 1, minWidth: "240px", position: "relative" }}>
+                          <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                          <input
+                            placeholder="Search Doctor Name, Code, Reg.No, Degree, Area, Mobile... + Enter"
+                            value={docSearch}
+                            onChange={e => setDocSearch(e.target.value)}
+                            style={{ ...inp, paddingLeft: "30px", width: "100%", height: "36px" }}
+                          />
+                        </div>
+                        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "700", color: "#334155", cursor: "pointer", userSelect: "none" }}>
+                          <input
+                            type="checkbox"
+                            checked={docFilterPermanent}
+                            onChange={e => setDocFilterPermanent(e.target.checked)}
+                          />
+                          Permanent Doctors Only ⭐
+                        </label>
+                        {docSearch && (
+                          <button onClick={() => setDocSearch("")} style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "11px" }}>Clear</button>
+                        )}
+                      </div>
+
+                      {/* Stat Cards */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", marginBottom: "16px" }}>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Registered Doctors</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a", marginTop: "4px" }}>{allDoctors.length}</div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Permanent POS Doctors</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#ca8a04", marginTop: "4px" }}>
+                            {allDoctors.filter(d => d.isPermanent).length} Doctors
+                          </div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Specialities Covered</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#2563eb", marginTop: "4px" }}>
+                            {[...new Set(allDoctors.map(d => d.degree).filter(Boolean))].length} Specialities
+                          </div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Preferred Items Linked</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#16a34a", marginTop: "4px" }}>
+                            {allDoctors.reduce((acc, d) => acc + (d.linkedItems || []).length, 0)} Medicines
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                }
-              </>
-            )}
+
+                      {/* Directory Table */}
+                      <div style={{ background: "white", borderRadius: "12px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                        <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                          <span style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b" }}>
+                            Doctor Master Directory ({filteredDoctors.length})
+                          </span>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>
+                            Click any Doctor to open full details, referral rates or link preferred medicines
+                          </span>
+                        </div>
+
+                        {filteredDoctors.length === 0 ? (
+                          <div style={{ padding: "50px 20px", textAlign: "center", color: "#64748b" }}>
+                            <div style={{ fontSize: "36px", opacity: 0.5, marginBottom: "8px" }}>🩺</div>
+                            <p style={{ margin: 0, fontWeight: "700", fontSize: "14px" }}>No doctors found</p>
+                            <p style={{ margin: "4px 0 12px", fontSize: "12px" }}>Add your first consulting doctor using the button below.</p>
+                            <button onClick={handleNewDoctor} style={{ ...btn("var(--color-primary)"), margin: "0 auto", fontSize: "12px" }}>
+                              <Plus size={13} /> Add First Doctor
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                              <thead>
+                                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontSize: "11px", textTransform: "uppercase" }}>
+                                  <th style={{ padding: "10px 8px", width: "40px", textAlign: "center" }}>Sr.</th>
+                                  <th style={{ padding: "10px 8px", width: "80px", textAlign: "center" }}>Code</th>
+                                  <th style={{ padding: "10px 14px", textAlign: "left" }}>Doctor Name</th>
+                                  <th style={{ padding: "10px 12px", textAlign: "left" }}>Degree / Spec.</th>
+                                  <th style={{ padding: "10px 10px", textAlign: "center" }}>Reg. No.</th>
+                                  <th style={{ padding: "10px 12px", textAlign: "left" }}>Mobile / Contact</th>
+                                  <th style={{ padding: "10px 12px", textAlign: "left" }}>Area & City</th>
+                                  <th style={{ padding: "10px 8px", width: "70px", textAlign: "center" }}>Sales %</th>
+                                  <th style={{ padding: "10px 8px", width: "80px", textAlign: "center" }}>POS Type</th>
+                                  <th style={{ padding: "10px 12px", width: "160px", textAlign: "center" }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filteredDoctors.map((doc, idx) => (
+                                  <tr
+                                    key={doc.id || idx}
+                                    style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.1s" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                  >
+                                    <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>{doc.srNo || idx + 1}</td>
+                                    <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "800", color: "#2563eb", fontFamily: "monospace" }}>{doc.code || "DOC"}</td>
+                                    <td
+                                      onClick={() => handleOpenDoctorForEdit(doc)}
+                                      style={{ padding: "8px 14px", fontWeight: "800", color: "#1e3a8a", cursor: "pointer" }}
+                                      title="Click to edit doctor details"
+                                    >
+                                      {doc.name}
+                                    </td>
+                                    <td style={{ padding: "8px 12px", color: "#475569" }}>
+                                      {doc.degree ? <span style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontSize: "11px", fontWeight: "600" }}>{doc.degree}</span> : "-"}
+                                    </td>
+                                    <td style={{ padding: "8px 10px", textAlign: "center", fontFamily: "monospace", fontSize: "11px", color: "#64748b" }}>
+                                      {doc.regNo || "-"}
+                                    </td>
+                                    <td style={{ padding: "8px 12px", color: "#334155" }}>
+                                      {doc.mobile ? <div>📞 {doc.mobile}</div> : null}
+                                      {doc.contact && doc.contact !== doc.mobile ? <div style={{ fontSize: "11px", color: "#94a3b8" }}>{doc.contact}</div> : null}
+                                    </td>
+                                    <td style={{ padding: "8px 12px", color: "#475569", fontSize: "11px" }}>
+                                      {doc.area ? <div>📍 {doc.area}</div> : null}
+                                      <span style={{ color: "#64748b" }}>{doc.city || "SURAT"}</span>
+                                    </td>
+                                    <td style={{ padding: "8px 8px", textAlign: "center", fontWeight: "700", color: "#16a34a" }}>
+                                      {doc.salesPercent}%
+                                    </td>
+                                    <td style={{ padding: "8px 8px", textAlign: "center" }}>
+                                      {doc.isPermanent ? (
+                                        <span style={{ background: "#fef3c7", color: "#854d0e", border: "1px solid #fde047", padding: "2px 6px", borderRadius: "10px", fontSize: "10px", fontWeight: "800" }}>
+                                          ⭐ Permanent
+                                        </span>
+                                      ) : (
+                                        <span style={{ color: "#94a3b8", fontSize: "11px" }}>Regular</span>
+                                      )}
+                                    </td>
+                                    <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                                      <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenDoctorForEdit(doc)}
+                                          style={{ ...btn("#2563eb"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Edit Doctor"
+                                        >
+                                          <Edit2 size={11} /> Edit
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { handleOpenDoctorForEdit(doc); setShowItemLinkModal(true); }}
+                                          style={{ ...btn("#0284c7"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Link Preferred Medicines"
+                                        >
+                                          Item Link
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { handleOpenDoctorForEdit(doc); setTimeout(handlePrintDoctorProfile, 100); }}
+                                          style={{ ...btn("#334155"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Print Profile"
+                                        >
+                                          <Printer size={11} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteDoctorRecord(doc)}
+                                          style={{ ...btn("#dc2626"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Delete Doctor"
+                                        >
+                                          <Trash2 size={11} />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ═══════════════════════════════════════════════════════════
+                      VIEW MODE 2: DOCTOR MASTER FORM (Exact Legacy Layout)
+                  ═══════════════════════════════════════════════════════════ */}
+                  {docViewMode === "editor" && (
+                    <div style={{ background: "white", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                      
+                      {/* Top Header Row with Permanent Doctor Action (Image 1 Pink Banner) */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", gap: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "18px" }}>🩺</span>
+                          <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
+                            {docMasterForm.name ? docMasterForm.name : "New Doctor Record"}
+                          </h3>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: "4px", fontFamily: "monospace" }}>
+                            Code: {docMasterForm.code || "DOC001"}
+                          </span>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: "4px" }}>
+                            Sr.No: {docMasterForm.srNo || 1}
+                          </span>
+                        </div>
+
+                        {/* Top Banner Button (Matching Image 1 Pink Box) */}
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <button
+                            type="button"
+                            onClick={handleTogglePermanent}
+                            style={{
+                              background: docMasterForm.isPermanent ? "#fef3c7" : "#fee2e2",
+                              color: docMasterForm.isPermanent ? "#854d0e" : "#991b1b",
+                              border: docMasterForm.isPermanent ? "2px solid #ca8a04" : "1px solid #fca5a5",
+                              borderRadius: "8px",
+                              padding: "7px 14px",
+                              fontSize: "12px",
+                              fontWeight: "800",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                            }}
+                            title="Click to toggle default permanent doctor for rapid billing"
+                          >
+                            <span>⭐</span>
+                            {docMasterForm.isPermanent
+                              ? "Permanent Doctor for Sales Bill: ACTIVE"
+                              : "Click here To Create Permanent Doctor for Sales Bill"}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Main Form Split: Left Core Form (2 cols) | Right Imp. Dates & Notes */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "16px", marginBottom: "16px" }}>
+                        
+                        {/* ─── LEFT COLUMN: CORE DOCTOR DETAILS ─── */}
+                        <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                          {/* Row 1: Sr.No | Code | Reg.No */}
+                          <div style={{ display: "grid", gridTemplateColumns: "80px 110px 1fr", gap: "10px", marginBottom: "10px" }}>
+                            <div>
+                              <label style={lbl}>Sr.No.</label>
+                              <input
+                                type="number"
+                                value={docMasterForm.srNo || 1}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, srNo: Number(e.target.value) || 1 })}
+                                style={{ ...inp, background: "#ffffff", fontWeight: "700" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Code</label>
+                              <input
+                                type="text"
+                                value={docMasterForm.code || ""}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, code: e.target.value.toUpperCase() })}
+                                style={{ ...inp, background: "#ffffff", textTransform: "uppercase", fontWeight: "700", color: "#1e40af" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Reg. No.</label>
+                              <input
+                                type="text"
+                                value={docMasterForm.regNo || ""}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, regNo: e.target.value.toUpperCase() })}
+                                placeholder="Council Registration No. (e.g. G-18942)"
+                                style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Row 2: Name */}
+                          <div style={{ marginBottom: "10px" }}>
+                            <label style={lbl}>Doctor Name *</label>
+                            <input
+                              type="text"
+                              value={docMasterForm.name || ""}
+                              onChange={e => setDocMasterForm({ ...docMasterForm, name: e.target.value.toUpperCase() })}
+                              placeholder="e.g. DR. R.K. PATEL"
+                              style={{ ...inp, background: "#ffffff", fontWeight: "800", textTransform: "uppercase", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          {/* Row 3: Degree | Password */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "10px", marginBottom: "10px" }}>
+                            <div>
+                              <label style={lbl}>Degree / Specialization</label>
+                              <input
+                                type="text"
+                                value={docMasterForm.degree || ""}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, degree: e.target.value.toUpperCase() })}
+                                placeholder="e.g. MBBS, MD (PHYSICIAN)"
+                                style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Password / PIN</label>
+                              <input
+                                type="text"
+                                value={docMasterForm.password || ""}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, password: e.target.value })}
+                                placeholder="Referral PIN"
+                                style={{ ...inp, background: "#ffffff" }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Row 4 & 5: Address Lines 1 & 2 */}
+                          <div style={{ marginBottom: "10px" }}>
+                            <label style={lbl}>Hospital / Clinic Address</label>
+                            <input
+                              type="text"
+                              value={docMasterForm.address || ""}
+                              onChange={e => setDocMasterForm({ ...docMasterForm, address: e.target.value.toUpperCase() })}
+                              placeholder="Address Line 1 (Clinic Name, Hospital, Complex)"
+                              style={{ ...inp, background: "#ffffff", textTransform: "uppercase", marginBottom: "6px" }}
+                            />
+                            <input
+                              type="text"
+                              value={docMasterForm.address2 || ""}
+                              onChange={e => setDocMasterForm({ ...docMasterForm, address2: e.target.value.toUpperCase() })}
+                              placeholder="Address Line 2 (Street, Landmark)"
+                              style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                            />
+                          </div>
+
+                          {/* Row 6 & 7: Area, City | Sales %, Return % */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 110px", gap: "10px", marginBottom: "10px" }}>
+                            <div>
+                              <label style={lbl}>Area / Locality</label>
+                              <input
+                                type="text"
+                                value={docMasterForm.area || ""}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, area: e.target.value.toUpperCase() })}
+                                placeholder="e.g. VARACHHA ROAD"
+                                style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Sales %</label>
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={docMasterForm.salesPercent ?? 10}
+                                  onChange={e => setDocMasterForm({ ...docMasterForm, salesPercent: Number(e.target.value) || 0 })}
+                                  style={{ ...inp, background: "#ffffff", textAlign: "center", fontWeight: "700" }}
+                                />
+                                <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b" }}>%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 110px", gap: "10px", marginBottom: "10px" }}>
+                            <div>
+                              <label style={lbl}>City</label>
+                              <input
+                                type="text"
+                                value={docMasterForm.city || "SURAT"}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, city: e.target.value.toUpperCase() })}
+                                placeholder="SURAT"
+                                style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Return %</label>
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={docMasterForm.returnPercent ?? 10}
+                                  onChange={e => setDocMasterForm({ ...docMasterForm, returnPercent: Number(e.target.value) || 0 })}
+                                  style={{ ...inp, background: "#ffffff", textAlign: "center", fontWeight: "700" }}
+                                />
+                                <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b" }}>%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Row 8, 9, 10: Mobile, Contact, Email */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                            <div>
+                              <label style={lbl}>Mobile No.</label>
+                              <input
+                                type="text"
+                                value={docMasterForm.mobile || ""}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, mobile: e.target.value })}
+                                placeholder="Primary Mobile"
+                                style={{ ...inp, background: "#ffffff" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Contact No. (Landline/Alt)</label>
+                              <input
+                                type="text"
+                                value={docMasterForm.contact || ""}
+                                onChange={e => setDocMasterForm({ ...docMasterForm, contact: e.target.value })}
+                                placeholder="Clinic Landline"
+                                style={{ ...inp, background: "#ffffff" }}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ marginBottom: "10px" }}>
+                            <label style={lbl}>E-mail</label>
+                            <input
+                              type="email"
+                              value={docMasterForm.email || ""}
+                              onChange={e => setDocMasterForm({ ...docMasterForm, email: e.target.value })}
+                              placeholder="doctor@hospital.com"
+                              style={{ ...inp, background: "#ffffff" }}
+                            />
+                          </div>
+
+                          {/* Row 11: Remarks */}
+                          <div>
+                            <label style={lbl}>Remarks / Visiting Hours</label>
+                            <textarea
+                              value={docMasterForm.remarks || ""}
+                              onChange={e => setDocMasterForm({ ...docMasterForm, remarks: e.target.value })}
+                              placeholder="Visiting hours (e.g. 10am-1pm, 5pm-8pm), hospital tie-up, bank account / UPI for referral..."
+                              style={{ ...inp, background: "#ffffff", height: "55px", resize: "vertical" }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* ─── RIGHT COLUMN: IMP. DATES AND NOTES (Image 1 Sub-Grid) ─── */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                          
+                          {/* Imp. Dates & Notes Box */}
+                          <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                            <div style={{ fontSize: "12px", fontWeight: "800", color: "#334155", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span>📅 Imp. Dates And Notes</span>
+                              <span style={{ fontSize: "10px", color: "#64748b" }}>Anniversaries & Events</span>
+                            </div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                              {/* Date Row 1 */}
+                              <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "6px" }}>
+                                <input
+                                  type="text"
+                                  value={docMasterForm.date1 || ""}
+                                  onChange={e => setDocMasterForm({ ...docMasterForm, date1: e.target.value })}
+                                  placeholder="DD/MM/YYYY"
+                                  style={{ ...inp, background: "#ffffff", fontSize: "11px", textAlign: "center" }}
+                                />
+                                <input
+                                  type="text"
+                                  value={docMasterForm.note1 || ""}
+                                  onChange={e => setDocMasterForm({ ...docMasterForm, note1: e.target.value })}
+                                  placeholder="e.g. Doctor Birthday"
+                                  style={{ ...inp, background: "#ffffff", fontSize: "11px" }}
+                                />
+                              </div>
+
+                              {/* Date Row 2 */}
+                              <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "6px" }}>
+                                <input
+                                  type="text"
+                                  value={docMasterForm.date2 || ""}
+                                  onChange={e => setDocMasterForm({ ...docMasterForm, date2: e.target.value })}
+                                  placeholder="DD/MM/YYYY"
+                                  style={{ ...inp, background: "#ffffff", fontSize: "11px", textAlign: "center" }}
+                                />
+                                <input
+                                  type="text"
+                                  value={docMasterForm.note2 || ""}
+                                  onChange={e => setDocMasterForm({ ...docMasterForm, note2: e.target.value })}
+                                  placeholder="e.g. Clinic Opening"
+                                  style={{ ...inp, background: "#ffffff", fontSize: "11px" }}
+                                />
+                              </div>
+
+                              {/* Date Row 3 */}
+                              <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "6px" }}>
+                                <input
+                                  type="text"
+                                  value={docMasterForm.date3 || ""}
+                                  onChange={e => setDocMasterForm({ ...docMasterForm, date3: e.target.value })}
+                                  placeholder="DD/MM/YYYY"
+                                  style={{ ...inp, background: "#ffffff", fontSize: "11px", textAlign: "center" }}
+                                />
+                                <input
+                                  type="text"
+                                  value={docMasterForm.note3 || ""}
+                                  onChange={e => setDocMasterForm({ ...docMasterForm, note3: e.target.value })}
+                                  placeholder="e.g. License Renewal"
+                                  style={{ ...inp, background: "#ffffff", fontSize: "11px" }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Preferred Linked Items Preview Box */}
+                          <div style={{ background: "#ffffff", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1", flex: 1, display: "flex", flexDirection: "column" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                              <span style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b" }}>
+                                💊 Linked Medicines ({(docMasterForm.linkedItems || []).length})
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setShowItemLinkModal(true)}
+                                style={{ ...btn("#0284c7"), fontSize: "10px", padding: "3px 8px", fontWeight: "700" }}
+                              >
+                                + Link Items
+                              </button>
+                            </div>
+
+                            {(!docMasterForm.linkedItems || docMasterForm.linkedItems.length === 0) ? (
+                              <div style={{ textAlign: "center", padding: "20px 10px", color: "#94a3b8", fontSize: "11px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                                <span>No preferred medicines linked yet.</span>
+                                <span style={{ fontSize: "10px", marginTop: "4px" }}>Click "Item Link" below to map common medicines for this doctor.</span>
+                              </div>
+                            ) : (
+                              <div style={{ maxHeight: "180px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                                {docMasterForm.linkedItems.map((li, idx) => (
+                                  <div key={li.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "6px 8px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div>
+                                      <div style={{ fontWeight: "700", color: "#0f172a" }}>{li.itemName}</div>
+                                      <div style={{ fontSize: "10px", color: "#64748b" }}>{li.company || "General"} | ₹{Number(li.sRate || 0).toFixed(2)}</div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveLinkedMedicine(li.id)}
+                                      style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer" }}
+                                      title="Remove"
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ─── EXACT LEGACY BOTTOM ACTION TOOLBAR (Image 1 Bottom Buttons) ─── */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                        {/* Left Buttons: New | Save | Delete | List | Item Link */}
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={handleNewDoctor}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 14px", fontWeight: "700" }}
+                            title="New Blank Doctor Form"
+                          >
+                            New
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveDoctorRecord}
+                            style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 16px", fontWeight: "800" }}
+                            title="Save / Update Doctor"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDoctorRecord(docMasterForm)}
+                            disabled={!editingDocId}
+                            style={{ ...btn("#dc2626"), fontSize: "12px", padding: "7px 14px", opacity: !editingDocId ? 0.5 : 1 }}
+                            title="Delete this Doctor"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDocViewMode("list")}
+                            style={{ ...btn("#0284c7"), fontSize: "12px", padding: "7px 14px", fontWeight: "700" }}
+                            title="View all doctors in directory"
+                          >
+                            List
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowItemLinkModal(true)}
+                            style={{ ...btn("#16a34a"), fontSize: "12px", padding: "7px 14px", fontWeight: "700" }}
+                            title="Open Preferred Medicine Link Modal"
+                          >
+                            Item Link
+                          </button>
+                        </div>
+
+                        {/* Right Buttons: < | > | Print | Close */}
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateDoctor("prev")}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 10px" }}
+                            title="Previous Doctor"
+                          >
+                            <ChevronLeft size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateDoctor("next")}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 10px" }}
+                            title="Next Doctor"
+                          >
+                            <ChevronRight size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handlePrintDoctorProfile}
+                            style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                            title="Print Doctor Profile"
+                          >
+                            <Printer size={13} /> Print
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDocViewMode("list")}
+                            style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px", padding: "7px 14px" }}
+                            title="Close Doctor Form"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ═══════════════════════════════════════════════════════════
+                      MODAL: ITEM LINK (PREFERRED MEDICINES FOR DOCTOR)
+                  ═══════════════════════════════════════════════════════════ */}
+                  {showItemLinkModal && (
+                    <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+                      <div style={{ background: "white", borderRadius: "12px", width: "100%", maxWidth: "680px", boxShadow: "0 20px 40px rgba(0,0,0,0.25)", overflow: "hidden", animation: "fadeIn 0.15s ease-out" }}>
+                        
+                        {/* Modal Header */}
+                        <div style={{ padding: "14px 20px", background: "#0f172a", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontWeight: "800", fontSize: "14px" }}>
+                              💊 Doctor - Item Linkage
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#94a3b8" }}>
+                              Map Preferred Medicines & Prescription Brands for: <strong>{docMasterForm.name || "Doctor"}</strong>
+                            </div>
+                          </div>
+                          <button onClick={() => setShowItemLinkModal(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}>
+                            <X size={16} />
+                          </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div style={{ padding: "18px 20px" }}>
+                          {/* Search & Add Bar */}
+                          <div style={{ position: "relative", marginBottom: "14px" }}>
+                            <label style={lbl}>Search Inventory to Link Medicine:</label>
+                            <div style={{ position: "relative" }}>
+                              <Search size={13} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                              <input
+                                placeholder="Type Brand Name, Formula or Company to Link..."
+                                value={itemLinkSearch}
+                                onChange={e => {
+                                  setItemLinkSearch(e.target.value);
+                                  setItemLinkDropdown(true);
+                                }}
+                                onFocus={() => setItemLinkDropdown(true)}
+                                style={{ ...inp, paddingLeft: "30px", height: "36px", width: "100%" }}
+                              />
+                            </div>
+
+                            {/* Dropdown Suggestions */}
+                            {itemLinkDropdown && matchingInventoryForLink.length > 0 && (
+                              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", zIndex: 90, marginTop: "4px", overflow: "hidden", maxHeight: "200px", overflowY: "auto" }}>
+                                {matchingInventoryForLink.map(invItem => (
+                                  <div
+                                    key={invItem.id}
+                                    onClick={() => handleAddLinkedMedicine(invItem)}
+                                    style={{ padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "white"}
+                                  >
+                                    <div>
+                                      <div style={{ fontWeight: "700", fontSize: "12px", color: "#1e293b" }}>{invItem.name}</div>
+                                      <div style={{ fontSize: "10px", color: "#64748b" }}>{invItem.company || "General"} | Stock: {invItem.stock || 0}</div>
+                                    </div>
+                                    <div style={{ textAlign: "right" }}>
+                                      <span style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb" }}>₹{Number(invItem.price || invItem.mrp || 0).toFixed(2)}</span>
+                                      <span style={{ display: "block", fontSize: "9px", background: "#dcfce7", color: "#166534", padding: "1px 5px", borderRadius: "3px", fontWeight: "700" }}>+ Link</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Linked Medicines List Table */}
+                          <div style={{ border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", maxHeight: "260px", overflowY: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                              <thead>
+                                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontSize: "11px", textTransform: "uppercase" }}>
+                                  <th style={{ padding: "8px", width: "30px", textAlign: "center" }}>#</th>
+                                  <th style={{ padding: "8px 12px", textAlign: "left" }}>Medicine / Brand</th>
+                                  <th style={{ padding: "8px 10px", textAlign: "left" }}>Company</th>
+                                  <th style={{ padding: "8px 10px", textAlign: "right" }}>Selling Rate</th>
+                                  <th style={{ padding: "8px 10px", textAlign: "left" }}>Special Note</th>
+                                  <th style={{ padding: "8px", width: "40px", textAlign: "center" }}>Del</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {(!docMasterForm.linkedItems || docMasterForm.linkedItems.length === 0) ? (
+                                  <tr>
+                                    <td colSpan={6} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
+                                      No medicines linked yet. Search and link medicines from inventory above.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  docMasterForm.linkedItems.map((li, idx) => (
+                                    <tr key={li.id || idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                      <td style={{ padding: "6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>{idx + 1}</td>
+                                      <td style={{ padding: "6px 12px", fontWeight: "700", color: "#0f172a" }}>{li.itemName}</td>
+                                      <td style={{ padding: "6px 10px", color: "#64748b" }}>{li.company || "-"}</td>
+                                      <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: "700", color: "#2563eb" }}>₹{Number(li.sRate || 0).toFixed(2)}</td>
+                                      <td style={{ padding: "6px 10px" }}>
+                                        <input
+                                          type="text"
+                                          value={li.note || ""}
+                                          onChange={e => {
+                                            const updated = [...docMasterForm.linkedItems];
+                                            updated[idx] = { ...updated[idx], note: e.target.value };
+                                            setDocMasterForm({ ...docMasterForm, linkedItems: updated });
+                                          }}
+                                          placeholder="e.g. 1st Choice"
+                                          style={{ ...inp, padding: "2px 6px", fontSize: "11px", height: "26px" }}
+                                        />
+                                      </td>
+                                      <td style={{ padding: "6px", textAlign: "center" }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveLinkedMedicine(li.id)}
+                                          style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer" }}
+                                          title="Remove Link"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div style={{ padding: "12px 20px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>
+                            Total Linked: <strong>{(docMasterForm.linkedItems || []).length} medicines</strong>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowItemLinkModal(false);
+                              handleSaveDoctorRecord();
+                            }}
+                            style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "6px 16px", fontWeight: "700" }}
+                          >
+                            <CheckCircle size={13} /> Done & Save
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Customers from orders */}
             {ownerSubTab === "customers" && (() => {
