@@ -896,6 +896,43 @@ export default function OwnerPanel() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showChangeBills, cbDetailModal, cbEditModal]);
 
+    // ── Sales Bill Delete & Renumbering States ──
+  const [showSalesBillDelete, setShowSalesBillDelete] = useState(false);
+  const [sbdActiveTab, setSbdActiveTab] = useState<"delete" | "renumber">("delete");
+  const [sbdFromDate, setSbdFromDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+  const [sbdToDate, setSbdToDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  const [sbdLowerAmt, setSbdLowerAmt] = useState("");
+  const [sbdHigherAmt, setSbdHigherAmt] = useState("");
+  const [sbdSelectedMap, setSbdSelectedMap] = useState<{ [key: string]: boolean }>({});
+  const [sbdSearchQuery, setSbdSearchQuery] = useState("");
+  const [sbdConfirmModal, setSbdConfirmModal] = useState(false);
+  const [sbdStatusMsg, setSbdStatusMsg] = useState<{ type: "success" | "error" | "info"; msg: string } | null>(null);
+
+  // Renumbering States
+  const [sbdRenumberStart, setSbdRenumberStart] = useState(1);
+  const [sbdRenumberPrefix, setSbdRenumberPrefix] = useState("INV-");
+  const [sbdRenumberDigits, setSbdRenumberDigits] = useState(4);
+  const [sbdRenumberConfirm, setSbdRenumberConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!showSalesBillDelete) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (sbdConfirmModal) { setSbdConfirmModal(false); }
+        else if (sbdRenumberConfirm) { setSbdRenumberConfirm(false); }
+        else { setShowSalesBillDelete(false); }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showSalesBillDelete, sbdConfirmModal, sbdRenumberConfirm]);
+
   // -- WIP Feature State --
   const [showWipModal, setShowWipModal] = useState("");
 
@@ -993,7 +1030,7 @@ export default function OwnerPanel() {
                 {label:"Transfer Other Data", action:()=>{setShowTransferOtherData(true);setActiveMenu(null);}},
                 {label:"Challan Problem", action:()=>{setShowChallanProblem(true);setActiveMenu(null);}},
                 {label:"Change Bills", action:()=>{setShowChangeBills(true);setActiveMenu(null);}},
-                {label:"Sales Bill Delete", action:()=>{setActiveSection("sales_pos");setActiveMenu(null);}},
+                {label:"Sales Bill Delete", action:()=>{setShowSalesBillDelete(true);setActiveMenu(null);}},
                 {label:"Purchase Delete", action:()=>{setActiveSection("purchase");setActiveMenu(null);}},
               ]},
               {id:"master", label:"Master", items:[
@@ -12505,6 +12542,1030 @@ const pending = [];
             </div>
           );
         })()}
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* SUPERVISOR — SALES BILL DELETE & RENUMBERING (100% FULLSCREEN) */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {showSalesBillDelete && (() => {
+          // Normalize sales bills - Filter for Cash bills only (Per system rule: NO DEBIT BILLS)
+          const rawBills = (salesBills || []).map((b: any, index: number) => {
+            const billTotal = Number(b.total || b.netAmount || b.grandTotal || 0);
+            const billBase = Number(b.taxableAmount || b.baseAmount || b.subTotal || (billTotal > 0 ? (billTotal / 1.12).toFixed(2) : 0));
+            const billGst = Number(b.taxAmount || b.gstAmount || b.vatAmount || (billTotal > 0 ? (billTotal - billBase).toFixed(2) : 0));
+            const billDate = b.date || (b.createdAt ? String(b.createdAt).slice(0, 10) : today());
+            const billType = b.payMode || b.paymentMode || b.type || (b.isCredit ? 'Credit' : 'Cash');
+            const isCashOnly = !/credit/i.test(billType);
+            const billUser = b.createdByName || b.user || b.cashier || currentUser?.username || 'ADMIN';
+            const billId = String(b.id || b.billNo || index + 1);
+
+            return {
+              ...b,
+              _id: billId,
+              _srNo: index + 1,
+              _billNo: String(b.billNo || b.invoiceNo || b.id || index + 1),
+              _date: billDate,
+              _type: billType,
+              _isCash: isCashOnly,
+              _customerName: b.patientName || b.customerName || b.partyName || 'Walk-in Customer',
+              _gst: billGst,
+              _amount: billTotal,
+              _user: billUser
+            };
+          });
+
+          // Apply filters for Tab 1 (Delete Cash Sales Bill)
+          const eligibleBills = rawBills.filter((b: any) => {
+            if (!b._isCash) return false; // Must be Cash bill only
+            if (sbdFromDate && b._date < sbdFromDate) return false;
+            if (sbdToDate && b._date > sbdToDate) return false;
+
+            if (sbdLowerAmt.trim() && b._amount < Number(sbdLowerAmt)) return false;
+            if (sbdHigherAmt.trim() && b._amount > Number(sbdHigherAmt)) return false;
+
+            if (sbdSearchQuery.trim()) {
+              const q = sbdSearchQuery.toLowerCase();
+              const matchNo = b._billNo.toLowerCase().includes(q);
+              const matchCust = b._customerName.toLowerCase().includes(q);
+              if (!matchNo && !matchCust) return false;
+            }
+
+            return true;
+          });
+
+          // Selected Bills calculation
+          const selectedBills = eligibleBills.filter((b: any) => !!sbdSelectedMap[b._id]);
+          const selectedCount = selectedBills.length;
+          const selectedTotalAmt = selectedBills.reduce((acc: number, b: any) => acc + (b._amount || 0), 0);
+
+          // Calculate total units to restore across selected bills
+          const totalUnitsToRestore = selectedBills.reduce((acc: number, b: any) => {
+            const lineItems = b.items || b.saleItems || [];
+            const billUnits = lineItems.reduce((sum: number, it: any) => sum + Number(it.qty || it.quantity || 1), 0);
+            return acc + billUnits;
+          }, 0);
+
+          // Select All (Yes)
+          const handleSelectAll = () => {
+            const nextMap: { [key: string]: boolean } = {};
+            eligibleBills.forEach((b: any) => { nextMap[b._id] = true; });
+            setSbdSelectedMap(nextMap);
+          };
+
+          // Deselect All (No)
+          const handleDeselectAll = () => {
+            setSbdSelectedMap({});
+          };
+
+          // Toggle Individual Row
+          const handleToggleRow = (id: string) => {
+            setSbdSelectedMap(prev => ({ ...prev, [id]: !prev[id] }));
+          };
+
+          // Execute Batch Delete with Inventory Stock Restoration
+          const handleExecuteDelete = () => {
+            if (selectedBills.length === 0) {
+              alert("Please select at least one bill to delete.");
+              return;
+            }
+
+            try {
+              const selectedIds = new Set(selectedBills.map((b: any) => b._id));
+              
+              // 1. Restore Inventory Stock for items and batches
+              const updatedItems = [...items];
+              const updatedBatches = [...batches];
+
+              selectedBills.forEach((bill: any) => {
+                const lineItems = bill.items || bill.saleItems || [];
+                lineItems.forEach((li: any) => {
+                  const qtyToRestore = Number(li.qty || li.quantity || 1);
+                  const targetItemId = li.itemId || li.id;
+                  const targetBatchNo = li.batch || li.batchNo;
+
+                  // Restore batch stock
+                  if (targetBatchNo) {
+                    const bIdx = updatedBatches.findIndex((b: any) => 
+                      (b.itemId === targetItemId || !targetItemId) && (b.batchNo === targetBatchNo || b.batch === targetBatchNo)
+                    );
+                    if (bIdx !== -1) {
+                      updatedBatches[bIdx] = {
+                        ...updatedBatches[bIdx],
+                        stock: Number(updatedBatches[bIdx].stock || 0) + qtyToRestore,
+                        currentStock: Number(updatedBatches[bIdx].currentStock || updatedBatches[bIdx].stock || 0) + qtyToRestore
+                      };
+                    }
+                  }
+
+                  // Restore item overall stock
+                  if (targetItemId) {
+                    const iIdx = updatedItems.findIndex((it: any) => it.id === targetItemId);
+                    if (iIdx !== -1) {
+                      updatedItems[iIdx] = {
+                        ...updatedItems[iIdx],
+                        stock: Number(updatedItems[iIdx].stock || 0) + qtyToRestore
+                      };
+                    }
+                  }
+                });
+              });
+
+              // 2. Remove deleted bills from salesBills
+              const updatedSales = (salesBills || []).filter((sb: any, idx: number) => {
+                const id = String(sb.id || sb.billNo || idx + 1);
+                return !selectedIds.has(id);
+              });
+
+              // Save to Store
+              if (typeof saveItems === 'function') saveItems(updatedItems);
+              if (typeof saveBatches === 'function') saveBatches(updatedBatches);
+              if (typeof saveSalesBills === 'function') saveSalesBills(updatedSales);
+
+              // 3. User Audit Logging
+              if (typeof logUserChange === 'function') {
+                logUserChange('SUPERVISOR_BATCH_DELETE_SALES', {
+                  deletedCount: selectedBills.length,
+                  totalAmount: selectedTotalAmt,
+                  restoredUnits: totalUnitsToRestore,
+                  billNumbers: selectedBills.map((b: any) => b._billNo).slice(0, 15).join(', ')
+                }, `Permanently deleted ${selectedBills.length} Cash sales bills totalling ₹${selectedTotalAmt.toFixed(2)} and restored ${totalUnitsToRestore} inventory units`);
+              }
+
+              setSbdStatusMsg({
+                type: "success",
+                msg: `Successfully deleted ${selectedBills.length} sales bills! ${totalUnitsToRestore} medicine units have been restored to inventory.`
+              });
+
+              setSbdSelectedMap({});
+              setSbdConfirmModal(false);
+              setTimeout(() => setSbdStatusMsg(null), 5000);
+            } catch (err: any) {
+              setSbdStatusMsg({ type: "error", msg: "Failed to delete sales bills: " + (err?.message || "Unknown error") });
+            }
+          };
+
+          // Execute Renumbering Logic
+          const handleExecuteRenumbering = () => {
+            try {
+              // Sort sales bills chronologically
+              const sorted = [...(salesBills || [])].sort((a: any, b: any) => {
+                const da = a.date || a.createdAt || '';
+                const db = b.date || b.createdAt || '';
+                return da.localeCompare(db);
+              });
+
+              let currentSeq = Number(sbdRenumberStart) || 1;
+              const padLen = Number(sbdRenumberDigits) || 4;
+              const prefix = sbdRenumberPrefix || '';
+
+              const renumbered = sorted.map((sb: any) => {
+                const newNo = `${prefix}${String(currentSeq).padStart(padLen, '0')}`;
+                currentSeq++;
+                return { ...sb, billNo: newNo, hasRenumbered: true };
+              });
+
+              if (typeof saveSalesBills === 'function') saveSalesBills(renumbered);
+
+              if (typeof logUserChange === 'function') {
+                logUserChange('SUPERVISOR_SALES_RENUMBER', {
+                  totalRenumbered: renumbered.length,
+                  startNo: sbdRenumberStart,
+                  prefix: sbdRenumberPrefix
+                }, `Renumbered ${renumbered.length} sales bills starting from ${sbdRenumberPrefix}${sbdRenumberStart}`);
+              }
+
+              setSbdStatusMsg({
+                type: "success",
+                msg: `Successfully renumbered all ${renumbered.length} sales bills consecutively!`
+              });
+              setSbdRenumberConfirm(false);
+              setTimeout(() => setSbdStatusMsg(null), 4500);
+            } catch (err: any) {
+              setSbdStatusMsg({ type: "error", msg: "Renumbering failed: " + (err?.message || "Unknown error") });
+            }
+          };
+
+          return (
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 99999,
+                background: "#0f172a",
+                color: "#f8fafc",
+                display: "flex",
+                flexDirection: "column",
+                fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                animation: "fadeIn 0.2s ease-out"
+              }}
+            >
+              {/* Top Warning Banner (Red/Brown Legacy Style) */}
+              <div
+                style={{
+                  background: "linear-gradient(90deg, #7f1d1d 0%, #991b1b 100%)",
+                  padding: "8px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid #b91c1c",
+                  flexShrink: 0
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <AlertCircle size={17} color="#fecaca" />
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#ffffff", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                    USE THIS FACILITY ONLY IF YOU MAKE CASH BILLS ONLY — NO DEBIT / CREDIT BILLS
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setShowSalesBillDelete(false)}
+                  style={{
+                    background: "#ffffff",
+                    color: "#991b1b",
+                    border: "none",
+                    padding: "4px 12px",
+                    borderRadius: "4px",
+                    fontWeight: "700",
+                    fontSize: "11px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  <X size={13} /> Close (ESC)
+                </button>
+              </div>
+
+              {/* Header Title & Subtabs */}
+              <div
+                style={{
+                  background: "#1e293b",
+                  padding: "10px 20px",
+                  borderBottom: "1px solid #334155",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexShrink: 0
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 8px rgba(239, 68, 68, 0.4)"
+                    }}
+                  >
+                    <Trash2 size={20} color="#ffffff" />
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff" }}>
+                        Sales Bill Delete &amp; Renumbering Facility
+                      </span>
+                      <span
+                        style={{
+                          background: "#450a0a",
+                          color: "#fca5a5",
+                          border: "1px solid #ef4444",
+                          padding: "2px 8px",
+                          borderRadius: "12px",
+                          fontSize: "11px",
+                          fontWeight: "700"
+                        }}
+                      >
+                        SUPERVISOR
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
+                      Batch reverse cash sales invoices, restore batch inventory quantities, and re-sequence bill numbers
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub-tabs Selector */}
+                <div style={{ display: "flex", background: "#0f172a", padding: "3px", borderRadius: "8px", border: "1px solid #334155" }}>
+                  <button
+                    onClick={() => setSbdActiveTab("delete")}
+                    style={{
+                      background: sbdActiveTab === "delete" ? "#ef4444" : "transparent",
+                      color: sbdActiveTab === "delete" ? "#ffffff" : "#94a3b8",
+                      border: "none",
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <Trash2 size={13} /> Delete Cash Sales Bill
+                  </button>
+
+                  <button
+                    onClick={() => setSbdActiveTab("renumber")}
+                    style={{
+                      background: sbdActiveTab === "renumber" ? "#3b82f6" : "transparent",
+                      color: sbdActiveTab === "renumber" ? "#ffffff" : "#94a3b8",
+                      border: "none",
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <TrendingUp size={13} /> Sales Bill Renumbering
+                  </button>
+                </div>
+              </div>
+
+              {/* Status Alert Banner */}
+              {sbdStatusMsg && (
+                <div
+                  style={{
+                    padding: "8px 20px",
+                    background: sbdStatusMsg.type === "success" ? "#064e3b" : "#7f1d1d",
+                    borderBottom: `1px solid ${sbdStatusMsg.type === "success" ? "#059669" : "#dc2626"}`,
+                    color: sbdStatusMsg.type === "success" ? "#6ee7b7" : "#fca5a5",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    flexShrink: 0
+                  }}
+                >
+                  {sbdStatusMsg.type === "success" ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+                  <span>{sbdStatusMsg.msg}</span>
+                </div>
+              )}
+
+              {/* ─── TAB 1: DELETE CASH SALES BILL ─── */}
+              {sbdActiveTab === "delete" && (
+                <>
+                  {/* Controls & Filter Panel (Matching Legacy System) */}
+                  <div
+                    style={{
+                      background: "#1e293b",
+                      padding: "12px 20px",
+                      borderBottom: "1px solid #334155",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "14px",
+                      flexWrap: "wrap",
+                      flexShrink: 0
+                    }}
+                  >
+                    {/* Left Filters */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>From:</span>
+                        <input
+                          type="date"
+                          value={sbdFromDate}
+                          onChange={(e) => setSbdFromDate(e.target.value)}
+                          style={{
+                            background: "#0f172a",
+                            border: "1px solid #475569",
+                            color: "#f8fafc",
+                            padding: "5px 8px",
+                            borderRadius: "5px",
+                            fontSize: "12px"
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>To:</span>
+                        <input
+                          type="date"
+                          value={sbdToDate}
+                          onChange={(e) => setSbdToDate(e.target.value)}
+                          style={{
+                            background: "#0f172a",
+                            border: "1px solid #475569",
+                            color: "#f8fafc",
+                            padding: "5px 8px",
+                            borderRadius: "5px",
+                            fontSize: "12px"
+                          }}
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          const d = new Date();
+                          const t = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                          setSbdFromDate(t);
+                          setSbdToDate(t);
+                        }}
+                        style={{
+                          background: "#334155",
+                          border: "none",
+                          color: "#ffffff",
+                          padding: "5px 10px",
+                          borderRadius: "5px",
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Today
+                      </button>
+
+                      {/* Lower / Higher Amount Filter */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>Lower Amount:</span>
+                        <input
+                          type="number"
+                          placeholder="Min ₹"
+                          value={sbdLowerAmt}
+                          onChange={(e) => setSbdLowerAmt(e.target.value)}
+                          style={{
+                            background: "#0f172a",
+                            border: "1px solid #475569",
+                            color: "#ffffff",
+                            padding: "5px 8px",
+                            borderRadius: "5px",
+                            fontSize: "12px",
+                            width: "80px"
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>Higher Amount:</span>
+                        <input
+                          type="number"
+                          placeholder="Max ₹"
+                          value={sbdHigherAmt}
+                          onChange={(e) => setSbdHigherAmt(e.target.value)}
+                          style={{
+                            background: "#0f172a",
+                            border: "1px solid #475569",
+                            color: "#ffffff",
+                            padding: "5px 8px",
+                            borderRadius: "5px",
+                            fontSize: "12px",
+                            width: "80px"
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Right Summary & Action Buttons */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>Total (₹):</span>
+                        <input
+                          type="text"
+                          readOnly
+                          value={`₹${selectedTotalAmt.toFixed(2)}`}
+                          style={{
+                            background: "#0f172a",
+                            border: "1px solid #3b82f6",
+                            color: "#60a5fa",
+                            padding: "5px 8px",
+                            borderRadius: "5px",
+                            fontSize: "12px",
+                            fontWeight: "800",
+                            width: "110px",
+                            textAlign: "right"
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>Sales (Qty):</span>
+                        <input
+                          type="text"
+                          readOnly
+                          value={selectedCount}
+                          style={{
+                            background: "#0f172a",
+                            border: "1px solid #f59e0b",
+                            color: "#fbbf24",
+                            padding: "5px 8px",
+                            borderRadius: "5px",
+                            fontSize: "12px",
+                            fontWeight: "800",
+                            width: "55px",
+                            textAlign: "center"
+                          }}
+                        />
+                      </div>
+
+                      {/* Selection Buttons */}
+                      <button
+                        onClick={handleSelectAll}
+                        style={{
+                          background: "#059669",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "6px 12px",
+                          borderRadius: "5px",
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Yes (All)
+                      </button>
+
+                      <button
+                        onClick={handleDeselectAll}
+                        style={{
+                          background: "#475569",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "6px 12px",
+                          borderRadius: "5px",
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          cursor: "pointer"
+                        }}
+                      >
+                        No (None)
+                      </button>
+
+                      {/* Delete Action Button */}
+                      <button
+                        onClick={() => {
+                          if (selectedCount === 0) {
+                            alert("No bills selected for deletion. Mark Y on the bills you wish to delete.");
+                            return;
+                          }
+                          setSbdConfirmModal(true);
+                        }}
+                        style={{
+                          background: "#ef4444",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "6px 16px",
+                          borderRadius: "5px",
+                          fontSize: "12px",
+                          fontWeight: "800",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: "0 2px 6px rgba(239, 68, 68, 0.4)"
+                        }}
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4 KPI Summary Cards */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(4, 1fr)",
+                      gap: "12px",
+                      padding: "12px 20px",
+                      background: "#090d16",
+                      borderBottom: "1px solid #1e293b",
+                      flexShrink: 0
+                    }}
+                  >
+                    <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
+                      <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Eligible Cash Bills</div>
+                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#60a5fa", marginTop: "2px" }}>{eligibleBills.length}</div>
+                    </div>
+
+                    <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
+                      <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Selected For Deletion</div>
+                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#ef4444", marginTop: "2px" }}>{selectedCount} / {eligibleBills.length}</div>
+                    </div>
+
+                    <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
+                      <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Selected Total Value</div>
+                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#f59e0b", marginTop: "2px" }}>₹{selectedTotalAmt.toFixed(2)}</div>
+                    </div>
+
+                    <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
+                      <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Stock Units to Restore</div>
+                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#34d399", marginTop: "2px" }}>{totalUnitsToRestore} Units</div>
+                    </div>
+                  </div>
+
+                  {/* Main 9-Column Table */}
+                  <div style={{ flex: 1, overflow: "auto", padding: "0 20px 20px 20px" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", marginTop: "12px" }}>
+                      <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
+                        <tr style={{ background: "#1e293b", borderBottom: "2px solid #475569", color: "#cbd5e1" }}>
+                          <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>SrNo</th>
+                          <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>Bill No</th>
+                          <th style={{ padding: "10px 10px", textAlign: "left", width: "95px" }}>Date</th>
+                          <th style={{ padding: "10px 10px", textAlign: "left", width: "85px" }}>Type</th>
+                          <th style={{ padding: "10px 12px", textAlign: "left" }}>Customer Name</th>
+                          <th style={{ padding: "10px 10px", textAlign: "right", width: "100px" }}>Vat/GST Rs</th>
+                          <th style={{ padding: "10px 12px", textAlign: "right", width: "120px" }}>Amount</th>
+                          <th style={{ padding: "10px 10px", textAlign: "left", width: "100px" }}>User</th>
+                          <th style={{ padding: "10px 8px", textAlign: "center", width: "65px" }}>Y/N</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {eligibleBills.length === 0 ? (
+                          <tr>
+                            <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+                              No cash sales bills found matching the selected period and amount criteria.
+                            </td>
+                          </tr>
+                        ) : (
+                          eligibleBills.map((bill: any, idx: number) => {
+                            const isSelected = !!sbdSelectedMap[bill._id];
+                            return (
+                              <tr
+                                key={bill._id}
+                                onClick={() => handleToggleRow(bill._id)}
+                                style={{
+                                  borderBottom: "1px solid #1e293b",
+                                  background: isSelected ? "rgba(239, 68, 68, 0.15)" : idx % 2 === 0 ? "#0f172a" : "#141e33",
+                                  cursor: "pointer",
+                                  transition: "background 0.15s ease"
+                                }}
+                              >
+                                <td style={{ padding: "8px", textAlign: "center", color: "#64748b", fontWeight: "600" }}>
+                                  {idx + 1}
+                                </td>
+                                <td style={{ padding: "8px 10px", fontWeight: "700", color: "#60a5fa" }}>
+                                  {bill._billNo}
+                                </td>
+                                <td style={{ padding: "8px 10px", color: "#cbd5e1" }}>
+                                  {bill._date}
+                                </td>
+                                <td style={{ padding: "8px 10px" }}>
+                                  <span
+                                    style={{
+                                      padding: "2px 8px",
+                                      borderRadius: "4px",
+                                      fontSize: "10px",
+                                      fontWeight: "700",
+                                      background: "#064e3b",
+                                      color: "#6ee7b7"
+                                    }}
+                                  >
+                                    Cash
+                                  </span>
+                                </td>
+                                <td style={{ padding: "8px 12px", color: "#ffffff", fontWeight: "500" }}>
+                                  {bill._customerName}
+                                </td>
+                                <td style={{ padding: "8px 10px", textAlign: "right", color: "#fbbf24", fontFamily: "monospace" }}>
+                                  ₹{bill._gst.toFixed(2)}
+                                </td>
+                                <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: "700", color: "#34d399", fontFamily: "monospace", fontSize: "13px" }}>
+                                  ₹{bill._amount.toFixed(2)}
+                                </td>
+                                <td style={{ padding: "8px 10px", color: "#94a3b8" }}>
+                                  {bill._user}
+                                </td>
+                                <td style={{ padding: "8px", textAlign: "center" }}>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleRow(bill._id);
+                                    }}
+                                    style={{
+                                      background: isSelected ? "#ef4444" : "#334155",
+                                      color: "#ffffff",
+                                      border: "none",
+                                      borderRadius: "4px",
+                                      padding: "2px 8px",
+                                      fontSize: "11px",
+                                      fontWeight: "800",
+                                      cursor: "pointer"
+                                    }}
+                                  >
+                                    {isSelected ? "Y" : "N"}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {/* ─── TAB 2: SALES BILL RENUMBERING ─── */}
+              {sbdActiveTab === "renumber" && (
+                <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
+                  <div style={{ maxWidth: "750px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+                    <div style={{ background: "#1e293b", padding: "20px", borderRadius: "10px", border: "1px solid #334155" }}>
+                      <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff", marginBottom: "6px" }}>
+                        Sequential Sales Bill Renumbering Configuration
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#94a3b8", lineHeight: "1.5" }}>
+                        After deleting sales bills, gaps appear in the invoice sequence. This utility re-sequences all existing sales bills consecutively by date.
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginTop: "20px" }}>
+                        <div>
+                          <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                            Invoice Prefix:
+                          </label>
+                          <input
+                            type="text"
+                            value={sbdRenumberPrefix}
+                            onChange={(e) => setSbdRenumberPrefix(e.target.value)}
+                            placeholder="e.g. INV-"
+                            style={{
+                              width: "100%",
+                              background: "#0f172a",
+                              border: "1px solid #475569",
+                              color: "#ffffff",
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                            Starting Number:
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={sbdRenumberStart}
+                            onChange={(e) => setSbdRenumberStart(Number(e.target.value) || 1)}
+                            style={{
+                              width: "100%",
+                              background: "#0f172a",
+                              border: "1px solid #475569",
+                              color: "#ffffff",
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                            Zero Padding Digits:
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="8"
+                            value={sbdRenumberDigits}
+                            onChange={(e) => setSbdRenumberDigits(Number(e.target.value) || 4)}
+                            style={{
+                              width: "100%",
+                              background: "#0f172a",
+                              border: "1px solid #475569",
+                              color: "#ffffff",
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: "20px",
+                          padding: "14px",
+                          background: "#0f172a",
+                          borderRadius: "8px",
+                          border: "1px solid #334155",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between"
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: "11px", color: "#94a3b8", textTransform: "uppercase", fontWeight: "700" }}>
+                            Sample Renumbered Bill Number:
+                          </div>
+                          <div style={{ fontSize: "18px", fontWeight: "800", color: "#38bdf8", marginTop: "2px" }}>
+                            {`${sbdRenumberPrefix}${String(sbdRenumberStart).padStart(sbdRenumberDigits, '0')}`}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: "11px", color: "#94a3b8", textTransform: "uppercase", fontWeight: "700" }}>
+                            Total Invoices to Sequence:
+                          </div>
+                          <div style={{ fontSize: "18px", fontWeight: "800", color: "#a78bfa", marginTop: "2px" }}>
+                            {(salesBills || []).length} Invoices
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                        <button
+                          onClick={() => setSbdRenumberConfirm(true)}
+                          style={{
+                            background: "#2563eb",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "6px",
+                            padding: "10px 20px",
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 8px rgba(37, 99, 235, 0.4)"
+                          }}
+                        >
+                          Execute Renumbering
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirmation Modal for Batch Delete */}
+              {sbdConfirmModal && (
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 100000,
+                    background: "rgba(0, 0, 0, 0.8)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backdropFilter: "blur(4px)"
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "#1e293b",
+                      border: "1px solid #ef4444",
+                      borderRadius: "10px",
+                      width: "480px",
+                      maxWidth: "95vw",
+                      overflow: "hidden",
+                      boxShadow: "0 25px 50px -12px rgba(239, 68, 68, 0.3)"
+                    }}
+                  >
+                    <div style={{ padding: "16px 20px", background: "#450a0a", borderBottom: "1px solid #ef4444", display: "flex", alignItems: "center", gap: "10px" }}>
+                      <AlertCircle size={20} color="#fca5a5" />
+                      <span style={{ fontSize: "15px", fontWeight: "800", color: "#ffffff" }}>
+                        Confirm Permanent Sales Bill Deletion
+                      </span>
+                    </div>
+
+                    <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px", color: "#e2e8f0" }}>
+                      <p style={{ margin: 0 }}>
+                        Are you sure you want to permanently delete <strong>{selectedCount}</strong> sales bills totaling <strong style={{ color: "#34d399" }}>₹{selectedTotalAmt.toFixed(2)}</strong>?
+                      </p>
+                      <div style={{ background: "#0f172a", padding: "10px 14px", borderRadius: "6px", border: "1px solid #334155", fontSize: "12px" }}>
+                        <div style={{ color: "#38bdf8", fontWeight: "700" }}>✓ Inventory Auto-Restoration:</div>
+                        <div style={{ color: "#94a3b8", marginTop: "4px" }}>
+                          Approximately <strong>{totalUnitsToRestore} medicine units</strong> will be returned to their respective batch stock.
+                        </div>
+                      </div>
+                      <p style={{ margin: 0, color: "#f87171", fontSize: "12px" }}>
+                        ⚠️ This action cannot be undone directly. A supervisor audit log entry will be permanently recorded.
+                      </p>
+                    </div>
+
+                    <div style={{ padding: "12px 20px", background: "#0f172a", borderTop: "1px solid #334155", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                      <button
+                        onClick={() => setSbdConfirmModal(false)}
+                        style={{
+                          background: "#334155",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "8px 16px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleExecuteDelete}
+                        style={{
+                          background: "#ef4444",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "8px 18px",
+                          fontSize: "12px",
+                          fontWeight: "800",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 8px rgba(239, 68, 68, 0.4)"
+                        }}
+                      >
+                        Confirm &amp; Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirmation Modal for Renumbering */}
+              {sbdRenumberConfirm && (
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 100000,
+                    background: "rgba(0, 0, 0, 0.8)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backdropFilter: "blur(4px)"
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "#1e293b",
+                      border: "1px solid #3b82f6",
+                      borderRadius: "10px",
+                      width: "480px",
+                      maxWidth: "95vw",
+                      overflow: "hidden",
+                      boxShadow: "0 25px 50px -12px rgba(59, 130, 246, 0.3)"
+                    }}
+                  >
+                    <div style={{ padding: "16px 20px", background: "#1e3a8a", borderBottom: "1px solid #3b82f6", display: "flex", alignItems: "center", gap: "10px" }}>
+                      <TrendingUp size={20} color="#93c5fd" />
+                      <span style={{ fontSize: "15px", fontWeight: "800", color: "#ffffff" }}>
+                        Confirm Consecutive Renumbering
+                      </span>
+                    </div>
+
+                    <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px", color: "#e2e8f0" }}>
+                      <p style={{ margin: 0 }}>
+                        All <strong>{(salesBills || []).length}</strong> sales invoices will be sorted by date and renumbered sequentially starting from <strong style={{ color: "#38bdf8" }}>{`${sbdRenumberPrefix}${String(sbdRenumberStart).padStart(sbdRenumberDigits, '0')}`}</strong>.
+                      </p>
+                      <p style={{ margin: 0, color: "#fcd34d", fontSize: "12px" }}>
+                        Please ensure you have printed or archived any historical reports if old invoice numbers are required.
+                      </p>
+                    </div>
+
+                    <div style={{ padding: "12px 20px", background: "#0f172a", borderTop: "1px solid #334155", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                      <button
+                        onClick={() => setSbdRenumberConfirm(false)}
+                        style={{
+                          background: "#334155",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "8px 16px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleExecuteRenumbering}
+                        style={{
+                          background: "#2563eb",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "8px 18px",
+                          fontSize: "12px",
+                          fontWeight: "800",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Confirm Renumbering
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
 
       </div>
     </div>
