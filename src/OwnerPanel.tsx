@@ -1127,6 +1127,50 @@ export default function OwnerPanel() {
   const [showLabelModal, setShowLabelModal] = useState(false);
   const [labelSupplier, setLabelSupplier] = useState(null);
 
+  // ═════════════════════════════════════════════════════════════
+  // DRUG GROUP MASTER STATES (Theme matching Inventory / Image 2)
+  // ═════════════════════════════════════════════════════════════
+  const defaultDrugGroupForm = {
+    id: "",
+    srNo: 1,
+    code: "",
+    name: "",
+    onlyStockProduct: false,
+    contents: "",
+    remarks: "",
+    fileAttachment: ""
+  };
+
+  const [drugGroups, setDrugGroups] = useState(() => {
+    try {
+      const stored = localStorage.getItem("store_drug_groups");
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    // Seed from unique drug groups in items if available
+    const itemGroups = [...new Set((items || []).map(i => i.drugGroup?.trim()).filter(Boolean))];
+    if (itemGroups.length > 0) {
+      return itemGroups.map((gName, idx) => ({
+        ...defaultDrugGroupForm,
+        id: uid(),
+        srNo: idx + 1,
+        code: gName.substring(0, 4).toUpperCase(),
+        name: gName.toUpperCase()
+      }));
+    }
+    return [];
+  });
+
+  const [drugGroupForm, setDrugGroupForm] = useState(defaultDrugGroupForm);
+  const [showDrugGroupForm, setShowDrugGroupForm] = useState(false);
+  const [editingDrugGroup, setEditingDrugGroup] = useState(null);
+  const [drugGroupSearch, setDrugGroupSearch] = useState("");
+  const [drugGroupSearchDropdown, setDrugGroupSearchDropdown] = useState(false);
+  const [drugGroupSearchHighlight, setDrugGroupSearchHighlight] = useState(0);
+  const [onlyStockFilter, setOnlyStockFilter] = useState(false);
+  const [drugGroupSortBy, setDrugGroupSortBy] = useState("name");
+  const [selectedGroupForItemsModal, setSelectedGroupForItemsModal] = useState(null);
+
+
 
 
   const [pbdActiveTab, setPbdActiveTab] = useState<"delete" | "renumber">("delete");
@@ -1268,7 +1312,7 @@ export default function OwnerPanel() {
                 {label:"Account Master", action:()=>{setActiveSection("masters");setOwnerSubTab("accounts");setActiveMenu(null);}},
                 {label:"Company Master", action:()=>{setActiveSection("masters");setOwnerSubTab("companies");setActiveMenu(null);}},
                 {label:"Supplier Master", action:()=>{setActiveSection("masters");setOwnerSubTab("suppliers");setActiveMenu(null);}},
-                {label:"Drug Group Master", action:()=>{setActiveSection("inventory");setActiveMenu(null);}},
+                {label:"Drug Group Master", action:()=>{setActiveSection("masters");setOwnerSubTab("drug_groups");setActiveMenu(null);}},
                 {label:"Item Master", action:()=>{setActiveSection("inventory");setActiveMenu(null);}},
                 {label:"Kit Master", action:()=>{setShowWipModal("Kit Master");}},
                 {label:"Doctor Master", action:()=>{setActiveSection("masters");setOwnerSubTab("doctors");setActiveMenu(null);}},
@@ -3584,7 +3628,7 @@ const pending = [];
         {isOwner && activeSection === "masters" && (
           <>
             <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
-              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "👥 Customers" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
+              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "👥 Customers" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
             </div>
@@ -6757,6 +6801,722 @@ const pending = [];
                 </div>
               );
             })()}
+
+            {/* ═════════════════════════════════════════════════════════════
+                DRUG GROUP MASTER (Matching Inventory Page Layout / Image 2)
+            ═════════════════════════════════════════════════════════════ */}
+            {ownerSubTab === "drug_groups" && (() => {
+              // Filtering & Sorting
+              const q = (drugGroupSearch || "").trim().toLowerCase();
+              let filtered = (drugGroups || []).filter(dg => {
+                const linkedItems = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === (dg.name || "").toUpperCase());
+                const totalStock = linkedItems.reduce((acc, it) => acc + (Number(it.stock) || 0), 0);
+                if (onlyStockFilter && totalStock <= 0) return false;
+                if (!q) return true;
+                return (
+                  (dg.name || "").toLowerCase().includes(q) ||
+                  (dg.code || "").toLowerCase().includes(q) ||
+                  (dg.contents || "").toLowerCase().includes(q) ||
+                  (dg.remarks || "").toLowerCase().includes(q) ||
+                  String(dg.srNo || "").includes(q)
+                );
+              });
+
+              if (drugGroupSortBy === "name") {
+                filtered = [...filtered].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+              } else if (drugGroupSortBy === "code") {
+                filtered = [...filtered].sort((a, b) => (a.code || "").localeCompare(b.code || ""));
+              } else if (drugGroupSortBy === "sr_desc") {
+                filtered = [...filtered].sort((a, b) => Number(b.srNo || 0) - Number(a.srNo || 0));
+              } else if (drugGroupSortBy === "items_desc") {
+                filtered = [...filtered].sort((a, b) => {
+                  const countA = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === (a.name || "").toUpperCase()).length;
+                  const countB = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === (b.name || "").toUpperCase()).length;
+                  return countB - countA;
+                });
+              }
+
+              // Search dropdown results (max 10)
+              const searchDropdownResults = q ? (drugGroups || []).filter(dg =>
+                (dg.name || "").toLowerCase().includes(q) ||
+                (dg.code || "").toLowerCase().includes(q) ||
+                (dg.contents || "").toLowerCase().includes(q)
+              ).slice(0, 10) : [];
+
+              // Open Form Handler
+              const handleOpenDrugGroupForm = (dg = null) => {
+                if (dg) {
+                  setEditingDrugGroup(dg);
+                  setDrugGroupForm({ ...defaultDrugGroupForm, ...dg });
+                } else {
+                  setEditingDrugGroup(null);
+                  const nextSr = drugGroups.length > 0 ? Math.max(...drugGroups.map(d => Number(d.srNo || 0))) + 1 : 1;
+                  setDrugGroupForm({ ...defaultDrugGroupForm, id: uid(), srNo: nextSr });
+                }
+                setShowDrugGroupForm(true);
+              };
+
+              // Save Drug Group Handler
+              const handleSaveDrugGroup = () => {
+                if (!drugGroupForm.name || !drugGroupForm.name.trim()) {
+                  showToast("Drug Group Name is required!", "error");
+                  return;
+                }
+
+                const dgId = drugGroupForm.id || uid();
+                const dgData = {
+                  ...drugGroupForm,
+                  id: dgId,
+                  name: drugGroupForm.name.trim().toUpperCase(),
+                  code: (drugGroupForm.code || drugGroupForm.name.substring(0, 4)).trim().toUpperCase(),
+                  srNo: Number(drugGroupForm.srNo) || (drugGroups.length + 1),
+                  updatedAt: new Date().toISOString()
+                };
+
+                let updatedList;
+                if (editingDrugGroup) {
+                  // If name changed, update items matching old name
+                  if (editingDrugGroup.name !== dgData.name) {
+                    const oldName = editingDrugGroup.name.toUpperCase();
+                    const updatedItems = (items || []).map(i => {
+                      if ((i.drugGroup || "").toUpperCase() === oldName) {
+                        return { ...i, drugGroup: dgData.name };
+                      }
+                      return i;
+                    });
+                    saveItems(updatedItems);
+                  }
+                  updatedList = drugGroups.map(d => d.id === editingDrugGroup.id ? dgData : d);
+                } else {
+                  updatedList = [...drugGroups, dgData];
+                }
+
+                setDrugGroups(updatedList);
+                try {
+                  localStorage.setItem("store_drug_groups", JSON.stringify(updatedList));
+                } catch (_) {}
+
+                showToast(editingDrugGroup ? "Drug Group updated successfully!" : "Drug Group created successfully!");
+                setShowDrugGroupForm(false);
+                setEditingDrugGroup(null);
+              };
+
+              // Bulk Update Items with this Group Name
+              const handleUpdateGroupItems = () => {
+                if (!drugGroupForm.name || !drugGroupForm.name.trim()) {
+                  showToast("Please enter a valid Drug Group name first", "error");
+                  return;
+                }
+
+                const groupName = drugGroupForm.name.trim().toUpperCase();
+                const matchingCount = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === groupName).length;
+
+                showToast(`✅ Verified: ${matchingCount} inventory items linked with ${groupName}`);
+              };
+
+              // Delete Drug Group Handler
+              const handleDeleteDrugGroup = (dg) => {
+                const targetName = dg.name;
+                const linkedCount = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === targetName.toUpperCase()).length;
+
+                showConfirm(`Are you sure you want to delete drug group "${targetName}" (${linkedCount} linked medicines)?`, () => {
+                  const nextList = drugGroups.filter(d => d.id !== dg.id);
+                  setDrugGroups(nextList);
+                  try {
+                    localStorage.setItem("store_drug_groups", JSON.stringify(nextList));
+                  } catch (_) {}
+
+                  if (editingDrugGroup?.id === dg.id) {
+                    setShowDrugGroupForm(false);
+                    setEditingDrugGroup(null);
+                  }
+                  showToast(`Drug group "${targetName}" deleted successfully!`);
+                });
+              };
+
+              // Record Navigation (< Prev & Next >)
+              const handleNavigateDrugGroup = (direction) => {
+                if (drugGroups.length === 0) return;
+                const currentIdx = editingDrugGroup ? drugGroups.findIndex(d => d.id === editingDrugGroup.id) : 0;
+                let nextIdx = direction === "prev" ? currentIdx - 1 : currentIdx + 1;
+                if (nextIdx < 0) nextIdx = drugGroups.length - 1;
+                if (nextIdx >= drugGroups.length) nextIdx = 0;
+                const target = drugGroups[nextIdx];
+                setEditingDrugGroup(target);
+                setDrugGroupForm({ ...defaultDrugGroupForm, ...target });
+              };
+
+              // Print Formulary Register
+              const handlePrintFormulary = () => {
+                const printWindow = window.open("", "_blank");
+                if (!printWindow) return;
+                const rows = filtered.map((dg, i) => {
+                  const linkedItems = (items || []).filter(it => (it.drugGroup || "").toUpperCase() === (dg.name || "").toUpperCase());
+                  const namesList = linkedItems.map(it => `${it.name} (${it.stock || 0} ${it.unit || ''})`).join(", ") || "None";
+                  return `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                      <td style="padding: 6px; text-align: center;">${i + 1}</td>
+                      <td style="padding: 6px; text-align: center; font-weight: bold;">${dg.code || '-'}</td>
+                      <td style="padding: 6px; font-weight: bold;">${dg.name}</td>
+                      <td style="padding: 6px; font-size: 11px;">${dg.contents || '-'}</td>
+                      <td style="padding: 6px; font-size: 11px;">${namesList}</td>
+                      <td style="padding: 6px; text-align: center; font-weight: bold;">${linkedItems.length}</td>
+                      <td style="padding: 6px; font-size: 11px;">${dg.remarks || '-'}</td>
+                    </tr>
+                  `;
+                }).join("");
+
+                printWindow.document.write(`
+                  <html>
+                    <head>
+                      <title>Drug Group Formulary - Shiv Dhara Medical Store</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; color: #111; }
+                        h2, h4 { margin: 0 0 6px 0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th { background: #0f172a; color: white; padding: 8px 6px; text-align: left; }
+                      </style>
+                    </head>
+                    <body>
+                      <h2>Shiv Dhara Medical Store</h2>
+                      <h4>Generic Drug Group Master Formulary (Total: ${filtered.length})</h4>
+                      <p style="font-size: 11px; color: #555;">Generated: ${new Date().toLocaleString()}</p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style="width: 35px; text-align: center;">#</th>
+                            <th style="width: 55px; text-align: center;">Code</th>
+                            <th>Generic / Molecule Name</th>
+                            <th>Contents & Formulation</th>
+                            <th>Linked Brands / Substitutes</th>
+                            <th style="width: 50px; text-align: center;">Brands</th>
+                            <th>Remarks & Precautions</th>
+                          </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                      </table>
+                    </body>
+                  </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => printWindow.print(), 300);
+              };
+
+              return (
+                <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
+                  {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "26px" }}>🧪</span>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Drug Group Master</h2>
+                      <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>Generic Formulations, Active Molecules & Brand Substitutes</p>
+                    </div>
+
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center" }}>
+                      <button
+                        onClick={handlePrintFormulary}
+                        style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Printer size={13} /> Print Formulary
+                      </button>
+                      <button
+                        onClick={() => handleOpenDrugGroupForm(null)}
+                        style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Plus size={13} /> Add Drug Group
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ─── SEARCH & FILTER BAR (Inventory Style / Image 2) ─── */}
+                  <div style={{ background: "white", borderRadius: "12px", padding: "14px 16px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                    <div style={{ flex: 1, minWidth: "220px", position: "relative" }}>
+                      <Search size={13} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                      <input
+                        placeholder="Search Generic Name, Code or Composition... + Enter"
+                        value={drugGroupSearch}
+                        onChange={e => {
+                          setDrugGroupSearch(e.target.value);
+                          setDrugGroupSearchDropdown(true);
+                          setDrugGroupSearchHighlight(0);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setDrugGroupSearchHighlight(prev => Math.min(prev + 1, searchDropdownResults.length - 1));
+                          } else if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setDrugGroupSearchHighlight(prev => Math.max(prev - 1, 0));
+                          } else if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (searchDropdownResults.length > 0 && drugGroupSearchDropdown) {
+                              handleOpenDrugGroupForm(searchDropdownResults[drugGroupSearchHighlight]);
+                              setDrugGroupSearchDropdown(false);
+                              setDrugGroupSearch("");
+                            } else if (q && filtered.length > 0) {
+                              handleOpenDrugGroupForm(filtered[0]);
+                              setDrugGroupSearchDropdown(false);
+                              setDrugGroupSearch("");
+                            } else if (q) {
+                              showToast("No drug group found matching: " + drugGroupSearch, "error");
+                            }
+                          }
+                        }}
+                        onFocus={() => setDrugGroupSearchDropdown(true)}
+                        onBlur={() => setTimeout(() => setDrugGroupSearchDropdown(false), 200)}
+                        style={{ ...inp, paddingLeft: "30px", width: "100%", height: "36px" }}
+                      />
+
+                      {/* Search Dropdown Popup */}
+                      {drugGroupSearchDropdown && searchDropdownResults.length > 0 && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden", maxHeight: "280px", overflowY: "auto" }}>
+                          {searchDropdownResults.map((dg, idx) => {
+                            const count = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === (dg.name || "").toUpperCase()).length;
+                            return (
+                              <div
+                                key={dg.id}
+                                onClick={() => {
+                                  handleOpenDrugGroupForm(dg);
+                                  setDrugGroupSearchDropdown(false);
+                                  setDrugGroupSearch("");
+                                }}
+                                onMouseEnter={() => setDrugGroupSearchHighlight(idx)}
+                                style={{
+                                  padding: "8px 12px",
+                                  cursor: "pointer",
+                                  background: idx === drugGroupSearchHighlight ? "#f1f5f9" : "white",
+                                  borderBottom: "1px solid #f1f5f9",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center"
+                                }}
+                              >
+                                <div>
+                                  <div style={{ fontSize: "12px", fontWeight: "700", color: "#1e293b" }}>
+                                    {dg.name} <span style={{ color: "#3b82f6", fontSize: "11px" }}>({dg.code})</span>
+                                  </div>
+                                  <div style={{ fontSize: "10px", color: "#64748b" }}>
+                                    {dg.contents ? dg.contents.substring(0, 50) + "..." : "No composition entered"}
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: "11px", fontWeight: "700", color: "#0f766e", background: "#f0fdf4", padding: "2px 6px", borderRadius: "4px" }}>
+                                  {count} Medicines
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "600", color: "#475569", cursor: "pointer", userSelect: "none" }}>
+                      <input
+                        type="checkbox"
+                        checked={onlyStockFilter}
+                        onChange={e => setOnlyStockFilter(e.target.checked)}
+                      />
+                      Only Stock Products
+                    </label>
+
+                    <select
+                      value={drugGroupSortBy}
+                      onChange={e => setDrugGroupSortBy(e.target.value)}
+                      style={{ ...inp, width: "auto", height: "36px" }}
+                    >
+                      <option value="name">Name A-Z</option>
+                      <option value="code">Code A-Z</option>
+                      <option value="items_desc">Medicines Count ↓</option>
+                      <option value="sr_desc">Sr No ↓</option>
+                    </select>
+                  </div>
+
+                  {/* ─── ADD / EDIT DRUG GROUP CARD (Theme: Add Item in Image 2 + Image 5 Screenshot) ─── */}
+                  {showDrugGroupForm && (
+                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                      {/* Form Header */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "18px" }}>🧪</span>
+                          <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
+                            {editingDrugGroup ? `Edit Drug Group: ${editingDrugGroup.name}` : "Add New Drug Group"}
+                          </h3>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: "4px" }}>
+                            Sr. No: {drugGroupForm.srNo || "Auto"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => { setShowDrugGroupForm(false); setEditingDrugGroup(null); }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                      {/* Main Form Fields Grid */}
+                      <div style={{ display: "grid", gridTemplateColumns: "140px 180px 1fr 180px", gap: "12px", marginBottom: "14px", alignItems: "flex-end" }}>
+                        {/* Sr. No (Pink Accent Box from Legacy Screenshot) */}
+                        <div>
+                          <label style={lbl}>Sr No. :</label>
+                          <input
+                            type="number"
+                            value={drugGroupForm.srNo || ""}
+                            onChange={e => setDrugGroupForm({ ...drugGroupForm, srNo: e.target.value })}
+                            placeholder="Auto"
+                            style={{ ...inp, background: "#fce7f3", border: "1px solid #f472b6", fontWeight: "800", color: "#831843" }}
+                          />
+                        </div>
+
+                        {/* Code */}
+                        <div>
+                          <label style={lbl}>Code :</label>
+                          <input
+                            value={drugGroupForm.code || ""}
+                            onChange={e => setDrugGroupForm({ ...drugGroupForm, code: e.target.value.toUpperCase() })}
+                            placeholder="e.g. PARA, AMOX"
+                            maxLength={10}
+                            style={{ ...inp, textTransform: "uppercase", fontWeight: "800", color: "#1e3a8a" }}
+                          />
+                        </div>
+
+                        {/* Name */}
+                        <div>
+                          <label style={lbl}>Generic / Drug Group Name * :</label>
+                          <input
+                            value={drugGroupForm.name || ""}
+                            onChange={e => setDrugGroupForm({ ...drugGroupForm, name: e.target.value.toUpperCase() })}
+                            placeholder="e.g. PARACETAMOL 650 MG or AMOXICILLIN + CLAVULANIC ACID"
+                            style={{ ...inp, textTransform: "uppercase", fontWeight: "800" }}
+                          />
+                        </div>
+
+                        {/* Only Stock Product Checkbox */}
+                        <div style={{ paddingBottom: "8px" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none", fontWeight: "600", color: "#334155" }}>
+                            <input
+                              type="checkbox"
+                              checked={!!drugGroupForm.onlyStockProduct}
+                              onChange={e => setDrugGroupForm({ ...drugGroupForm, onlyStockProduct: e.target.checked })}
+                            />
+                            Only Stock Product
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Contents (Active Formulation) */}
+                      <div style={{ marginBottom: "12px" }}>
+                        <label style={lbl}>Contents : (Active Ingredients & Composition)</label>
+                        <textarea
+                          value={drugGroupForm.contents || ""}
+                          onChange={e => setDrugGroupForm({ ...drugGroupForm, contents: e.target.value })}
+                          placeholder="Detailed formulation, therapeutic class, standard strength, e.g. Paracetamol IP 650mg, Analgesic & Antipyretic..."
+                          style={{ ...inp, height: "70px", resize: "vertical" }}
+                        />
+                      </div>
+
+                      {/* Remarks */}
+                      <div style={{ marginBottom: "16px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <label style={lbl}>Remarks : (Clinical Guidelines & Precautions)</label>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const fn = prompt("Enter reference file path or document link:", drugGroupForm.fileAttachment || "");
+                                if (fn !== null) setDrugGroupForm({ ...drugGroupForm, fileAttachment: fn });
+                              }}
+                              style={{ ...btn("#334155"), padding: "2px 8px", fontSize: "10px" }}
+                            >
+                              📎 File Attachment
+                            </button>
+                            {drugGroupForm.fileAttachment && (
+                              <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: "600" }}>
+                                Attached: {drugGroupForm.fileAttachment}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <textarea
+                          value={drugGroupForm.remarks || ""}
+                          onChange={e => setDrugGroupForm({ ...drugGroupForm, remarks: e.target.value })}
+                          placeholder="Dosage instructions, contraindications, pregnancy warnings, schedule classification..."
+                          style={{ ...inp, height: "65px", resize: "vertical" }}
+                        />
+                      </div>
+
+                      {/* Live Linked Inventory Medicines (Generic Substitutes) */}
+                      {editingDrugGroup && (
+                        <div style={{ background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", padding: "12px", marginBottom: "16px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                            <span style={{ fontSize: "12px", fontWeight: "800", color: "#1e3a8a" }}>
+                              💊 Linked Inventory Medicines (Generic Substitutes):
+                            </span>
+                            <span style={{ fontSize: "11px", color: "#64748b" }}>
+                              Total Brands in Stock: {(items || []).filter(i => (i.drugGroup || "").toUpperCase() === (editingDrugGroup.name || "").toUpperCase()).length}
+                            </span>
+                          </div>
+
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                            {(() => {
+                              const linked = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === (editingDrugGroup.name || "").toUpperCase());
+                              if (linked.length === 0) {
+                                return <span style={{ fontSize: "11px", color: "#94a3b8", fontStyle: "italic" }}>No branded medicines in inventory mapped to this group yet.</span>;
+                              }
+                              return linked.map(it => (
+                                <div key={it.id} style={{ background: "white", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "4px 8px", fontSize: "11px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <span style={{ fontWeight: "700", color: "#0f172a" }}>{it.name}</span>
+                                  <span style={{ color: "#64748b", fontSize: "10px" }}>({it.company || "Generic"})</span>
+                                  <span style={{ background: (Number(it.stock) || 0) > 0 ? "#dcfce7" : "#fee2e2", color: (Number(it.stock) || 0) > 0 ? "#166534" : "#991b1b", padding: "1px 5px", borderRadius: "3px", fontSize: "10px", fontWeight: "700" }}>
+                                    {it.stock || 0} {it.unit || ""}
+                                  </span>
+                                  <span style={{ color: "#2563eb", fontWeight: "700", fontSize: "10px" }}>₹{it.price || it.mrp || 0}</span>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ─── FORM ACTION BUTTONS (Matching Legacy Controls & Image 2 Theme) ─── */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateDrugGroup("prev")}
+                            style={{ ...btn("#475569"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Previous Group"
+                          >
+                            <ChevronLeft size={14} /> Prev
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateDrugGroup("next")}
+                            style={{ ...btn("#475569"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Next Group"
+                          >
+                            Next <ChevronRight size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleUpdateGroupItems}
+                            style={{ ...btn("#0284c7"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Verify and update inventory items with this group"
+                          >
+                            Update Group
+                          </button>
+
+                          {editingDrugGroup && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDrugGroup(editingDrugGroup)}
+                              style={{ ...btn("#dc2626"), padding: "7px 12px", fontSize: "12px" }}
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={() => { setShowDrugGroupForm(false); setEditingDrugGroup(null); }}
+                            style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), padding: "7px 14px", fontSize: "12px" }}
+                          >
+                            <X size={13} /> Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveDrugGroup}
+                            style={{ ...btn("var(--color-primary)"), padding: "7px 18px", fontSize: "12px", fontWeight: "800" }}
+                          >
+                            <CheckCircle size={14} /> {editingDrugGroup ? "Update Drug Group" : "Save Drug Group"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── DRUG GROUPS DIRECTORY TABLE (Inventory Style / Image 2) ─── */}
+                  <div style={{ background: "white", borderRadius: "12px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b" }}>
+                        Registered Generic Drug Groups ({filtered.length})
+                      </span>
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>
+                        Click any generic group to edit composition, substitute brands or therapeutic notes
+                      </span>
+                    </div>
+
+                    {filtered.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
+                        <div style={{ fontSize: "40px", opacity: 0.6 }}>🧪</div>
+                        <p style={{ marginTop: "12px", fontWeight: "700", fontSize: "15px", color: "#334155" }}>
+                          No drug groups found matching your criteria
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#64748b" }}>
+                          Add a new generic formulation or change search keywords.
+                        </p>
+                        <button
+                          onClick={() => handleOpenDrugGroupForm(null)}
+                          style={{ ...btn("var(--color-primary)"), margin: "14px auto 0", fontSize: "12px" }}
+                        >
+                          <Plus size={13} /> Add New Drug Group
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                          <thead>
+                            <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>Sr No</th>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "65px" }}>Code</th>
+                              <th style={{ padding: "10px 12px", textAlign: "left" }}>Generic / Molecule Name</th>
+                              <th style={{ padding: "10px 12px", textAlign: "left", width: "220px" }}>Contents & Strength</th>
+                              <th style={{ padding: "10px 10px", textAlign: "center", width: "110px" }}>Brands in Stock</th>
+                              <th style={{ padding: "10px 12px", textAlign: "left", width: "200px" }}>Remarks / Precautions</th>
+                              <th style={{ padding: "10px 12px", textAlign: "center", width: "120px" }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filtered.map((dg, idx) => {
+                              const linkedItems = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === (dg.name || "").toUpperCase());
+                              const totalStock = linkedItems.reduce((acc, it) => acc + (Number(it.stock) || 0), 0);
+                              return (
+                                <tr
+                                  key={dg.id}
+                                  style={{
+                                    borderBottom: "1px solid #f1f5f9",
+                                    background: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                    transition: "background 0.15s ease"
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
+                                  onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f8fafc"}
+                                >
+                                  <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>
+                                    {dg.srNo || idx + 1}
+                                  </td>
+                                  <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "800", color: "#2563eb", fontFamily: "monospace" }}>
+                                    {dg.code || "DRG"}
+                                  </td>
+                                  <td
+                                    onClick={() => handleOpenDrugGroupForm(dg)}
+                                    style={{ padding: "8px 12px", fontWeight: "800", color: "#1e3a8a", cursor: "pointer" }}
+                                    title="Click to edit drug group"
+                                  >
+                                    {dg.name}
+                                  </td>
+                                  <td style={{ padding: "8px 12px", color: "#475569", fontSize: "11px" }}>
+                                    {dg.contents || "-"}
+                                  </td>
+                                  <td style={{ padding: "8px 10px", textAlign: "center" }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedGroupForItemsModal(dg)}
+                                      style={{
+                                        background: linkedItems.length > 0 ? "#dbeafe" : "#f1f5f9",
+                                        color: linkedItems.length > 0 ? "#1e40af" : "#64748b",
+                                        border: "none",
+                                        padding: "3px 8px",
+                                        borderRadius: "10px",
+                                        fontSize: "11px",
+                                        fontWeight: "700",
+                                        cursor: linkedItems.length > 0 ? "pointer" : "default"
+                                      }}
+                                      title="View linked substitute medicines"
+                                    >
+                                      {linkedItems.length} Brands ({totalStock} Stock)
+                                    </button>
+                                  </td>
+                                  <td style={{ padding: "8px 12px", color: "#64748b", fontSize: "11px" }}>
+                                    {dg.remarks || "-"}
+                                  </td>
+                                  <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                                    <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                                      <button
+                                        onClick={() => handleOpenDrugGroupForm(dg)}
+                                        style={{ ...btn("#2563eb"), padding: "4px 8px", fontSize: "11px" }}
+                                        title="Edit Drug Group"
+                                      >
+                                        <Edit2 size={11} /> Edit
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteDrugGroup(dg)}
+                                        style={{ ...btn("#dc2626"), padding: "4px 6px", fontSize: "11px" }}
+                                        title="Delete Drug Group"
+                                      >
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ─── LINKED MEDICINES (GENERIC SUBSTITUTES) MODAL ─── */}
+                  {selectedGroupForItemsModal && (
+                    <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+                      <div style={{ background: "white", borderRadius: "12px", width: "100%", maxWidth: "600px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+                        <div style={{ padding: "14px 20px", background: "#1e293b", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: "700", fontSize: "14px" }}>
+                            💊 Generic Substitutes: {selectedGroupForItemsModal.name}
+                          </span>
+                          <button onClick={() => setSelectedGroupForItemsModal(null)} style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}>
+                            <X size={16} />
+                          </button>
+                        </div>
+                        <div style={{ padding: "16px", maxHeight: "400px", overflowY: "auto" }}>
+                          {(() => {
+                            const matching = (items || []).filter(i => (i.drugGroup || "").toUpperCase() === (selectedGroupForItemsModal.name || "").toUpperCase());
+                            if (matching.length === 0) {
+                              return <p style={{ textAlign: "center", color: "#64748b", margin: "20px 0" }}>No branded medicines in inventory mapped to this generic group.</p>;
+                            }
+                            return (
+                              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                                <thead>
+                                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
+                                    <th style={{ padding: "8px", textAlign: "left" }}>Brand / Item Name</th>
+                                    <th style={{ padding: "8px", textAlign: "left" }}>Manufacturer</th>
+                                    <th style={{ padding: "8px", textAlign: "center" }}>Stock</th>
+                                    <th style={{ padding: "8px", textAlign: "right" }}>Price / MRP</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {matching.map(it => (
+                                    <tr key={it.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                      <td style={{ padding: "8px", fontWeight: "700", color: "#0f172a" }}>{it.name}</td>
+                                      <td style={{ padding: "8px", color: "#475569" }}>{it.company || "-"}</td>
+                                      <td style={{ padding: "8px", textAlign: "center" }}>
+                                        <span style={{ background: (Number(it.stock) || 0) > 0 ? "#dcfce7" : "#fee2e2", color: (Number(it.stock) || 0) > 0 ? "#166534" : "#991b1b", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "700" }}>
+                                          {it.stock || 0} {it.unit || ""}
+                                        </span>
+                                      </td>
+                                      <td style={{ padding: "8px", textAlign: "right", fontWeight: "700", color: "#2563eb" }}>
+                                        ₹{Number(it.price || it.mrp || 0).toFixed(2)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            );
+                          })()}
+                        </div>
+                        <div style={{ padding: "12px 20px", background: "#f8fafc", display: "flex", justifyContent: "flex-end" }}>
+                          <button onClick={() => setSelectedGroupForItemsModal(null)} style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px" }}>
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
 {/* Doctors */}
             {ownerSubTab === "doctors" && (
               <>
