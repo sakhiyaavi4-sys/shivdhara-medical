@@ -1036,6 +1036,62 @@ export default function OwnerPanel() {
   const [showAccountLedger, setShowAccountLedger] = useState(false);
   const [ledgerAcc, setLedgerAcc] = useState(null);
 
+  // ═════════════════════════════════════════════════════════════
+  // COMPANY MASTER STATES (Theme matching Inventory / Image 2)
+  // ═════════════════════════════════════════════════════════════
+  const defaultCompanyForm = {
+    id: "",
+    srNo: 1,
+    code: "",
+    location: "",
+    name: "",
+    person: "",
+    address: "",
+    area: "",
+    city: "",
+    contact: "",
+    mobile: "",
+    email: "",
+    dlNo: "",
+    remarks: "",
+    relatedSuppliers: [], // array of supplier names
+    status: "active" // "active" | "inactive"
+  };
+
+  const [companies, setCompanies] = useState(() => {
+    try {
+      const stored = localStorage.getItem("store_companies");
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    // Seed from unique company names in items if available
+    const itemComps = [...new Set((items || []).map(i => i.company?.trim()).filter(Boolean))];
+    if (itemComps.length > 0) {
+      return itemComps.map((cName, idx) => ({
+        ...defaultCompanyForm,
+        id: uid(),
+        srNo: idx + 1,
+        code: cName.substring(0, 4).toUpperCase(),
+        name: cName.toUpperCase(),
+        status: "active",
+        relatedSuppliers: []
+      }));
+    }
+    return [];
+  });
+
+  const [companyForm, setCompanyForm] = useState(defaultCompanyForm);
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const [editingCompany, setEditingCompany] = useState(null);
+  const [companySearch, setCompanySearch] = useState("");
+  const [companySearchDropdown, setCompanySearchDropdown] = useState(false);
+  const [companySearchHighlight, setCompanySearchHighlight] = useState(0);
+  const [companyStatusFilter, setCompanyStatusFilter] = useState("All");
+  const [companySortBy, setCompanySortBy] = useState("name");
+  const [deleteWithItems, setDeleteWithItems] = useState(false);
+  const [newSupplierInput, setNewSupplierInput] = useState("");
+  const [supplierFilterText, setSupplierFilterText] = useState("");
+
+
   const [pbdActiveTab, setPbdActiveTab] = useState<"delete" | "renumber">("delete");
   const [pbdFromDate, setPbdFromDate] = useState(() => {
     const d = new Date();
@@ -1173,7 +1229,7 @@ export default function OwnerPanel() {
               ]},
               {id:"master", label:"Master", items:[
                 {label:"Account Master", action:()=>{setActiveSection("masters");setOwnerSubTab("accounts");setActiveMenu(null);}},
-                {label:"Company Master", action:()=>{setActiveSection("masters");setActiveMenu(null);}},
+                {label:"Company Master", action:()=>{setActiveSection("masters");setOwnerSubTab("companies");setActiveMenu(null);}},
                 {label:"Supplier Master", action:()=>{setActiveSection("masters");setOwnerSubTab("suppliers");setActiveMenu(null);}},
                 {label:"Drug Group Master", action:()=>{setActiveSection("inventory");setActiveMenu(null);}},
                 {label:"Item Master", action:()=>{setActiveSection("inventory");setActiveMenu(null);}},
@@ -3491,7 +3547,7 @@ const pending = [];
         {isOwner && activeSection === "masters" && (
           <>
             <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
-              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "👥 Customers" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
+              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "👥 Customers" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
             </div>
@@ -4576,6 +4632,953 @@ const pending = [];
                       </div>
                     </div>
                   )}
+                </div>
+              );
+            })()}
+
+
+            {/* ═════════════════════════════════════════════════════════════
+                COMPANY MASTER (Matching Inventory Page Layout / Image 2)
+            ═════════════════════════════════════════════════════════════ */}
+            {ownerSubTab === "companies" && (() => {
+              // Filtering & Sorting
+              const q = (companySearch || "").trim().toLowerCase();
+              let filtered = (companies || []).filter(c => {
+                if (companyStatusFilter === "active" && c.status === "inactive") return false;
+                if (companyStatusFilter === "inactive" && c.status !== "inactive") return false;
+                if (!q) return true;
+                return (
+                  (c.name || "").toLowerCase().includes(q) ||
+                  (c.code || "").toLowerCase().includes(q) ||
+                  (c.city || "").toLowerCase().includes(q) ||
+                  (c.person || "").toLowerCase().includes(q) ||
+                  (c.mobile || "").includes(q) ||
+                  String(c.srNo || "").includes(q)
+                );
+              });
+
+              if (companySortBy === "name") {
+                filtered = [...filtered].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+              } else if (companySortBy === "code") {
+                filtered = [...filtered].sort((a, b) => (a.code || "").localeCompare(b.code || ""));
+              } else if (companySortBy === "sr_desc") {
+                filtered = [...filtered].sort((a, b) => Number(b.srNo || 0) - Number(a.srNo || 0));
+              } else if (companySortBy === "items_desc") {
+                filtered = [...filtered].sort((a, b) => {
+                  const countA = (items || []).filter(i => (i.company || "").toUpperCase() === (a.name || "").toUpperCase()).length;
+                  const countB = (items || []).filter(i => (i.company || "").toUpperCase() === (b.name || "").toUpperCase()).length;
+                  return countB - countA;
+                });
+              }
+
+              // Search dropdown results (max 10)
+              const searchDropdownResults = q ? (companies || []).filter(c =>
+                (c.name || "").toLowerCase().includes(q) ||
+                (c.code || "").toLowerCase().includes(q) ||
+                (c.city || "").toLowerCase().includes(q)
+              ).slice(0, 10) : [];
+
+              // Open Form Handler
+              const handleOpenCompanyForm = (comp = null) => {
+                if (comp) {
+                  setEditingCompany(comp);
+                  setCompanyForm({ ...defaultCompanyForm, ...comp, relatedSuppliers: comp.relatedSuppliers || [] });
+                } else {
+                  setEditingCompany(null);
+                  const nextSr = companies.length > 0 ? Math.max(...companies.map(c => Number(c.srNo || 0))) + 1 : 1;
+                  setCompanyForm({ ...defaultCompanyForm, id: uid(), srNo: nextSr, relatedSuppliers: [] });
+                }
+                setDeleteWithItems(false);
+                setShowCompanyForm(true);
+              };
+
+              // Save Company Handler
+              const handleSaveCompany = () => {
+                if (!companyForm.name || !companyForm.name.trim()) {
+                  showToast("Company Name is required!", "error");
+                  return;
+                }
+
+                const cId = companyForm.id || uid();
+                const compData = {
+                  ...companyForm,
+                  id: cId,
+                  name: companyForm.name.trim().toUpperCase(),
+                  code: (companyForm.code || companyForm.name.substring(0, 4)).trim().toUpperCase(),
+                  srNo: Number(companyForm.srNo) || (companies.length + 1),
+                  updatedAt: new Date().toISOString()
+                };
+
+                let updatedList;
+                if (editingCompany) {
+                  updatedList = companies.map(c => c.id === editingCompany.id ? compData : c);
+                } else {
+                  updatedList = [...companies, compData];
+                }
+
+                setCompanies(updatedList);
+                try {
+                  localStorage.setItem("store_companies", JSON.stringify(updatedList));
+                } catch (_) {}
+
+                showToast(editingCompany ? "Company updated successfully!" : "Company created successfully!");
+                setShowCompanyForm(false);
+                setEditingCompany(null);
+              };
+
+              // Delete Company Handler
+              const handleDeleteCompany = (comp) => {
+                const targetName = comp.name;
+                const linkedItemsCount = (items || []).filter(i => (i.company || "").toUpperCase() === targetName.toUpperCase()).length;
+                const msg = deleteWithItems && linkedItemsCount > 0
+                  ? `Delete company "${targetName}" AND all ${linkedItemsCount} linked items?`
+                  : `Are you sure you want to delete company "${targetName}"?`;
+
+                showConfirm(msg, () => {
+                  const nextList = companies.filter(c => c.id !== comp.id);
+                  setCompanies(nextList);
+                  try {
+                    localStorage.setItem("store_companies", JSON.stringify(nextList));
+                  } catch (_) {}
+
+                  // If deleteWithItems is checked, also remove matching items
+                  if (deleteWithItems && linkedItemsCount > 0) {
+                    const remainingItems = (items || []).filter(i => (i.company || "").toUpperCase() !== targetName.toUpperCase());
+                    saveItems(remainingItems);
+                    showToast(`Company "${targetName}" and ${linkedItemsCount} items deleted!`);
+                  } else {
+                    showToast(`Company "${targetName}" deleted successfully!`);
+                  }
+
+                  if (editingCompany?.id === comp.id) {
+                    setShowCompanyForm(false);
+                    setEditingCompany(null);
+                  }
+                });
+              };
+
+              // Bulk Item Status (Off / On)
+              const handleSetCompanyItemStatus = (statusValue) => {
+                if (!companyForm.name || !companyForm.name.trim()) {
+                  showToast("Please select or save the company first", "error");
+                  return;
+                }
+
+                const targetName = companyForm.name.trim().toUpperCase();
+                const matchingItems = (items || []).filter(i => (i.company || "").toUpperCase() === targetName);
+
+                if (matchingItems.length === 0) {
+                  showToast(`No items found under company "${targetName}"`, "error");
+                  return;
+                }
+
+                const updatedItems = (items || []).map(i => {
+                  if ((i.company || "").toUpperCase() === targetName) {
+                    return { ...i, status: statusValue };
+                  }
+                  return i;
+                });
+
+                saveItems(updatedItems);
+                showToast(`✅ All ${matchingItems.length} items of "${targetName}" set to Status ${statusValue.toUpperCase()}!`);
+              };
+
+              // Record Navigation (< Prev & Next >)
+              const handleNavigateCompany = (direction) => {
+                if (companies.length === 0) return;
+                const currentIdx = editingCompany ? companies.findIndex(c => c.id === editingCompany.id) : 0;
+                let nextIdx = direction === "prev" ? currentIdx - 1 : currentIdx + 1;
+                if (nextIdx < 0) nextIdx = companies.length - 1;
+                if (nextIdx >= companies.length) nextIdx = 0;
+                const target = companies[nextIdx];
+                setEditingCompany(target);
+                setCompanyForm({ ...defaultCompanyForm, ...target, relatedSuppliers: target.relatedSuppliers || [] });
+              };
+
+              // All available suppliers in the system (starts completely blank if no suppliers exist!)
+              const allSystemSuppliers = (suppliers || []).map(s => s.name?.trim().toUpperCase()).filter(Boolean);
+              // Plus any suppliers manually added by the user
+              const combinedSupplierPool = [...new Set([...allSystemSuppliers, ...(companyForm.relatedSuppliers || [])])];
+              
+              const filteredPoolSuppliers = combinedSupplierPool.filter(sName => {
+                if (!supplierFilterText) return true;
+                return sName.toLowerCase().includes(supplierFilterText.toLowerCase());
+              });
+
+              // Add Supplier to Related List
+              const handleAddRelatedSupplier = (suppName) => {
+                if (!suppName || !suppName.trim()) return;
+                const clean = suppName.trim().toUpperCase();
+                if ((companyForm.relatedSuppliers || []).includes(clean)) {
+                  showToast(`Supplier "${clean}" is already mapped to this company`, "error");
+                  return;
+                }
+                setCompanyForm(prev => ({
+                  ...prev,
+                  relatedSuppliers: [...(prev.relatedSuppliers || []), clean]
+                }));
+                setNewSupplierInput("");
+              };
+
+              // Remove Supplier from Related List
+              const handleRemoveRelatedSupplier = (suppName) => {
+                setCompanyForm(prev => ({
+                  ...prev,
+                  relatedSuppliers: (prev.relatedSuppliers || []).filter(s => s !== suppName)
+                }));
+              };
+
+              // Move Related Supplier Up/Down
+              const handleMoveSupplier = (idx, direction) => {
+                const list = [...(companyForm.relatedSuppliers || [])];
+                const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+                if (targetIdx < 0 || targetIdx >= list.length) return;
+                const temp = list[idx];
+                list[idx] = list[targetIdx];
+                list[targetIdx] = temp;
+                setCompanyForm(prev => ({ ...prev, relatedSuppliers: list }));
+              };
+
+              // Print Company Directory
+              const handlePrintCompanyList = () => {
+                const printWindow = window.open("", "_blank");
+                if (!printWindow) return;
+                const rows = filtered.map((c, i) => {
+                  const itemCount = (items || []).filter(it => (it.company || "").toUpperCase() === (c.name || "").toUpperCase()).length;
+                  const suppList = (c.relatedSuppliers || []).join(", ") || "-";
+                  return `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                      <td style="padding: 6px; text-align: center;">${i + 1}</td>
+                      <td style="padding: 6px; text-align: center; font-weight: bold;">${c.code || '-'}</td>
+                      <td style="padding: 6px; font-weight: bold;">${c.name}</td>
+                      <td style="padding: 6px;">${c.person || '-'}</td>
+                      <td style="padding: 6px;">${c.city || '-'}</td>
+                      <td style="padding: 6px;">${c.mobile || '-'}</td>
+                      <td style="padding: 6px; text-align: center; font-weight: bold;">${itemCount}</td>
+                      <td style="padding: 6px; font-size: 11px;">${suppList}</td>
+                      <td style="padding: 6px; text-align: center;">${c.status === 'inactive' ? 'Inactive' : 'Active'}</td>
+                    </tr>
+                  `;
+                }).join("");
+
+                printWindow.document.write(`
+                  <html>
+                    <head>
+                      <title>Company Master Directory - Shiv Dhara Medical Store</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; color: #111; }
+                        h2, h4 { margin: 0 0 6px 0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th { background: #0f172a; color: white; padding: 8px 6px; text-align: left; }
+                      </style>
+                    </head>
+                    <body>
+                      <h2>Shiv Dhara Medical Store</h2>
+                      <h4>Company Master Directory (Total: ${filtered.length})</h4>
+                      <p style="font-size: 11px; color: #555;">Generated: ${new Date().toLocaleString()}</p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style="width: 35px; text-align: center;">#</th>
+                            <th style="width: 55px; text-align: center;">Code</th>
+                            <th>Company Name</th>
+                            <th>Contact Person</th>
+                            <th>City</th>
+                            <th>Mobile</th>
+                            <th style="width: 50px; text-align: center;">Items</th>
+                            <th>Related Suppliers</th>
+                            <th style="width: 60px; text-align: center;">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                      </table>
+                    </body>
+                  </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => printWindow.print(), 300);
+              };
+
+              return (
+                <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
+                  {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "26px" }}>🏢</span>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Company Master</h2>
+                      <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>Pharmaceutical Manufacturers, Location & Supplier Mapping</p>
+                    </div>
+
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center" }}>
+                      <button
+                        onClick={handlePrintCompanyList}
+                        style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Printer size={13} /> Print Directory
+                      </button>
+                      <button
+                        onClick={() => handleOpenCompanyForm(null)}
+                        style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Plus size={13} /> Add Company
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ─── SEARCH & FILTER BAR (Inventory Style / Image 2) ─── */}
+                  <div style={{ background: "white", borderRadius: "12px", padding: "14px 16px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                    <div style={{ flex: 1, minWidth: "220px", position: "relative" }}>
+                      <Search size={13} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                      <input
+                        placeholder="Search Company Name, Code or City... + Enter"
+                        value={companySearch}
+                        onChange={e => {
+                          setCompanySearch(e.target.value);
+                          setCompanySearchDropdown(true);
+                          setCompanySearchHighlight(0);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setCompanySearchHighlight(prev => Math.min(prev + 1, searchDropdownResults.length - 1));
+                          } else if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setCompanySearchHighlight(prev => Math.max(prev - 1, 0));
+                          } else if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (searchDropdownResults.length > 0 && companySearchDropdown) {
+                              handleOpenCompanyForm(searchDropdownResults[companySearchHighlight]);
+                              setCompanySearchDropdown(false);
+                              setCompanySearch("");
+                            } else if (q && filtered.length > 0) {
+                              handleOpenCompanyForm(filtered[0]);
+                              setCompanySearchDropdown(false);
+                              setCompanySearch("");
+                            } else if (q) {
+                              showToast("No company found matching: " + companySearch, "error");
+                            }
+                          }
+                        }}
+                        onFocus={() => setCompanySearchDropdown(true)}
+                        onBlur={() => setTimeout(() => setCompanySearchDropdown(false), 200)}
+                        style={{ ...inp, paddingLeft: "30px", width: "100%", height: "36px" }}
+                      />
+
+                      {/* Search Dropdown Popup */}
+                      {companySearchDropdown && searchDropdownResults.length > 0 && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden", maxHeight: "280px", overflowY: "auto" }}>
+                          {searchDropdownResults.map((comp, idx) => {
+                            const count = (items || []).filter(i => (i.company || "").toUpperCase() === (comp.name || "").toUpperCase()).length;
+                            return (
+                              <div
+                                key={comp.id}
+                                onClick={() => {
+                                  handleOpenCompanyForm(comp);
+                                  setCompanySearchDropdown(false);
+                                  setCompanySearch("");
+                                }}
+                                onMouseEnter={() => setCompanySearchHighlight(idx)}
+                                style={{
+                                  padding: "8px 12px",
+                                  cursor: "pointer",
+                                  background: idx === companySearchHighlight ? "#f1f5f9" : "white",
+                                  borderBottom: "1px solid #f1f5f9",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center"
+                                }}
+                              >
+                                <div>
+                                  <div style={{ fontSize: "12px", fontWeight: "700", color: "#1e293b" }}>
+                                    {comp.name} <span style={{ color: "#3b82f6", fontSize: "11px" }}>({comp.code})</span>
+                                  </div>
+                                  <div style={{ fontSize: "10px", color: "#64748b" }}>
+                                    {comp.city ? `City: ${comp.city}` : ""} {comp.person ? `· Rep: ${comp.person}` : ""}
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: "11px", fontWeight: "700", color: "#0f766e", background: "#f0fdf4", padding: "2px 6px", borderRadius: "4px" }}>
+                                  {count} Items
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <select
+                      value={companyStatusFilter}
+                      onChange={e => setCompanyStatusFilter(e.target.value)}
+                      style={{ ...inp, width: "auto", height: "36px" }}
+                    >
+                      <option value="All">All Status</option>
+                      <option value="active">Active Only</option>
+                      <option value="inactive">Inactive Only</option>
+                    </select>
+
+                    <select
+                      value={companySortBy}
+                      onChange={e => setCompanySortBy(e.target.value)}
+                      style={{ ...inp, width: "auto", height: "36px" }}
+                    >
+                      <option value="name">Name A-Z</option>
+                      <option value="code">Code A-Z</option>
+                      <option value="items_desc">Items Count ↓</option>
+                      <option value="sr_desc">Sr No ↓</option>
+                    </select>
+                  </div>
+
+                  {/* ─── ADD / EDIT COMPANY CARD (Theme: Add Item in Image 2 + Dual Panel Mapping) ─── */}
+                  {showCompanyForm && (
+                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                      {/* Form Header */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "18px" }}>🏢</span>
+                          <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
+                            {editingCompany ? `Edit Company: ${editingCompany.name}` : "Add New Company"}
+                          </h3>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: "4px" }}>
+                            Sr. No: {companyForm.srNo || "Auto"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => { setShowCompanyForm(false); setEditingCompany(null); }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                      {/* Dual Panel Layout (Company Details Left, Supplier Mapping Right) */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr", gap: "20px", marginBottom: "16px" }}>
+                        {/* ─── LEFT PANEL: COMPANY DETAILS ─── */}
+                        <div>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: "10px" }}>
+                            {/* Sr. No (Pink Accent Box from Legacy Screenshot) */}
+                            <div>
+                              <label style={lbl}>Sr. No.</label>
+                              <input
+                                type="number"
+                                value={companyForm.srNo || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, srNo: e.target.value })}
+                                placeholder="Auto"
+                                style={{ ...inp, background: "#fce7f3", border: "1px solid #f472b6", fontWeight: "800", color: "#831843" }}
+                              />
+                            </div>
+
+                            {/* Code */}
+                            <div>
+                              <label style={lbl}>Company Code *</label>
+                              <input
+                                value={companyForm.code || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, code: e.target.value.toUpperCase() })}
+                                placeholder="e.g. ZYD, CIP, SUN"
+                                maxLength={8}
+                                style={{ ...inp, textTransform: "uppercase", fontWeight: "800", color: "#1e3a8a" }}
+                              />
+                            </div>
+
+                            {/* Location */}
+                            <div>
+                              <label style={lbl}>Location / Rack</label>
+                              <input
+                                value={companyForm.location || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, location: e.target.value.toUpperCase() })}
+                                placeholder="e.g. RACK-B2, W-01"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Company Name */}
+                            <div style={{ gridColumn: "span 2" }}>
+                              <label style={lbl}>Company Name *</label>
+                              <input
+                                value={companyForm.name || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, name: e.target.value.toUpperCase() })}
+                                placeholder="e.g. ZYDUS HEALTHCARE LTD or CIPLA LIMITED"
+                                style={{ ...inp, textTransform: "uppercase", fontWeight: "800" }}
+                              />
+                            </div>
+
+                            {/* Contact Person (MR / Area Manager) */}
+                            <div>
+                              <label style={lbl}>Person / Representative</label>
+                              <input
+                                value={companyForm.person || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, person: e.target.value.toUpperCase() })}
+                                placeholder="MR / Area Manager Name"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Area */}
+                            <div>
+                              <label style={lbl}>Area</label>
+                              <input
+                                value={companyForm.area || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, area: e.target.value.toUpperCase() })}
+                                placeholder="e.g. RING ROAD"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* City */}
+                            <div>
+                              <label style={lbl}>City</label>
+                              <input
+                                value={companyForm.city || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, city: e.target.value.toUpperCase() })}
+                                placeholder="e.g. AHMEDABAD, SURAT"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Contact (Landline / Office) */}
+                            <div>
+                              <label style={lbl}>Contact Phone</label>
+                              <input
+                                value={companyForm.contact || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, contact: e.target.value })}
+                                placeholder="Office phone number"
+                                style={inp}
+                              />
+                            </div>
+
+                            {/* Mobile */}
+                            <div>
+                              <label style={lbl}>Mobile Number</label>
+                              <input
+                                value={companyForm.mobile || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, mobile: e.target.value.replace(/[^0-9]/g, "") })}
+                                placeholder="10-digit mobile"
+                                maxLength={10}
+                                style={{ ...inp, fontWeight: "600" }}
+                              />
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                              <label style={lbl}>Email Address</label>
+                              <input
+                                type="email"
+                                value={companyForm.email || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, email: e.target.value })}
+                                placeholder="orders@pharma.com"
+                                style={inp}
+                              />
+                            </div>
+
+                            {/* Drug License No (D.L.No) */}
+                            <div>
+                              <label style={lbl}>D.L. No. (Drug License)</label>
+                              <input
+                                value={companyForm.dlNo || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, dlNo: e.target.value.toUpperCase() })}
+                                placeholder="e.g. 20B/21B-GJ-9988"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Status */}
+                            <div>
+                              <label style={lbl}>Company Status</label>
+                              <select
+                                value={companyForm.status || "active"}
+                                onChange={e => setCompanyForm({ ...companyForm, status: e.target.value })}
+                                style={{ ...inp, fontWeight: "700", color: companyForm.status === "inactive" ? "#dc2626" : "#16a34a" }}
+                              >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                              </select>
+                            </div>
+
+                            {/* Full Address */}
+                            <div style={{ gridColumn: "1 / -1" }}>
+                              <label style={lbl}>Company Address</label>
+                              <textarea
+                                value={companyForm.address || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, address: e.target.value.toUpperCase() })}
+                                placeholder="Corporate / Depot Address..."
+                                style={{ ...inp, height: "42px", resize: "vertical", textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Remarks */}
+                            <div style={{ gridColumn: "1 / -1" }}>
+                              <label style={lbl}>Remarks / Internal Notes</label>
+                              <input
+                                value={companyForm.remarks || ""}
+                                onChange={e => setCompanyForm({ ...companyForm, remarks: e.target.value })}
+                                placeholder="Internal notes, distributor terms, ordering policies..."
+                                style={inp}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ─── RIGHT PANEL: SUPPLIER MAPPING (Blank by default, no hardcoded dummy list!) ─── */}
+                        <div style={{ background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", padding: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                          {/* Function Keys Shortcut Banner (Matching Legacy Screenshot) */}
+                          <div style={{ background: "#1e293b", color: "#f8fafc", padding: "6px 10px", borderRadius: "5px", fontSize: "10px", fontWeight: "700", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "4px" }}>
+                            <span>F5-Company Name</span>
+                            <span>F6-New Supplier</span>
+                            <span>F7-All Supplier</span>
+                            <span>F8-Company Supplier</span>
+                          </div>
+
+                          {/* Quick Add / Register Supplier */}
+                          <div>
+                            <label style={{ ...lbl, fontSize: "10px" }}>Add New Supplier to List</label>
+                            <div style={{ display: "flex", gap: "6px" }}>
+                              <input
+                                value={newSupplierInput}
+                                onChange={e => setNewSupplierInput(e.target.value.toUpperCase())}
+                                onKeyDown={e => e.key === "Enter" && handleAddRelatedSupplier(newSupplierInput)}
+                                placeholder="Type supplier name..."
+                                style={{ ...inp, textTransform: "uppercase", fontSize: "11px", height: "30px" }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleAddRelatedSupplier(newSupplierInput)}
+                                style={{ ...btn("var(--color-primary)"), padding: "4px 10px", fontSize: "11px" }}
+                              >
+                                Add
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Top Box: List of All Supplier (Blank if no suppliers created yet!) */}
+                          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "11px", fontWeight: "800", color: "#334155" }}>
+                                List of All Supplier ({combinedSupplierPool.length})
+                              </span>
+                              <input
+                                placeholder="Filter suppliers..."
+                                value={supplierFilterText}
+                                onChange={e => setSupplierFilterText(e.target.value)}
+                                style={{ ...inp, width: "110px", height: "22px", fontSize: "10px", padding: "2px 6px" }}
+                              />
+                            </div>
+
+                            <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "5px", height: "130px", overflowY: "auto", padding: "4px" }}>
+                              {filteredPoolSuppliers.length === 0 ? (
+                                <div style={{ padding: "30px 10px", textAlign: "center", color: "#94a3b8", fontSize: "11px" }}>
+                                  No suppliers in system yet.<br/>Type above or add in Supplier Master to populate.
+                                </div>
+                              ) : (
+                                filteredPoolSuppliers.map(sName => {
+                                  const isAlreadyRelated = (companyForm.relatedSuppliers || []).includes(sName);
+                                  return (
+                                    <div
+                                      key={sName}
+                                      onClick={() => !isAlreadyRelated && handleAddRelatedSupplier(sName)}
+                                      style={{
+                                        padding: "4px 8px",
+                                        fontSize: "11px",
+                                        cursor: isAlreadyRelated ? "default" : "pointer",
+                                        borderRadius: "3px",
+                                        marginBottom: "2px",
+                                        background: isAlreadyRelated ? "#f1f5f9" : "transparent",
+                                        color: isAlreadyRelated ? "#94a3b8" : "#0f172a",
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center"
+                                      }}
+                                      onMouseEnter={e => { if (!isAlreadyRelated) e.currentTarget.style.background = "#e0e7ff"; }}
+                                      onMouseLeave={e => { if (!isAlreadyRelated) e.currentTarget.style.background = "transparent"; }}
+                                    >
+                                      <span style={{ fontWeight: isAlreadyRelated ? "400" : "600" }}>{sName}</span>
+                                      {isAlreadyRelated ? (
+                                        <span style={{ fontSize: "9px", color: "#16a34a", fontWeight: "700" }}>Mapped</span>
+                                      ) : (
+                                        <span style={{ fontSize: "10px", color: "#2563eb", fontWeight: "700" }}>+ Map</span>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Bottom Box: List of Supplier Related to Company */}
+                          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "11px", fontWeight: "800", color: "#1e3a8a" }}>
+                                List of Supplier Related to Company ({(companyForm.relatedSuppliers || []).length})
+                              </span>
+                              <span style={{ fontSize: "10px", color: "#64748b" }}>Use UP/DOWN to reorder</span>
+                            </div>
+
+                            <div style={{ background: "#ffffff", border: "1px solid #93c5fd", borderRadius: "5px", height: "130px", overflowY: "auto", padding: "4px" }}>
+                              {(companyForm.relatedSuppliers || []).length === 0 ? (
+                                <div style={{ padding: "30px 10px", textAlign: "center", color: "#94a3b8", fontSize: "11px" }}>
+                                  No suppliers mapped to this company yet.<br/>Click "+ Map" above to associate distributors.
+                                </div>
+                              ) : (
+                                (companyForm.relatedSuppliers || []).map((sName, idx) => (
+                                  <div
+                                    key={sName}
+                                    style={{
+                                      padding: "4px 8px",
+                                      fontSize: "11px",
+                                      background: "#eff6ff",
+                                      borderBottom: "1px solid #dbeafe",
+                                      borderRadius: "3px",
+                                      marginBottom: "2px",
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center"
+                                    }}
+                                  >
+                                    <span style={{ fontWeight: "700", color: "#1e40af" }}>
+                                      {idx + 1}. {sName}
+                                    </span>
+                                    <div style={{ display: "flex", gap: "3px" }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMoveSupplier(idx, "up")}
+                                        disabled={idx === 0}
+                                        style={{ padding: "1px 5px", fontSize: "9px", border: "1px solid #cbd5e1", borderRadius: "2px", background: "white", cursor: idx === 0 ? "default" : "pointer", opacity: idx === 0 ? 0.4 : 1 }}
+                                        title="Move UP"
+                                      >
+                                        ▲
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMoveSupplier(idx, "down")}
+                                        disabled={idx === (companyForm.relatedSuppliers || []).length - 1}
+                                        style={{ padding: "1px 5px", fontSize: "9px", border: "1px solid #cbd5e1", borderRadius: "2px", background: "white", cursor: idx === (companyForm.relatedSuppliers || []).length - 1 ? "default" : "pointer", opacity: idx === (companyForm.relatedSuppliers || []).length - 1 ? 0.4 : 1 }}
+                                        title="Move DOWN"
+                                      >
+                                        ▼
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveRelatedSupplier(sName)}
+                                        style={{ padding: "1px 5px", fontSize: "9px", border: "none", borderRadius: "2px", background: "#fee2e2", color: "#dc2626", cursor: "pointer", fontWeight: "700" }}
+                                        title="Remove"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ─── FORM ACTION BUTTONS (Matching Legacy Controls & Image 2 Theme) ─── */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateCompany("prev")}
+                            style={{ ...btn("#475569"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Previous Company"
+                          >
+                            <ChevronLeft size={14} /> Prev
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateCompany("next")}
+                            style={{ ...btn("#475569"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Next Company"
+                          >
+                            Next <ChevronRight size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSetCompanyItemStatus("off")}
+                            style={{ ...btn("#e11d48"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Turn Off all items under this company"
+                          >
+                            Item Status - Off
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSetCompanyItemStatus("on")}
+                            style={{ ...btn("#059669"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Turn On all items under this company"
+                          >
+                            Item Status - On
+                          </button>
+
+                          {editingCompany && (
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "6px" }}>
+                              <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#dc2626", cursor: "pointer", fontWeight: "600" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={deleteWithItems}
+                                  onChange={e => setDeleteWithItems(e.target.checked)}
+                                />
+                                Delete with Item List
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCompany(editingCompany)}
+                                style={{ ...btn("#dc2626"), padding: "7px 12px", fontSize: "12px" }}
+                              >
+                                <Trash2 size={13} /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={() => { setShowCompanyForm(false); setEditingCompany(null); }}
+                            style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), padding: "7px 14px", fontSize: "12px" }}
+                          >
+                            <X size={13} /> Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveCompany}
+                            style={{ ...btn("var(--color-primary)"), padding: "7px 18px", fontSize: "12px", fontWeight: "800" }}
+                          >
+                            <CheckCircle size={14} /> {editingCompany ? "Update Company" : "Save Company"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── COMPANIES DIRECTORY TABLE (Inventory Style / Image 2) ─── */}
+                  <div style={{ background: "white", borderRadius: "12px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b" }}>
+                        Registered Companies ({filtered.length})
+                      </span>
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>
+                        Click any company to edit or manage supplier associations
+                      </span>
+                    </div>
+
+                    {filtered.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
+                        <div style={{ fontSize: "40px", opacity: 0.6 }}>🏢</div>
+                        <p style={{ marginTop: "12px", fontWeight: "700", fontSize: "15px", color: "#334155" }}>
+                          No companies found matching your criteria
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#64748b" }}>
+                          Add a new manufacturer company or search with different keywords.
+                        </p>
+                        <button
+                          onClick={() => handleOpenCompanyForm(null)}
+                          style={{ ...btn("var(--color-primary)"), margin: "14px auto 0", fontSize: "12px" }}
+                        >
+                          <Plus size={13} /> Add New Company
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                          <thead>
+                            <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>Sr No</th>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "65px" }}>Code</th>
+                              <th style={{ padding: "10px 12px", textAlign: "left" }}>Company Name</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "140px" }}>Representative</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>City</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>Mobile</th>
+                              <th style={{ padding: "10px 10px", textAlign: "center", width: "85px" }}>Items</th>
+                              <th style={{ padding: "10px 12px", textAlign: "left", width: "180px" }}>Related Suppliers</th>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "75px" }}>Status</th>
+                              <th style={{ padding: "10px 12px", textAlign: "center", width: "110px" }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filtered.map((comp, idx) => {
+                              const itemCount = (items || []).filter(i => (i.company || "").toUpperCase() === (comp.name || "").toUpperCase()).length;
+                              const isInactive = comp.status === "inactive";
+                              return (
+                                <tr
+                                  key={comp.id}
+                                  style={{
+                                    borderBottom: "1px solid #f1f5f9",
+                                    background: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                    transition: "background 0.15s ease"
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
+                                  onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f8fafc"}
+                                >
+                                  <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>
+                                    {comp.srNo || idx + 1}
+                                  </td>
+                                  <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "800", color: "#2563eb", fontFamily: "monospace" }}>
+                                    {comp.code || "-"}
+                                  </td>
+                                  <td
+                                    onClick={() => handleOpenCompanyForm(comp)}
+                                    style={{ padding: "8px 12px", fontWeight: "800", color: "#1e3a8a", cursor: "pointer" }}
+                                    title="Click to edit company"
+                                  >
+                                    {comp.name}
+                                    {comp.location && <span style={{ display: "block", fontSize: "10px", fontWeight: "500", color: "#64748b" }}>📍 Location: {comp.location}</span>}
+                                  </td>
+                                  <td style={{ padding: "8px 10px", color: "#334155" }}>{comp.person || "-"}</td>
+                                  <td style={{ padding: "8px 10px", color: "#475569" }}>{comp.city || "-"}</td>
+                                  <td style={{ padding: "8px 10px", color: "#475569", fontWeight: "600" }}>{comp.mobile || "-"}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "center" }}>
+                                    <span style={{ background: itemCount > 0 ? "#dbeafe" : "#f1f5f9", color: itemCount > 0 ? "#1e40af" : "#64748b", padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
+                                      {itemCount}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "8px 12px", fontSize: "11px", color: "#475569" }}>
+                                    {(comp.relatedSuppliers || []).length === 0 ? (
+                                      <span style={{ color: "#94a3b8", fontStyle: "italic" }}>None</span>
+                                    ) : (
+                                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                                        {(comp.relatedSuppliers || []).slice(0, 2).map(s => (
+                                          <span key={s} style={{ background: "#e0e7ff", color: "#3730a3", padding: "1px 5px", borderRadius: "3px", fontSize: "10px", fontWeight: "600" }}>
+                                            {s}
+                                          </span>
+                                        ))}
+                                        {(comp.relatedSuppliers || []).length > 2 && (
+                                          <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "700" }}>
+                                            +{(comp.relatedSuppliers || []).length - 2} more
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: "8px 6px", textAlign: "center" }}>
+                                    <span style={{ background: isInactive ? "#fee2e2" : "#dcfce7", color: isInactive ? "#991b1b" : "#166534", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "700" }}>
+                                      {isInactive ? "Off" : "Active"}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                                    <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                                      <button
+                                        onClick={() => handleOpenCompanyForm(comp)}
+                                        style={{ ...btn("#2563eb"), padding: "4px 8px", fontSize: "11px" }}
+                                        title="Edit Company"
+                                      >
+                                        <Edit2 size={11} /> Edit
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteCompany(comp)}
+                                        style={{ ...btn("#dc2626"), padding: "4px 6px", fontSize: "11px" }}
+                                        title="Delete Company"
+                                      >
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })()}
