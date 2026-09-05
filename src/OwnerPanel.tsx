@@ -1570,6 +1570,327 @@ export default function OwnerPanel() {
   const [newDepAge, setNewDepAge] = useState(30);
   const [newDepGender, setNewDepGender] = useState("Male");
 
+  // ─── OTHER MASTERS (101 to 119 Lookup Categories) ───
+  const OTHER_MASTER_CATEGORIES = [
+    { code: "101", name: "Area Master", icon: "📍", desc: "Local territory delivery zones and sales areas" },
+    { code: "102", name: "City Master", icon: "🏙️", desc: "Municipalities and logistics cities" },
+    { code: "103", name: "Customer Bank", icon: "🏦", desc: "Customer banking institutions & clearing branches" },
+    { code: "104", name: "Payment Term", icon: "⏳", desc: "Credit terms, payment due day definitions" },
+    { code: "105", name: "Payment Type", icon: "💳", desc: "Accepted settlement modes & tender channels" },
+    { code: "106", name: "Item Type", icon: "💊", desc: "Formulation dosage forms (Tablet, Syrup, Injection)" },
+    { code: "107", name: "Doctor Degree", icon: "🎓", desc: "Medical qualification titles and doctor designations" },
+    { code: "108", name: "Sales Man (Purchase)", icon: "👔", desc: "Purchase procurement agents & field staff" },
+    { code: "109", name: "Sales Man (Sales)", icon: "💼", desc: "Counter sales personnel & marketing reps" },
+    { code: "111", name: "Mobile Company (Sim Form)", icon: "📱", desc: "Cellular network operators for SIM documentation" },
+    { code: "112", name: "Distributors (Sim Form)", icon: "🏢", desc: "Telecom and agency distributors" },
+    { code: "113", name: "Dealers (Sim Form)", icon: "🏪", desc: "Authorized dealers and franchised retailers" },
+    { code: "114", name: "Nationality (Sim Form)", icon: "🌍", desc: "Citizen and resident nationality classifications" },
+    { code: "115", name: "Item Category", icon: "🏷️", desc: "Product department (Ethical, OTC, Generic, Surgical)" },
+    { code: "116", name: "Item Location", icon: "📦", desc: "Store warehouse aisle, rack, and shelf locations" },
+    { code: "117", name: "ID Proof1 (Sim Form)", icon: "🪪", desc: "Primary government identity proof types" },
+    { code: "118", name: "ID Proof2 (Sim Form)", icon: "📄", desc: "Secondary identity and address verification proofs" },
+    { code: "119", name: "Patient Diagnosis", icon: "🩺", desc: "Clinical conditions, ICD descriptions, symptom tags" }
+  ];
+
+  const INITIAL_OTHER_MASTERS_DATA = {
+    "101": [
+      { id: "101-1", srNo: 1, name: "Station Road", description: "Central Station commercial area", createdAt: "2026-01-10" },
+      { id: "101-2", srNo: 2, name: "Market Yard", description: "Agricultural and wholesale market zone", createdAt: "2026-01-10" },
+      { id: "101-3", srNo: 3, name: "Ring Road", description: "Outer bypass commercial hub", createdAt: "2026-01-11" },
+      { id: "101-4", srNo: 4, name: "City Center", description: "Prime urban hospital area", createdAt: "2026-01-12" }
+    ],
+    "102": [
+      { id: "102-1", srNo: 1, name: "Surat", description: "South Gujarat region", createdAt: "2026-01-05" },
+      { id: "102-2", srNo: 2, name: "Ahmedabad", description: "Central corporate region", createdAt: "2026-01-05" },
+      { id: "102-3", srNo: 3, name: "Rajkot", description: "Saurashtra region", createdAt: "2026-01-06" },
+      { id: "102-4", srNo: 4, name: "Vadodara", description: "East Central region", createdAt: "2026-01-06" },
+      { id: "102-5", srNo: 5, name: "Navsari", description: "South highway belt", createdAt: "2026-01-08" }
+    ],
+    "103": [
+      { id: "103-1", srNo: 1, name: "HDFC Bank", description: "Private commercial bank", createdAt: "2026-01-15" },
+      { id: "103-2", srNo: 2, name: "State Bank of India (SBI)", description: "Public sector scheduled bank", createdAt: "2026-01-15" },
+      { id: "103-3", srNo: 3, name: "ICICI Bank", description: "Private retail bank", createdAt: "2026-01-16" },
+      { id: "103-4", srNo: 4, name: "Axis Bank", description: "Private retail bank", createdAt: "2026-01-16" },
+      { id: "103-5", srNo: 5, name: "Bank of Baroda", description: "Public sector commercial bank", createdAt: "2026-01-18" }
+    ],
+    "104": [
+      { id: "104-1", srNo: 1, name: "Immediate (Cash)", description: "Net 0 days payment due immediately", createdAt: "2026-01-01" },
+      { id: "104-2", srNo: 2, name: "Net 15 Days", description: "Payment due within 15 calendar days", createdAt: "2026-01-01" },
+      { id: "104-3", srNo: 3, name: "Net 30 Days", description: "Standard month credit term", createdAt: "2026-01-01" },
+      { id: "104-4", srNo: 4, name: "Net 45 Days", description: "Extended supplier credit term", createdAt: "2026-01-02" },
+      { id: "104-5", srNo: 5, name: "Net 60 Days", description: "Quarterly institutional credit term", createdAt: "2026-01-02" }
+    ],
+    "105": [
+      { id: "105-1", srNo: 1, name: "Cash", description: "Physical currency notes & coins", createdAt: "2026-01-01" },
+      { id: "105-2", srNo: 2, name: "UPI / QR Code", description: "Google Pay, PhonePe, Paytm instant transfer", createdAt: "2026-01-01" },
+      { id: "105-3", srNo: 3, name: "Credit / Debit Card", description: "POS EDC swipe machine transaction", createdAt: "2026-01-01" },
+      { id: "105-4", srNo: 4, name: "Cheque / DD", description: "Bank clearing instrument", createdAt: "2026-01-02" },
+      { id: "105-5", srNo: 5, name: "NEFT / RTGS / IMPS", description: "Direct net banking ledger settlement", createdAt: "2026-01-02" },
+      { id: "105-6", srNo: 6, name: "Credit Note / Ledger", description: "Adjustment against customer credit account", createdAt: "2026-01-05" }
+    ],
+    "106": [
+      { id: "106-1", srNo: 1, name: "Tablet", description: "Solid oral compressed tablet dosage", createdAt: "2026-01-01" },
+      { id: "106-2", srNo: 2, name: "Capsule", description: "Hard/soft gelatin encapsulated medicine", createdAt: "2026-01-01" },
+      { id: "106-3", srNo: 3, name: "Syrup / Suspension", description: "Liquid oral formulation", createdAt: "2026-01-01" },
+      { id: "106-4", srNo: 4, name: "Injection (Vial/Ampoule)", description: "Sterile parenteral liquid or powder", createdAt: "2026-01-02" },
+      { id: "106-5", srNo: 5, name: "Ointment / Gel / Cream", description: "Topical dermatological application", createdAt: "2026-01-02" },
+      { id: "106-6", srNo: 6, name: "Eye / Ear / Nasal Drops", description: "Sterile ophthalmic / otic drops", createdAt: "2026-01-03" },
+      { id: "106-7", srNo: 7, name: "Powder / Sachet", description: "Effervescent or oral rehydration salt", createdAt: "2026-01-03" }
+    ],
+    "107": [
+      { id: "107-1", srNo: 1, name: "M.B.B.S.", description: "Bachelor of Medicine & Bachelor of Surgery", createdAt: "2026-01-01" },
+      { id: "107-2", srNo: 2, name: "M.D. (Medicine)", description: "Doctor of Medicine - Internal Physician", createdAt: "2026-01-01" },
+      { id: "107-3", srNo: 3, name: "M.S. (Surgeon)", description: "Master of Surgery - General / Ortho Surgeon", createdAt: "2026-01-01" },
+      { id: "107-4", srNo: 4, name: "B.A.M.S.", description: "Bachelor of Ayurvedic Medicine & Surgery", createdAt: "2026-01-02" },
+      { id: "107-5", srNo: 5, name: "B.H.M.S.", description: "Bachelor of Homeopathic Medicine & Surgery", createdAt: "2026-01-02" },
+      { id: "107-6", srNo: 6, name: "B.D.S. / M.D.S.", description: "Dental Surgery Specialist", createdAt: "2026-01-03" },
+      { id: "107-7", srNo: 7, name: "D.N.B. / D.C.H.", description: "Diplomate National Board / Child Health Specialist", createdAt: "2026-01-04" },
+      { id: "107-8", srNo: 8, name: "M.Ch. / D.M.", description: "Super-specialist (Cardio / Neuro / Nephro)", createdAt: "2026-01-05" }
+    ],
+    "108": [
+      { id: "108-1", srNo: 1, name: "Ramesh Patel", description: "Senior Purchase Procurement Incharge", createdAt: "2026-01-10" },
+      { id: "108-2", srNo: 2, name: "Suresh Shah", description: "Generic & Surgical Vendor Relations", createdAt: "2026-01-12" },
+      { id: "108-3", srNo: 3, name: "Kishor Verma", description: "Direct Depot Stock Incharge", createdAt: "2026-01-15" }
+    ],
+    "109": [
+      { id: "109-1", srNo: 1, name: "Amit Dave", description: "Senior Counter Sales Executive", createdAt: "2026-01-05" },
+      { id: "109-2", srNo: 2, name: "Jignesh Modi", description: "Institutional & Hospital Supply Rep", createdAt: "2026-01-05" },
+      { id: "109-3", srNo: 3, name: "Pravin Solanki", description: "Evening Shift Billing Incharge", createdAt: "2026-01-08" },
+      { id: "109-4", srNo: 4, name: "Bhavin Trivedi", description: "Retail Delivery Executive", createdAt: "2026-01-12" }
+    ],
+    "111": [
+      { id: "111-1", srNo: 1, name: "Airtel", description: "Bharti Airtel Telecommunications", createdAt: "2026-01-01" },
+      { id: "111-2", srNo: 2, name: "Jio (Reliance)", description: "Reliance Jio Infocomm Ltd", createdAt: "2026-01-01" },
+      { id: "111-3", srNo: 3, name: "Vodafone Idea (Vi)", description: "Vi Cellular Network Operator", createdAt: "2026-01-01" },
+      { id: "111-4", srNo: 4, name: "BSNL", description: "Bharat Sanchar Nigam Limited", createdAt: "2026-01-02" }
+    ],
+    "112": [
+      { id: "112-1", srNo: 1, name: "Shivam Pharma Distribution", description: "Authorized Regional Distributor", createdAt: "2026-01-04" },
+      { id: "112-2", srNo: 2, name: "Royal Healthcare Agency", description: "Vaccines & Critical Care C&F", createdAt: "2026-01-04" },
+      { id: "112-3", srNo: 3, name: "Shreeji Medico Syndicate", description: "Generic medicines wholesale distributor", createdAt: "2026-01-06" }
+    ],
+    "113": [
+      { id: "113-1", srNo: 1, name: "MedPlus Dealers", description: "Secondary stockist & retail dealer", createdAt: "2026-01-04" },
+      { id: "113-2", srNo: 2, name: "Apex Surgical Supplies", description: "Disposable needles, gloves, IV sets dealer", createdAt: "2026-01-06" },
+      { id: "113-3", srNo: 3, name: "Gujarat Medical Agencies", description: "Surgical and implants stock dealer", createdAt: "2026-01-08" }
+    ],
+    "114": [
+      { id: "114-1", srNo: 1, name: "Indian", description: "Resident Indian citizen", createdAt: "2026-01-01" },
+      { id: "114-2", srNo: 2, name: "Non-Resident Indian (NRI)", description: "Overseas Indian national with passport", createdAt: "2026-01-01" },
+      { id: "114-3", srNo: 3, name: "Foreign National", description: "International traveler / medical visa holder", createdAt: "2026-01-02" }
+    ],
+    "115": [
+      { id: "115-1", srNo: 1, name: "Ethical Prescription", description: "Doctor prescribed pharmaceutical drugs", createdAt: "2026-01-01" },
+      { id: "115-2", srNo: 2, name: "Generic Medicine", description: "Affordable branded generic pharmaceuticals", createdAt: "2026-01-01" },
+      { id: "115-3", srNo: 3, name: "OTC (Over The Counter)", description: "Wellness, balms, antiseptics, vitamins", createdAt: "2026-01-01" },
+      { id: "115-4", srNo: 4, name: "Surgical & Disposable", description: "Bandages, syringes, catheters, surgical tape", createdAt: "2026-01-02" },
+      { id: "115-5", srNo: 5, name: "Ayurvedic & Herbal", description: "Ayush formulations, herbal oils, powders", createdAt: "2026-01-02" },
+      { id: "115-6", srNo: 6, name: "Cold Storage (2-8°C)", description: "Insulins, vaccines, immunoglobulin sera", createdAt: "2026-01-03" }
+    ],
+    "116": [
+      { id: "116-1", srNo: 1, name: "Rack A1 - Main Counter", description: "Top fast-moving pain & fever items", createdAt: "2026-01-01" },
+      { id: "116-2", srNo: 2, name: "Rack A2 - Antibiotics", description: "Secondary antibiotic tablets & syrups", createdAt: "2026-01-01" },
+      { id: "116-3", srNo: 3, name: "Rack B1 - Cardiac & Diabetic", description: "Chronic regular refill medicine rack", createdAt: "2026-01-01" },
+      { id: "116-4", srNo: 4, name: "Shelf C3 - Syrups & Liquids", description: "Cough syrups, tonics, antacids liquids", createdAt: "2026-01-02" },
+      { id: "116-5", srNo: 5, name: "Cold Storage Refrigerator 1", description: "Insulins and injectables (2°C to 8°C)", createdAt: "2026-01-02" },
+      { id: "116-6", srNo: 6, name: "Warehouse Mezzanine Floor", description: "Bulk carton storage for seasonal goods", createdAt: "2026-01-05" }
+    ],
+    "117": [
+      { id: "117-1", srNo: 1, name: "Aadhaar Card (UIDAI)", description: "12-digit Indian national unique identity", createdAt: "2026-01-01" },
+      { id: "117-2", srNo: 2, name: "PAN Card (Income Tax)", description: "Permanent Account Number card", createdAt: "2026-01-01" },
+      { id: "117-3", srNo: 3, name: "Election Voter ID (EPIC)", description: "Election Commission of India voter identity", createdAt: "2026-01-01" },
+      { id: "117-4", srNo: 4, name: "Driving License", description: "State RTO motor vehicle driving license", createdAt: "2026-01-02" }
+    ],
+    "118": [
+      { id: "118-1", srNo: 1, name: "Indian Passport", description: "Government issued passport for travel & ID", createdAt: "2026-01-01" },
+      { id: "118-2", srNo: 2, name: "Ration Card", description: "Food & civil supplies family ration booklet", createdAt: "2026-01-01" },
+      { id: "118-3", srNo: 3, name: "Electricity / Utility Bill", description: "Address verification proof within 3 months", createdAt: "2026-01-02" },
+      { id: "118-4", srNo: 4, name: "Bank Passbook with Photo", description: "Attested scheduled bank account passbook", createdAt: "2026-01-02" }
+    ],
+    "119": [
+      { id: "119-1", srNo: 1, name: "Hypertension (High BP)", description: "Elevated systolic/diastolic blood pressure", createdAt: "2026-01-01" },
+      { id: "119-2", srNo: 2, name: "Type 2 Diabetes Mellitus", description: "Chronic hyperglycemia insulin resistance", createdAt: "2026-01-01" },
+      { id: "119-3", srNo: 3, name: "Acute Bronchitis / Cough", description: "Upper respiratory tract infection and wheezing", createdAt: "2026-01-01" },
+      { id: "119-4", srNo: 4, name: "Viral Fever & Body Ache", description: "Seasonal pyrexia with myalgia and chills", createdAt: "2026-01-02" },
+      { id: "119-5", srNo: 5, name: "Acid Peptic Disease (GERD)", description: "Hyperacidity, gastroesophageal reflux, gastritis", createdAt: "2026-01-02" },
+      { id: "119-6", srNo: 6, name: "Allergic Rhinitis / Asthma", description: "Bronchospasm, wheezing, dust/cold allergy", createdAt: "2026-01-03" },
+      { id: "119-7", srNo: 7, name: "Pulmonary TB (Nikshay)", description: "Mycobacterium tuberculosis under DOTS therapy", createdAt: "2026-01-04" },
+      { id: "119-8", srNo: 8, name: "Typhoid Enteric Fever", description: "Salmonella typhi infection, high grade fever", createdAt: "2026-01-05" }
+    ]
+  };
+
+  const [selectedOtherMasterCode, setSelectedOtherMasterCode] = useState("107"); // Default Doctor Degree matching user screenshot
+  const [otherMasterCategorySearch, setOtherMasterCategorySearch] = useState("");
+  const [otherMasterEntrySearch, setOtherMasterEntrySearch] = useState("");
+  const [newMasterEntryName, setNewMasterEntryName] = useState("");
+  const [newMasterEntryDesc, setNewMasterEntryDesc] = useState("");
+  const [editingMasterEntryId, setEditingMasterEntryId] = useState(null);
+  const [selectedMasterEntryIds, setSelectedMasterEntryIds] = useState<string[]>([]);
+  const [showOtherMasterPrintModal, setShowOtherMasterPrintModal] = useState(false);
+
+  const [otherMastersData, setOtherMastersData] = useState(() => {
+    try {
+      const saved = localStorage.getItem("store_other_masters_data");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Merge with defaults if any category is missing
+        return { ...INITIAL_OTHER_MASTERS_DATA, ...parsed };
+      }
+    } catch (e) {
+      console.error("Error loading other_masters_data from localStorage", e);
+    }
+    return INITIAL_OTHER_MASTERS_DATA;
+  });
+
+  const saveOtherMastersData = (updater: any) => {
+    setOtherMastersData((prev: any) => {
+      const updated = typeof updater === "function" ? updater(prev) : updater;
+      try {
+        localStorage.setItem("store_other_masters_data", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Error saving other_masters_data to localStorage", e);
+      }
+      return updated;
+    });
+  };
+
+  const handleAddOrUpdateOtherMasterEntry = (e?: any) => {
+    if (e) e.preventDefault();
+    const cleanName = (newMasterEntryName || "").trim();
+    if (!cleanName) {
+      alert("Please enter a valid entry name / title.");
+      return;
+    }
+
+    const currentList = otherMastersData[selectedOtherMasterCode] || [];
+
+    if (editingMasterEntryId) {
+      // Update existing
+      const updatedList = currentList.map((item: any) => {
+        if (item.id === editingMasterEntryId) {
+          return {
+            ...item,
+            name: cleanName,
+            description: (newMasterEntryDesc || "").trim()
+          };
+        }
+        return item;
+      });
+      saveOtherMastersData((prev: any) => ({
+        ...prev,
+        [selectedOtherMasterCode]: updatedList
+      }));
+      setEditingMasterEntryId(null);
+      setNewMasterEntryName("");
+      setNewMasterEntryDesc("");
+      showToast("Entry updated successfully!");
+    } else {
+      // Add new
+      // Check duplicate
+      const isDuplicate = currentList.some((it: any) => (it.name || "").toLowerCase() === cleanName.toLowerCase());
+      if (isDuplicate) {
+        if (!window.confirm("An entry with this name already exists. Do you still want to add it?")) {
+          return;
+        }
+      }
+
+      const nextSrNo = currentList.length > 0 ? Math.max(...currentList.map((it: any) => Number(it.srNo) || 0)) + 1 : 1;
+      const newEntry = {
+        id: selectedOtherMasterCode + "-" + Date.now(),
+        srNo: nextSrNo,
+        name: cleanName,
+        description: (newMasterEntryDesc || "").trim(),
+        createdAt: new Date().toISOString().split("T")[0]
+      };
+
+      saveOtherMastersData((prev: any) => ({
+        ...prev,
+        [selectedOtherMasterCode]: [...currentList, newEntry]
+      }));
+      setNewMasterEntryName("");
+      setNewMasterEntryDesc("");
+      showToast("Entry added successfully!");
+    }
+  };
+
+  const handleEditOtherMasterEntry = (item: any) => {
+    setEditingMasterEntryId(item.id);
+    setNewMasterEntryName(item.name || "");
+    setNewMasterEntryDesc(item.description || "");
+  };
+
+  const handleCancelOtherMasterEdit = () => {
+    setEditingMasterEntryId(null);
+    setNewMasterEntryName("");
+    setNewMasterEntryDesc("");
+  };
+
+  const handleDeleteOtherMasterEntry = (id: string, name: string) => {
+    if (!window.confirm("Are you sure you want to delete '" + name + "'?")) return;
+    const currentList = otherMastersData[selectedOtherMasterCode] || [];
+    const updatedList = currentList.filter((it: any) => it.id !== id);
+    // Renumber srNo
+    const renumbered = updatedList.map((it: any, idx: number) => ({ ...it, srNo: idx + 1 }));
+    saveOtherMastersData((prev: any) => ({
+      ...prev,
+      [selectedOtherMasterCode]: renumbered
+    }));
+    setSelectedMasterEntryIds((prev) => prev.filter(x => x !== id));
+    if (editingMasterEntryId === id) handleCancelOtherMasterEdit();
+    showToast("Entry deleted successfully!");
+  };
+
+  const handleDeleteSelectedOtherMasterEntries = () => {
+    if (selectedMasterEntryIds.length === 0) {
+      alert("Please select at least one entry from the table to delete.");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to delete the " + selectedMasterEntryIds.length + " selected entries?")) return;
+    const currentList = otherMastersData[selectedOtherMasterCode] || [];
+    const updatedList = currentList.filter((it: any) => !selectedMasterEntryIds.includes(it.id));
+    const renumbered = updatedList.map((it: any, idx: number) => ({ ...it, srNo: idx + 1 }));
+    saveOtherMastersData((prev: any) => ({
+      ...prev,
+      [selectedOtherMasterCode]: renumbered
+    }));
+    setSelectedMasterEntryIds([]);
+    handleCancelOtherMasterEdit();
+    showToast(selectedMasterEntryIds.length + " entries deleted successfully!");
+  };
+
+  const handleDeleteAllOtherMasterEntries = () => {
+    const currentList = otherMastersData[selectedOtherMasterCode] || [];
+    if (currentList.length === 0) {
+      alert("The current master list is already empty.");
+      return;
+    }
+    const cat = OTHER_MASTER_CATEGORIES.find(c => c.code === selectedOtherMasterCode);
+    const catName = cat ? cat.name : "this category";
+    if (!window.confirm("WARNING: Are you sure you want to delete ALL entries in " + catName + "? This action cannot be undone.")) return;
+    saveOtherMastersData((prev: any) => ({
+      ...prev,
+      [selectedOtherMasterCode]: []
+    }));
+    setSelectedMasterEntryIds([]);
+    handleCancelOtherMasterEdit();
+    showToast("All entries in " + catName + " deleted.");
+  };
+
+  const handleResetOtherMasterDefaults = () => {
+    const cat = OTHER_MASTER_CATEGORIES.find(c => c.code === selectedOtherMasterCode);
+    const catName = cat ? cat.name : "this category";
+    if (!window.confirm("Reset " + catName + " to standard pharmacy defaults?")) return;
+    const defaultForCat = INITIAL_OTHER_MASTERS_DATA[selectedOtherMasterCode] || [];
+    saveOtherMastersData((prev: any) => ({
+      ...prev,
+      [selectedOtherMasterCode]: defaultForCat
+    }));
+    setSelectedMasterEntryIds([]);
+    handleCancelOtherMasterEdit();
+    showToast(catName + " reset to default items!");
+  };
+
+
 
 
 
@@ -1718,7 +2039,7 @@ export default function OwnerPanel() {
                 {label:"Doctor Master", action:()=>{setActiveSection("masters");setOwnerSubTab("doctors");setActiveMenu(null);}},
                 {label:"Patient Master", action:()=>{setActiveSection("masters");setOwnerSubTab("customers");setActiveMenu(null);}},
                 {label:"Contract Employee Master", action:()=>{setActiveSection("masters");setOwnerSubTab("contract_employees");setContractEmpViewMode("editor");setActiveMenu(null);}},
-                {label:"Other Masters", action:()=>{setActiveSection("masters");setActiveMenu(null);}},
+                {label:"Other Masters", action:()=>{setActiveSection("masters");setOwnerSubTab("other_masters");setActiveMenu(null);}},
                 {label:"Account Group", action:()=>{setShowWipModal("Account Group");}},
                 {label:"Generic Group Item List", action:()=>{setShowWipModal("Generic Group Item List");}},
               ]},
@@ -4175,7 +4496,7 @@ const pending = [];
         {isOwner && activeSection === "masters" && (
           <>
             <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
-              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "contract_employees", label: "👷 Contract Employee Master" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
+              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "contract_employees", label: "👷 Contract Employee Master" }, { id: "other_masters", label: "📑 Other Masters" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
             </div>
@@ -12234,6 +12555,726 @@ const pending = [];
                 </div>
               );
             })()}
+
+            {/* ═════════════════════════════════════════════════════════════
+                OTHER MASTERS (System Lookup Masters 101 to 119)
+                Pure English UI - Matching Inventory Light Theme
+            ═════════════════════════════════════════════════════════════ */}
+            {ownerSubTab === "other_masters" && (() => {
+              const activeCat = OTHER_MASTER_CATEGORIES.find(c => c.code === selectedOtherMasterCode) || OTHER_MASTER_CATEGORIES[6]; // default 107
+              const currentEntries = otherMastersData[selectedOtherMasterCode] || [];
+              
+              // Filter categories by search
+              const catQ = (otherMasterCategorySearch || "").trim().toLowerCase();
+              const filteredCats = OTHER_MASTER_CATEGORIES.filter(c => {
+                if (!catQ) return true;
+                return c.code.toLowerCase().includes(catQ) || c.name.toLowerCase().includes(catQ) || c.desc.toLowerCase().includes(catQ);
+              });
+
+              // Filter entries by search
+              const entryQ = (otherMasterEntrySearch || "").trim().toLowerCase();
+              const filteredEntries = currentEntries.filter((item: any) => {
+                if (!entryQ) return true;
+                return (
+                  String(item.srNo).includes(entryQ) ||
+                  (item.name || "").toLowerCase().includes(entryQ) ||
+                  (item.description || "").toLowerCase().includes(entryQ) ||
+                  (item.createdAt || "").toLowerCase().includes(entryQ)
+                );
+              });
+
+              const totalSystemEntries = Object.values(otherMastersData).reduce((sum: number, list: any) => sum + (Array.isArray(list) ? list.length : 0), 0);
+
+              const handleSelectAll = (e: any) => {
+                if (e.target.checked) {
+                  setSelectedMasterEntryIds(filteredEntries.map((it: any) => it.id));
+                } else {
+                  setSelectedMasterEntryIds([]);
+                }
+              };
+
+              const handleToggleSelect = (id: string) => {
+                setSelectedMasterEntryIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+              };
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px", animation: "fadeIn 0.2s ease-in" }}>
+                  {/* TOP HEADER BAR */}
+                  <div style={{
+                    background: "#ffffff",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e8f0",
+                    padding: "16px 20px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "12px"
+                  }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "24px" }}>📑</span>
+                        <div>
+                          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}>
+                            Other Masters Configuration
+                            <span style={{ fontSize: "11px", fontWeight: "700", background: "#dbeafe", color: "#1d4ed8", padding: "2px 8px", borderRadius: "12px" }}>
+                              GST Ver. 1005A
+                            </span>
+                          </h2>
+                          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                            Lic To: SHIV DHARA MEDICAL STORE : 2026 - 2027 &nbsp;•&nbsp; 17 System Master Categories &nbsp;•&nbsp; Total {totalSystemEntries} active entries
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <button
+                        onClick={() => setShowOtherMasterPrintModal(true)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          borderRadius: "6px",
+                          background: "#0284c7",
+                          color: "#ffffff",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                        }}
+                      >
+                        🖨️ Print Master List
+                      </button>
+                      <button
+                        onClick={handleResetOtherMasterDefaults}
+                        title="Reset current category to standard pharmacy entries"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          background: "#f1f5f9",
+                          color: "#475569",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          border: "1px solid #cbd5e1",
+                          cursor: "pointer"
+                        }}
+                      >
+                        ↺ Reset Defaults
+                      </button>
+                      <button
+                        onClick={() => setOwnerSubTab("accounts")}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          background: "#f8fafc",
+                          color: "#64748b",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          border: "1px solid #e2e8f0",
+                          cursor: "pointer"
+                        }}
+                      >
+                        ✕ Close
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 2-COLUMN WORKSPACE: LEFT (70% ENTRIES & FORM) | RIGHT (30% MASTER DATA LIST) */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "16px", alignItems: "start" }}>
+                    
+                    {/* LEFT PANEL: ENTRY WORKBENCH & CURRENT TABLE */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      
+                      {/* ENTRY FORM CARD */}
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "10px",
+                        border: "1px solid #e2e8f0",
+                        padding: "18px 20px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ fontSize: "20px" }}>{activeCat.icon}</span>
+                            <div>
+                              <div style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                Code #{activeCat.code} &nbsp;•&nbsp; {editingMasterEntryId ? "EDIT ENTRY" : "NEW ENTRY"}
+                              </div>
+                              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
+                                Entry for : {activeCat.name}
+                              </h3>
+                            </div>
+                          </div>
+                          {editingMasterEntryId && (
+                            <button
+                              onClick={handleCancelOtherMasterEdit}
+                              style={{
+                                padding: "4px 10px",
+                                background: "#fef2f2",
+                                color: "#ef4444",
+                                border: "1px solid #fecaca",
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                cursor: "pointer"
+                              }}
+                            >
+                              ✕ Cancel Edit
+                            </button>
+                          )}
+                        </div>
+
+                        <form onSubmit={handleAddOrUpdateOtherMasterEntry} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                            <div>
+                              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                                Add New Entry / Name <span style={{ color: "#ef4444" }}>*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={newMasterEntryName}
+                                onChange={(e) => setNewMasterEntryName(e.target.value)}
+                                placeholder={"Enter " + activeCat.name.toLowerCase() + " name..."}
+                                autoFocus
+                                style={{
+                                  width: "100%",
+                                  padding: "9px 12px",
+                                  border: "1.5px solid #cbd5e1",
+                                  borderRadius: "6px",
+                                  fontSize: "13px",
+                                  color: "#0f172a",
+                                  outline: "none",
+                                  background: "#ffffff",
+                                  boxSizing: "border-box"
+                                }}
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                                Description / Notes
+                              </label>
+                              <input
+                                type="text"
+                                value={newMasterEntryDesc}
+                                onChange={(e) => setNewMasterEntryDesc(e.target.value)}
+                                placeholder="Additional details, code, or description..."
+                                style={{
+                                  width: "100%",
+                                  padding: "9px 12px",
+                                  border: "1.5px solid #cbd5e1",
+                                  borderRadius: "6px",
+                                  fontSize: "13px",
+                                  color: "#0f172a",
+                                  outline: "none",
+                                  background: "#ffffff",
+                                  boxSizing: "border-box"
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "4px" }}>
+                            <div style={{ fontSize: "11px", color: "#64748b" }}>
+                              {activeCat.desc}
+                            </div>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button
+                                type="submit"
+                                style={{
+                                  padding: "9px 20px",
+                                  borderRadius: "6px",
+                                  background: editingMasterEntryId ? "#0284c7" : "#16a34a",
+                                  color: "#ffffff",
+                                  fontWeight: "800",
+                                  fontSize: "13px",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "6px"
+                                }}
+                              >
+                                {editingMasterEntryId ? "💾 Update Entry" : "➕ Add Entry"}
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+
+                      {/* DATA TABLE CARD */}
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "10px",
+                        border: "1px solid #e2e8f0",
+                        padding: "16px 20px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                      }}>
+                        {/* TABLE TOOLBAR */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <div style={{ position: "relative", width: "260px" }}>
+                              <input
+                                type="text"
+                                value={otherMasterEntrySearch}
+                                onChange={(e) => setOtherMasterEntrySearch(e.target.value)}
+                                placeholder={"Search in " + activeCat.name + "..."}
+                                style={{
+                                  width: "100%",
+                                  padding: "7px 10px 7px 30px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "12px",
+                                  outline: "none",
+                                  boxSizing: "border-box"
+                                }}
+                              />
+                              <span style={{ position: "absolute", left: "9px", top: "7px", fontSize: "13px", color: "#94a3b8" }}>🔍</span>
+                            </div>
+                            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                              Showing {filteredEntries.length} of {currentEntries.length} entries
+                            </span>
+                          </div>
+
+                          {/* ACTION BUTTONS */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            {selectedMasterEntryIds.length > 0 && (
+                              <button
+                                onClick={handleDeleteSelectedOtherMasterEntries}
+                                style={{
+                                  padding: "6px 12px",
+                                  background: "#fef2f2",
+                                  color: "#dc2626",
+                                  border: "1px solid #fecaca",
+                                  borderRadius: "6px",
+                                  fontSize: "12px",
+                                  fontWeight: "700",
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px"
+                                }}
+                              >
+                                🗑️ Delete Selected ({selectedMasterEntryIds.length})
+                              </button>
+                            )}
+                            <button
+                              onClick={handleDeleteAllOtherMasterEntries}
+                              style={{
+                                padding: "6px 12px",
+                                background: "#fff1f2",
+                                color: "#e11d48",
+                                border: "1px solid #ffe4e6",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px"
+                              }}
+                            >
+                              ⚠️ Delete All
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* TABLE */}
+                        <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px" }}>
+                            <thead>
+                              <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", textAlign: "left" }}>
+                                <th style={{ padding: "10px 12px", width: "36px", textAlign: "center" }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={filteredEntries.length > 0 && selectedMasterEntryIds.length === filteredEntries.length}
+                                    onChange={handleSelectAll}
+                                  />
+                                </th>
+                                <th style={{ padding: "10px 12px", width: "60px", color: "#475569", fontWeight: "700" }}>Sr No.</th>
+                                <th style={{ padding: "10px 12px", color: "#475569", fontWeight: "700" }}>Description / Value</th>
+                                <th style={{ padding: "10px 12px", color: "#475569", fontWeight: "700" }}>Notes / Extra Details</th>
+                                <th style={{ padding: "10px 12px", width: "100px", color: "#475569", fontWeight: "700" }}>Created</th>
+                                <th style={{ padding: "10px 12px", width: "110px", color: "#475569", fontWeight: "700", textAlign: "center" }}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredEntries.length === 0 ? (
+                                <tr>
+                                  <td colSpan={6} style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8" }}>
+                                    <div style={{ fontSize: "32px", marginBottom: "8px" }}>📭</div>
+                                    <div style={{ fontWeight: "700", fontSize: "14px", color: "#475569" }}>No entries found</div>
+                                    <div style={{ fontSize: "12px", marginTop: "4px" }}>
+                                      Use the form above to add your first entry for {activeCat.name}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ) : (
+                                filteredEntries.map((item: any) => {
+                                  const isSelected = selectedMasterEntryIds.includes(item.id);
+                                  const isEditing = editingMasterEntryId === item.id;
+                                  return (
+                                    <tr
+                                      key={item.id}
+                                      style={{
+                                        borderBottom: "1px solid #f1f5f9",
+                                        background: isEditing ? "#eff6ff" : isSelected ? "#f8fafc" : "#ffffff",
+                                        transition: "background 0.15s"
+                                      }}
+                                    >
+                                      <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          onChange={() => handleToggleSelect(item.id)}
+                                        />
+                                      </td>
+                                      <td style={{ padding: "10px 12px", fontWeight: "700", color: "#64748b" }}>
+                                        #{item.srNo}
+                                      </td>
+                                      <td style={{ padding: "10px 12px", fontWeight: "700", color: "#0f172a" }}>
+                                        {item.name}
+                                      </td>
+                                      <td style={{ padding: "10px 12px", color: "#475569" }}>
+                                        {item.description || <span style={{ color: "#cbd5e1" }}>-</span>}
+                                      </td>
+                                      <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "11.5px" }}>
+                                        {item.createdAt || "-"}
+                                      </td>
+                                      <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                                        <div style={{ display: "inline-flex", gap: "6px" }}>
+                                          <button
+                                            onClick={() => handleEditOtherMasterEntry(item)}
+                                            title="Edit this entry"
+                                            style={{
+                                              padding: "4px 8px",
+                                              background: "#f1f5f9",
+                                              color: "#0284c7",
+                                              border: "1px solid #cbd5e1",
+                                              borderRadius: "4px",
+                                              fontSize: "11px",
+                                              fontWeight: "700",
+                                              cursor: "pointer"
+                                            }}
+                                          >
+                                            ✏️ Edit
+                                          </button>
+                                          <button
+                                            onClick={() => handleDeleteOtherMasterEntry(item.id, item.name)}
+                                            title="Delete this entry"
+                                            style={{
+                                              padding: "4px 8px",
+                                              background: "#fef2f2",
+                                              color: "#ef4444",
+                                              border: "1px solid #fecaca",
+                                              borderRadius: "4px",
+                                              fontSize: "11px",
+                                              fontWeight: "700",
+                                              cursor: "pointer"
+                                            }}
+                                          >
+                                            🗑️
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* FOOTER BAR MATCHING LEGACY FORM BUTTONS */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                          <div style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ padding: "2px 6px", background: "#f1f5f9", borderRadius: "4px", fontWeight: "700", border: "1px solid #e2e8f0" }}>F1</span>
+                            <span>Click any category on the right master data list to switch tables</span>
+                          </div>
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                              onClick={() => {
+                                if (filteredEntries.length > 0) {
+                                  handleDeleteOtherMasterEntry(filteredEntries[0].id, filteredEntries[0].name);
+                                } else {
+                                  alert("No entry to delete in this view.");
+                                }
+                              }}
+                              style={{
+                                padding: "7px 14px",
+                                background: "#f1f5f9",
+                                color: "#475569",
+                                border: "1px solid #cbd5e1",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                cursor: "pointer"
+                              }}
+                            >
+                              Delete
+                            </button>
+                            <button
+                              onClick={handleDeleteAllOtherMasterEntries}
+                              style={{
+                                padding: "7px 14px",
+                                background: "#fee2e2",
+                                color: "#b91c1c",
+                                border: "1px solid #fca5a5",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                cursor: "pointer"
+                              }}
+                            >
+                              Delete All
+                            </button>
+                            <button
+                              onClick={() => setOwnerSubTab("accounts")}
+                              style={{
+                                padding: "7px 16px",
+                                background: "#334155",
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                cursor: "pointer"
+                              }}
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* RIGHT PANEL: MASTER DATA LIST (: Master Data List :) */}
+                    <div style={{
+                      background: "#ffffff",
+                      borderRadius: "10px",
+                      border: "1px solid #e2e8f0",
+                      padding: "16px",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px"
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px" }}>
+                        <div>
+                          <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>
+                            Navigation Index
+                          </div>
+                          <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>
+                            : Master Data List :
+                          </h4>
+                        </div>
+                        <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#475569", padding: "3px 8px", borderRadius: "10px" }}>
+                          {OTHER_MASTER_CATEGORIES.length} Tables
+                        </span>
+                      </div>
+
+                      {/* SEARCH CATEGORY */}
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          value={otherMasterCategorySearch}
+                          onChange={(e) => setOtherMasterCategorySearch(e.target.value)}
+                          placeholder="Filter master categories..."
+                          style={{
+                            width: "100%",
+                            padding: "7px 10px 7px 28px",
+                            borderRadius: "6px",
+                            border: "1px solid #cbd5e1",
+                            fontSize: "12px",
+                            outline: "none",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                        <span style={{ position: "absolute", left: "8px", top: "7px", fontSize: "12px", color: "#94a3b8" }}>🔍</span>
+                      </div>
+
+                      {/* LIST OF 17 MASTER TABLES */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "650px", overflowY: "auto", paddingRight: "4px" }}>
+                        {filteredCats.map((cat) => {
+                          const isSelected = cat.code === selectedOtherMasterCode;
+                          const count = (otherMastersData[cat.code] || []).length;
+                          return (
+                            <button
+                              key={cat.code}
+                              onClick={() => {
+                                setSelectedOtherMasterCode(cat.code);
+                                handleCancelOtherMasterEdit();
+                                setSelectedMasterEntryIds([]);
+                              }}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                width: "100%",
+                                padding: "8px 10px",
+                                borderRadius: "6px",
+                                border: isSelected ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
+                                background: isSelected ? "#eff6ff" : "#ffffff",
+                                color: isSelected ? "#1d4ed8" : "#334155",
+                                fontWeight: isSelected ? "800" : "600",
+                                fontSize: "12px",
+                                cursor: "pointer",
+                                textAlign: "left",
+                                transition: "all 0.15s ease",
+                                boxShadow: isSelected ? "0 1px 3px rgba(37, 99, 235, 0.15)" : "none"
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span style={{
+                                  fontSize: "11px",
+                                  fontWeight: "800",
+                                  fontFamily: "monospace",
+                                  background: isSelected ? "#2563eb" : "#f1f5f9",
+                                  color: isSelected ? "#ffffff" : "#64748b",
+                                  padding: "2px 6px",
+                                  borderRadius: "4px"
+                                }}>
+                                  {cat.code}
+                                </span>
+                                <span>{cat.name}</span>
+                              </div>
+                              <span style={{
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                background: isSelected ? "#dbeafe" : "#f1f5f9",
+                                color: isSelected ? "#1e40af" : "#64748b",
+                                padding: "2px 6px",
+                                borderRadius: "10px"
+                              }}>
+                                {count}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* QUICK STATS IN RIGHT BAR */}
+                      <div style={{ background: "#f8fafc", borderRadius: "6px", padding: "10px", border: "1px solid #e2e8f0", fontSize: "11.5px", color: "#64748b" }}>
+                        <div style={{ fontWeight: "700", color: "#334155", marginBottom: "4px" }}>System Master Tip:</div>
+                        All entries configured here automatically populate dropdowns in Sales, Purchase, Patient, Doctor, and Inventory modules.
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* PRINT MODAL */}
+                  {showOtherMasterPrintModal && (
+                    <div style={{
+                      position: "fixed",
+                      inset: 0,
+                      background: "rgba(15, 23, 42, 0.65)",
+                      backdropFilter: "blur(3px)",
+                      zIndex: 9999,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "20px"
+                    }}>
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "12px",
+                        maxWidth: "750px",
+                        width: "100%",
+                        maxHeight: "90vh",
+                        overflowY: "auto",
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                        padding: "24px"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "16px" }}>
+                          <div>
+                            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#0f172a" }}>
+                              SHIV DHARA MEDICAL STORE
+                            </h2>
+                            <div style={{ fontSize: "12px", color: "#475569" }}>
+                              Official Master Data Directory &nbsp;•&nbsp; Category #{activeCat.code}: {activeCat.name}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right", fontSize: "11px", color: "#64748b" }}>
+                            Date: {new Date().toLocaleDateString("en-GB")}<br />
+                            GST Ver. 1005A
+                          </div>
+                        </div>
+
+                        <div style={{ marginBottom: "16px" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                            <thead>
+                              <tr style={{ background: "#f1f5f9", borderBottom: "1.5px solid #cbd5e1" }}>
+                                <th style={{ padding: "8px 10px", textAlign: "left", width: "60px" }}>Sr No.</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left" }}>Name / Value</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left" }}>Description / Extra Details</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left", width: "90px" }}>Created Date</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {currentEntries.map((it: any) => (
+                                <tr key={it.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                                  <td style={{ padding: "8px 10px", fontWeight: "700" }}>#{it.srNo}</td>
+                                  <td style={{ padding: "8px 10px", fontWeight: "700", color: "#0f172a" }}>{it.name}</td>
+                                  <td style={{ padding: "8px 10px", color: "#475569" }}>{it.description || "-"}</td>
+                                  <td style={{ padding: "8px 10px", color: "#64748b" }}>{it.createdAt || "-"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
+                          <button
+                            onClick={() => window.print()}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#0284c7",
+                              color: "#ffffff",
+                              borderRadius: "6px",
+                              border: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            🖨️ Print Now
+                          </button>
+                          <button
+                            onClick={() => setShowOtherMasterPrintModal(false)}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#f1f5f9",
+                              color: "#475569",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e1",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              );
+            })()}
+
           </>
         )}
 
