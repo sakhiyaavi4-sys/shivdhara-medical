@@ -1728,6 +1728,206 @@ export default function OwnerPanel() {
   const [selectedMasterEntryIds, setSelectedMasterEntryIds] = useState<string[]>([]);
   const [showOtherMasterPrintModal, setShowOtherMasterPrintModal] = useState(false);
 
+  // ─── ACCOUNT GROUP MASTER ───
+  // Type Definitions matching legacy software:
+  // 1-Liabilities, 2-Assets, 3-Expense, 4-Income, 5-Trading Expense, 6-Trading Income
+  const ACCOUNT_GROUP_TYPES = [
+    { id: 1, name: "Liabilities", label: "1 - Liabilities", color: "#e11d48", bg: "#ffe4e6", border: "#fecdd3" },
+    { id: 2, name: "Assets", label: "2 - Assets", color: "#0284c7", bg: "#e0f2fe", border: "#bae6fd" },
+    { id: 3, name: "Expense", label: "3 - Expense (Indirect)", color: "#d97706", bg: "#fef3c7", border: "#fde68a" },
+    { id: 4, name: "Income", label: "4 - Income (Indirect)", color: "#16a34a", bg: "#dcfce7", border: "#bbf7d0" },
+    { id: 5, name: "Trading Expense", label: "5 - Trading Expense", color: "#9333ea", bg: "#f3e8ff", border: "#e9d5ff" },
+    { id: 6, name: "Trading Income", label: "6 - Trading Income", color: "#0d9488", bg: "#ccfbf1", border: "#99f6e4" }
+  ];
+
+  // User requested: Do NOT pre-fill static list. Load ONLY if saved in localStorage, else start empty []
+  const [accountGroups, setAccountGroups] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem("store_account_groups");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error("Error reading store_account_groups from localStorage", e);
+    }
+    return []; // Clean empty start as instructed by user
+  });
+
+  const [accountGroupSearch, setAccountGroupSearch] = useState("");
+  const [accountGroupTypeFilter, setAccountGroupTypeFilter] = useState("All");
+  const [accountGroupSort, setAccountGroupSort] = useState<"sr_asc" | "name_asc" | "name_desc" | "seq_asc">("sr_asc");
+  const [selectedAccountGroupIds, setSelectedAccountGroupIds] = useState<string[]>([]);
+  const [editingAccountGroupId, setEditingAccountGroupId] = useState<string | null>(null);
+  
+  // Entry Form States
+  const [newAccGroupName, setNewAccGroupName] = useState("");
+  const [newAccGroupType, setNewAccGroupType] = useState<number>(1);
+  const [newAccGroupSeq, setNewAccGroupSeq] = useState<number>(0);
+  const [newAccGroupParent, setNewAccGroupParent] = useState<string>("0");
+  const [newAccGroupDesc, setNewAccGroupDesc] = useState("");
+  const [showAccountGroupPrintModal, setShowAccountGroupPrintModal] = useState(false);
+
+  const saveAccountGroups = (updater: any) => {
+    setAccountGroups((prev: any) => {
+      const updated = typeof updater === "function" ? updater(prev) : updater;
+      try {
+        localStorage.setItem("store_account_groups", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Error saving store_account_groups to localStorage", e);
+      }
+      return updated;
+    });
+  };
+
+  const handleAddOrUpdateAccountGroup = (e?: any) => {
+    if (e) e.preventDefault();
+    const cleanName = (newAccGroupName || "").trim();
+    if (!cleanName) {
+      alert("Please enter a valid Account Group Name.");
+      return;
+    }
+
+    if (editingAccountGroupId) {
+      // Update
+      const updated = accountGroups.map((g: any) => {
+        if (g.id === editingAccountGroupId) {
+          return {
+            ...g,
+            name: cleanName.toUpperCase(),
+            typeId: Number(newAccGroupType),
+            seq: Number(newAccGroupSeq) || 0,
+            inGroup: newAccGroupParent || "0",
+            description: (newAccGroupDesc || "").trim()
+          };
+        }
+        return g;
+      });
+      saveAccountGroups(updated);
+      setEditingAccountGroupId(null);
+      setNewAccGroupName("");
+      setNewAccGroupType(1);
+      setNewAccGroupSeq(0);
+      setNewAccGroupParent("0");
+      setNewAccGroupDesc("");
+      showToast("Account Group updated successfully!");
+    } else {
+      // Add
+      const exists = accountGroups.some((g: any) => (g.name || "").toLowerCase() === cleanName.toLowerCase());
+      if (exists) {
+        if (!window.confirm("An account group with this name already exists. Add anyway?")) return;
+      }
+
+      const nextSrNo = accountGroups.length > 0 ? Math.max(...accountGroups.map((g: any) => Number(g.srNo) || 0)) + 1 : 1;
+      const newGroup = {
+        id: "ag-" + Date.now(),
+        srNo: nextSrNo,
+        name: cleanName.toUpperCase(),
+        typeId: Number(newAccGroupType),
+        seq: Number(newAccGroupSeq) || 0,
+        inGroup: newAccGroupParent || "0",
+        description: (newAccGroupDesc || "").trim(),
+        createdAt: new Date().toISOString().split("T")[0]
+      };
+
+      saveAccountGroups([...accountGroups, newGroup]);
+      setNewAccGroupName("");
+      setNewAccGroupType(1);
+      setNewAccGroupSeq(0);
+      setNewAccGroupParent("0");
+      setNewAccGroupDesc("");
+      showToast("Account Group added successfully!");
+    }
+  };
+
+  const handleEditAccountGroup = (group: any) => {
+    setEditingAccountGroupId(group.id);
+    setNewAccGroupName(group.name || "");
+    setNewAccGroupType(Number(group.typeId) || 1);
+    setNewAccGroupSeq(Number(group.seq) || 0);
+    setNewAccGroupParent(group.inGroup || "0");
+    setNewAccGroupDesc(group.description || "");
+  };
+
+  const handleCancelAccountGroupEdit = () => {
+    setEditingAccountGroupId(null);
+    setNewAccGroupName("");
+    setNewAccGroupType(1);
+    setNewAccGroupSeq(0);
+    setNewAccGroupParent("0");
+    setNewAccGroupDesc("");
+  };
+
+  const handleDeleteAccountGroup = (id: string, name: string) => {
+    if (!window.confirm("Are you sure you want to delete Account Group '" + name + "'?")) return;
+    const filtered = accountGroups.filter((g: any) => g.id !== id);
+    const renumbered = filtered.map((g: any, idx: number) => ({ ...g, srNo: idx + 1 }));
+    saveAccountGroups(renumbered);
+    setSelectedAccountGroupIds(prev => prev.filter(x => x !== id));
+    if (editingAccountGroupId === id) handleCancelAccountGroupEdit();
+    showToast("Account Group deleted!");
+  };
+
+  const handleDeleteSelectedAccountGroups = () => {
+    if (selectedAccountGroupIds.length === 0) {
+      alert("Please select at least one Account Group to delete.");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to delete " + selectedAccountGroupIds.length + " selected Account Groups?")) return;
+    const filtered = accountGroups.filter((g: any) => !selectedAccountGroupIds.includes(g.id));
+    const renumbered = filtered.map((g: any, idx: number) => ({ ...g, srNo: idx + 1 }));
+    saveAccountGroups(renumbered);
+    setSelectedAccountGroupIds([]);
+    handleCancelAccountGroupEdit();
+    showToast(selectedAccountGroupIds.length + " Account Groups deleted!");
+  };
+
+  const handleDeleteAllAccountGroups = () => {
+    if (accountGroups.length === 0) {
+      alert("Account Group list is already empty.");
+      return;
+    }
+    if (!window.confirm("WARNING: Are you sure you want to delete ALL Account Groups? This cannot be undone.")) return;
+    saveAccountGroups([]);
+    setSelectedAccountGroupIds([]);
+    handleCancelAccountGroupEdit();
+    showToast("All Account Groups cleared.");
+  };
+
+  // Optional tool to import standard pharmacy accounting chart of groups if user requests
+  const handleLoadStandardAccountGroups = () => {
+    if (accountGroups.length > 0) {
+      if (!window.confirm("This will append standard pharmacy account groups to your list. Continue?")) return;
+    }
+    const standardPresets = [
+      { id: "ag-1", srNo: 1, name: "BANK ACCOUNT", typeId: 2, seq: 101, inGroup: "0", description: "Current and savings bank accounts" },
+      { id: "ag-2", srNo: 2, name: "BANK OVERDRAFT", typeId: 1, seq: 100, inGroup: "0", description: "Bank credit line & overdraft facility" },
+      { id: "ag-3", srNo: 3, name: "BRANCH A/C", typeId: 2, seq: 1, inGroup: "0", description: "Inter-branch clearing accounts" },
+      { id: "ag-4", srNo: 4, name: "CAPITAL ACCOUNT", typeId: 1, seq: 0, inGroup: "0", description: "Proprietor capital and equity fund" },
+      { id: "ag-5", srNo: 5, name: "CASH IN HAND", typeId: 2, seq: 0, inGroup: "0", description: "Counter drawer cash and petty cash" },
+      { id: "ag-6", srNo: 6, name: "CASH SALES ACCOUNT", typeId: 6, seq: 2, inGroup: "0", description: "Direct retail OTC cash revenues" },
+      { id: "ag-7", srNo: 7, name: "C-D CARD A/C", typeId: 2, seq: 0, inGroup: "0", description: "POS debit/credit card swipe settlements" },
+      { id: "ag-8", srNo: 8, name: "CLOSING STOCK ACCOUNT", typeId: 2, seq: 2, inGroup: "0", description: "Inventory valuation ledger" },
+      { id: "ag-9", srNo: 9, name: "CONTRACT", typeId: 1, seq: 2, inGroup: "0", description: "Corporate and hospital contracted liabilities" },
+      { id: "ag-10", srNo: 10, name: "CURRENT ASSETS", typeId: 2, seq: 1, inGroup: "0", description: "Short-term convertible store assets" },
+      { id: "ag-11", srNo: 11, name: "CURRENT LIABILITIES", typeId: 1, seq: 1, inGroup: "0", description: "Short-term dues and payables" },
+      { id: "ag-12", srNo: 12, name: "DEPARTMENT A/C", typeId: 1, seq: 0, inGroup: "0", description: "Internal clinic and pharmacy departments" },
+      { id: "ag-13", srNo: 13, name: "DUTIES & TAXES", typeId: 1, seq: 3, inGroup: "0", description: "GST (CGST, SGST, IGST) tax ledger" },
+      { id: "ag-14", srNo: 14, name: "FAMILY MEMBER LOAN ACCOUNT", typeId: 1, seq: 2, inGroup: "0", description: "Unsecured personal and family borrowings" },
+      { id: "ag-15", srNo: 15, name: "FIXED ASSETS", typeId: 2, seq: 4, inGroup: "0", description: "Furniture, refrigerators, POS computers" },
+      { id: "ag-16", srNo: 16, name: "INDIRECT EXPENSE", typeId: 3, seq: 2, inGroup: "0", description: "Store electricity, rent, staff salary, tea" },
+      { id: "ag-17", srNo: 17, name: "INDIRECT INCOME", typeId: 4, seq: 0, inGroup: "0", description: "Bank interest, vendor discounts, scrap sale" },
+      { id: "ag-18", srNo: 18, name: "INVESTMENTS", typeId: 2, seq: 0, inGroup: "0", description: "Fixed deposits and mutual fund investments" }
+    ];
+    // Merge without duplicate names
+    const existingNames = new Set(accountGroups.map(g => (g.name || "").toLowerCase()));
+    const toAdd = standardPresets.filter(p => !existingNames.has(p.name.toLowerCase()));
+    const combined = [...accountGroups, ...toAdd].map((g, idx) => ({ ...g, srNo: idx + 1, createdAt: g.createdAt || new Date().toISOString().split("T")[0] }));
+    saveAccountGroups(combined);
+    showToast("Standard Account Groups loaded!");
+  };
+
+
   const [otherMastersData, setOtherMastersData] = useState(() => {
     try {
       const saved = localStorage.getItem("store_other_masters_data");
@@ -2040,7 +2240,7 @@ export default function OwnerPanel() {
                 {label:"Patient Master", action:()=>{setActiveSection("masters");setOwnerSubTab("customers");setActiveMenu(null);}},
                 {label:"Contract Employee Master", action:()=>{setActiveSection("masters");setOwnerSubTab("contract_employees");setContractEmpViewMode("editor");setActiveMenu(null);}},
                 {label:"Other Masters", action:()=>{setActiveSection("masters");setOwnerSubTab("other_masters");setActiveMenu(null);}},
-                {label:"Account Group", action:()=>{setShowWipModal("Account Group");}},
+                {label:"Account Group", action:()=>{setActiveSection("masters");setOwnerSubTab("account_groups");setActiveMenu(null);}},
                 {label:"Generic Group Item List", action:()=>{setShowWipModal("Generic Group Item List");}},
               ]},
               {id:"transaction", label:"Transaction", items:[
@@ -4496,7 +4696,7 @@ const pending = [];
         {isOwner && activeSection === "masters" && (
           <>
             <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
-              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "contract_employees", label: "👷 Contract Employee Master" }, { id: "other_masters", label: "📑 Other Masters" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
+              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "contract_employees", label: "👷 Contract Employee Master" }, { id: "other_masters", label: "📑 Other Masters" }, { id: "account_groups", label: "📊 Account Groups" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
             </div>
@@ -13274,6 +13474,882 @@ const pending = [];
                 </div>
               );
             })()}
+
+
+            {/* ═════════════════════════════════════════════════════════════
+                ACCOUNT GROUP MASTER (Chart of Groups 1 to 6)
+                Pure English UI - Matching Inventory Light Theme
+            ═════════════════════════════════════════════════════════════ */}
+            {ownerSubTab === "account_groups" && (() => {
+              // Filter
+              const q = (accountGroupSearch || "").trim().toLowerCase();
+              let filtered = (accountGroups || []).filter((g: any) => {
+                if (accountGroupTypeFilter !== "All" && String(g.typeId) !== accountGroupTypeFilter) return false;
+                if (!q) return true;
+                return (
+                  String(g.srNo).includes(q) ||
+                  (g.name || "").toLowerCase().includes(q) ||
+                  String(g.seq).includes(q) ||
+                  (g.description || "").toLowerCase().includes(q)
+                );
+              });
+
+              // Sort
+              if (accountGroupSort === "name_asc") {
+                filtered = [...filtered].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""));
+              } else if (accountGroupSort === "name_desc") {
+                filtered = [...filtered].sort((a: any, b: any) => (b.name || "").localeCompare(a.name || ""));
+              } else if (accountGroupSort === "seq_asc") {
+                filtered = [...filtered].sort((a: any, b: any) => (Number(a.seq) || 0) - (Number(b.seq) || 0));
+              } else {
+                filtered = [...filtered].sort((a: any, b: any) => (Number(a.srNo) || 0) - (Number(b.srNo) || 0));
+              }
+
+              const handleSelectAll = (e: any) => {
+                if (e.target.checked) {
+                  setSelectedAccountGroupIds(filtered.map((g: any) => g.id));
+                } else {
+                  setSelectedAccountGroupIds([]);
+                }
+              };
+
+              const handleToggleSelect = (id: string) => {
+                setSelectedAccountGroupIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+              };
+
+              const getTypeObj = (typeId: number) => {
+                return ACCOUNT_GROUP_TYPES.find(t => t.id === Number(typeId)) || ACCOUNT_GROUP_TYPES[0];
+              };
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px", animation: "fadeIn 0.2s ease-in" }}>
+                  {/* TOP HEADER BAR */}
+                  <div style={{
+                    background: "#ffffff",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e8f0",
+                    padding: "16px 20px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "12px"
+                  }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "24px" }}>📊</span>
+                        <div>
+                          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}>
+                            Account Group Master
+                            <span style={{ fontSize: "11px", fontWeight: "700", background: "#fef3c7", color: "#b45309", padding: "2px 8px", borderRadius: "12px" }}>
+                              GST Ver. 1005A
+                            </span>
+                          </h2>
+                          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                            Lic To: SHIV DHARA MEDICAL STORE : 2026 - 2027 &nbsp;•&nbsp; Chart of Financial & Ledger Account Groups ({accountGroups.length} configured)
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      {accountGroups.length === 0 && (
+                        <button
+                          onClick={handleLoadStandardAccountGroups}
+                          title="Click to populate standard pharmaceutical account groups"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px 14px",
+                            borderRadius: "6px",
+                            background: "#059669",
+                            color: "#ffffff",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            border: "none",
+                            cursor: "pointer",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                          }}
+                        >
+                          ⚡ Load Standard Groups
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowAccountGroupPrintModal(true)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          borderRadius: "6px",
+                          background: "#0284c7",
+                          color: "#ffffff",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                        }}
+                      >
+                        🖨️ Print Groups Directory
+                      </button>
+                      <button
+                        onClick={() => setOwnerSubTab("accounts")}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          background: "#f8fafc",
+                          color: "#64748b",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          border: "1px solid #e2e8f0",
+                          cursor: "pointer"
+                        }}
+                      >
+                        ✕ Close
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* LEGEND BAR MATCHING LEGACY HEADER: Type 1-Liabilities, 2-Assets, 3-Expense, 4-Income, 5-Trading Expense, 6-Trading Income */}
+                  <div style={{
+                    background: "#0f172a",
+                    color: "#ffffff",
+                    borderRadius: "8px",
+                    padding: "10px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: "800", letterSpacing: "0.5px", textTransform: "uppercase", color: "#94a3b8" }}>
+                      <span>🏷️ ACCOUNT TYPES:</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      {ACCOUNT_GROUP_TYPES.map(t => (
+                        <div
+                          key={t.id}
+                          onClick={() => setAccountGroupTypeFilter(accountGroupTypeFilter === String(t.id) ? "All" : String(t.id))}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            background: accountGroupTypeFilter === String(t.id) ? t.bg : "rgba(255,255,255,0.08)",
+                            color: accountGroupTypeFilter === String(t.id) ? t.color : "#cbd5e1",
+                            border: accountGroupTypeFilter === String(t.id) ? ("1px solid " + t.color) : "1px solid rgba(255,255,255,0.15)",
+                            fontSize: "11.5px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            transition: "all 0.15s"
+                          }}
+                        >
+                          <span style={{
+                            width: "16px",
+                            height: "16px",
+                            borderRadius: "50%",
+                            background: t.color,
+                            color: "#ffffff",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "10px",
+                            fontWeight: "800"
+                          }}>
+                            {t.id}
+                          </span>
+                          <span>{t.name}</span>
+                          {accountGroupTypeFilter === String(t.id) && <span style={{ fontSize: "10px" }}>✓</span>}
+                        </div>
+                      ))}
+                      {accountGroupTypeFilter !== "All" && (
+                        <button
+                          onClick={() => setAccountGroupTypeFilter("All")}
+                          style={{
+                            background: "transparent",
+                            color: "#f87171",
+                            border: "1px dashed #f87171",
+                            borderRadius: "4px",
+                            padding: "3px 8px",
+                            fontSize: "10.5px",
+                            fontWeight: "700",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Clear Filter
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ENTRY FORM CARD (Add / Edit) */}
+                  <div style={{
+                    background: "#ffffff",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e8f0",
+                    padding: "18px 20px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "20px" }}>{editingAccountGroupId ? "✏️" : "➕"}</span>
+                        <div>
+                          <div style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                            {editingAccountGroupId ? "EDITING EXISTING GROUP" : "NEW ACCOUNT GROUP DEFINITION"}
+                          </div>
+                          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
+                            {editingAccountGroupId ? ("Edit: " + newAccGroupName) : "Add New Account Group"}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {editingAccountGroupId && (
+                        <button
+                          onClick={handleCancelAccountGroupEdit}
+                          style={{
+                            padding: "4px 10px",
+                            background: "#fef2f2",
+                            color: "#ef4444",
+                            border: "1px solid #fecaca",
+                            borderRadius: "4px",
+                            fontSize: "11px",
+                            fontWeight: "700",
+                            cursor: "pointer"
+                          }}
+                        >
+                          ✕ Cancel Edit
+                        </button>
+                      )}
+                    </div>
+
+                    <form onSubmit={handleAddOrUpdateAccountGroup} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 1fr 1.5fr", gap: "14px", alignItems: "end" }}>
+                        
+                        {/* GROUP NAME */}
+                        <div>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                            Group Name <span style={{ color: "#ef4444" }}>*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={newAccGroupName}
+                            onChange={(e) => setNewAccGroupName(e.target.value)}
+                            placeholder="e.g. BANK ACCOUNT, SUNDRY DEBTORS..."
+                            autoFocus
+                            style={{
+                              width: "100%",
+                              padding: "9px 12px",
+                              border: "1.5px solid #cbd5e1",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              color: "#0f172a",
+                              fontWeight: "700",
+                              textTransform: "uppercase",
+                              outline: "none",
+                              background: "#ffffff",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                        </div>
+
+                        {/* GROUP TYPE (1 to 6) */}
+                        <div>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                            Group Type (1 to 6) <span style={{ color: "#ef4444" }}>*</span>
+                          </label>
+                          <select
+                            value={newAccGroupType}
+                            onChange={(e) => setNewAccGroupType(Number(e.target.value))}
+                            style={{
+                              width: "100%",
+                              padding: "9px 12px",
+                              border: "1.5px solid #cbd5e1",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              color: "#0f172a",
+                              outline: "none",
+                              background: "#ffffff",
+                              boxSizing: "border-box",
+                              cursor: "pointer"
+                            }}
+                          >
+                            {ACCOUNT_GROUP_TYPES.map(t => (
+                              <option key={t.id} value={t.id}>
+                                {t.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* SEQ NUMBER */}
+                        <div>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                            Seq- No.
+                          </label>
+                          <input
+                            type="number"
+                            value={newAccGroupSeq}
+                            onChange={(e) => setNewAccGroupSeq(Number(e.target.value))}
+                            placeholder="0"
+                            style={{
+                              width: "100%",
+                              padding: "9px 12px",
+                              border: "1.5px solid #cbd5e1",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              color: "#0f172a",
+                              outline: "none",
+                              background: "#ffffff",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                        </div>
+
+                        {/* IN GROUP (PARENT / SUBGROUP) */}
+                        <div>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                            In Group (Parent)
+                          </label>
+                          <select
+                            value={newAccGroupParent}
+                            onChange={(e) => setNewAccGroupParent(e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "9px 12px",
+                              border: "1.5px solid #cbd5e1",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              color: "#0f172a",
+                              outline: "none",
+                              background: "#ffffff",
+                              boxSizing: "border-box",
+                              cursor: "pointer"
+                            }}
+                          >
+                            <option value="0">0 - Primary / Root Group</option>
+                            {accountGroups
+                              .filter((g: any) => g.id !== editingAccountGroupId)
+                              .map((g: any) => (
+                                <option key={g.id} value={g.name}>
+                                  {g.name}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+
+                      </div>
+
+                      {/* DESCRIPTION / NOTES & SUBMIT BUTTON */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "14px", alignItems: "center", paddingTop: "4px" }}>
+                        <div>
+                          <input
+                            type="text"
+                            value={newAccGroupDesc}
+                            onChange={(e) => setNewAccGroupDesc(e.target.value)}
+                            placeholder="Optional notes, accounting balance sheet remarks, or tax schedule..."
+                            style={{
+                              width: "100%",
+                              padding: "8px 12px",
+                              border: "1px solid #cbd5e1",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              color: "#334155",
+                              outline: "none",
+                              background: "#f8fafc",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            type="submit"
+                            style={{
+                              padding: "9px 24px",
+                              borderRadius: "6px",
+                              background: editingAccountGroupId ? "#0284c7" : "#16a34a",
+                              color: "#ffffff",
+                              fontWeight: "800",
+                              fontSize: "13px",
+                              border: "none",
+                              cursor: "pointer",
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px"
+                            }}
+                          >
+                            {editingAccountGroupId ? "💾 Update Group" : "➕ Ok / Add Group"}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* DATA TABLE CARD */}
+                  <div style={{
+                    background: "#ffffff",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e8f0",
+                    padding: "16px 20px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                  }}>
+                    {/* TABLE TOOLBAR */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ position: "relative", width: "260px" }}>
+                          <input
+                            type="text"
+                            value={accountGroupSearch}
+                            onChange={(e) => setAccountGroupSearch(e.target.value)}
+                            placeholder="Search account group name, seq..."
+                            style={{
+                              width: "100%",
+                              padding: "7px 10px 7px 30px",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e1",
+                              fontSize: "12px",
+                              outline: "none",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                          <span style={{ position: "absolute", left: "9px", top: "7px", fontSize: "13px", color: "#94a3b8" }}>🔍</span>
+                        </div>
+                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                          Showing {filtered.length} of {accountGroups.length} groups
+                        </span>
+                      </div>
+
+                      {/* SORT & BULK ACTIONS */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        {/* SORT BUTTONS MATCHING SCREENSHOT (A-Z, Z-A) */}
+                        <div style={{ display: "inline-flex", borderRadius: "6px", border: "1px solid #cbd5e1", overflow: "hidden" }}>
+                          <button
+                            onClick={() => setAccountGroupSort("name_asc")}
+                            title="Sort Alphabetically A to Z"
+                            style={{
+                              padding: "6px 12px",
+                              background: accountGroupSort === "name_asc" ? "#2563eb" : "#f8fafc",
+                              color: accountGroupSort === "name_asc" ? "#ffffff" : "#475569",
+                              border: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            A-Z
+                          </button>
+                          <button
+                            onClick={() => setAccountGroupSort("name_desc")}
+                            title="Sort Alphabetically Z to A"
+                            style={{
+                              padding: "6px 12px",
+                              background: accountGroupSort === "name_desc" ? "#2563eb" : "#f8fafc",
+                              color: accountGroupSort === "name_desc" ? "#ffffff" : "#475569",
+                              borderLeft: "1px solid #cbd5e1",
+                              borderRight: "1px solid #cbd5e1",
+                              borderTop: "none",
+                              borderBottom: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            Z-A
+                          </button>
+                          <button
+                            onClick={() => setAccountGroupSort("seq_asc")}
+                            title="Sort by Sequence"
+                            style={{
+                              padding: "6px 10px",
+                              background: accountGroupSort === "seq_asc" ? "#2563eb" : "#f8fafc",
+                              color: accountGroupSort === "seq_asc" ? "#ffffff" : "#475569",
+                              border: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            Seq
+                          </button>
+                        </div>
+
+                        {selectedAccountGroupIds.length > 0 && (
+                          <button
+                            onClick={handleDeleteSelectedAccountGroups}
+                            style={{
+                              padding: "6px 12px",
+                              background: "#fef2f2",
+                              color: "#dc2626",
+                              border: "1px solid #fecaca",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                          >
+                            🗑️ Delete Selected ({selectedAccountGroupIds.length})
+                          </button>
+                        )}
+
+                        <button
+                          onClick={handleDeleteAllAccountGroups}
+                          style={{
+                            padding: "6px 12px",
+                            background: "#fff1f2",
+                            color: "#e11d48",
+                            border: "1px solid #ffe4e6",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px"
+                          }}
+                        >
+                          ⚠️ Delete All
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* TABLE */}
+                    <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px" }}>
+                        <thead>
+                          <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", textAlign: "left" }}>
+                            <th style={{ padding: "10px 12px", width: "36px", textAlign: "center" }}>
+                              <input
+                                type="checkbox"
+                                checked={filtered.length > 0 && selectedAccountGroupIds.length === filtered.length}
+                                onChange={handleSelectAll}
+                              />
+                            </th>
+                            <th style={{ padding: "10px 12px", width: "60px", color: "#475569", fontWeight: "700" }}>Sr No.</th>
+                            <th style={{ padding: "10px 12px", color: "#475569", fontWeight: "700" }}>Group Name</th>
+                            <th style={{ padding: "10px 12px", width: "180px", color: "#475569", fontWeight: "700" }}>Group Type</th>
+                            <th style={{ padding: "10px 12px", width: "80px", color: "#475569", fontWeight: "700", textAlign: "center" }}>Seq-</th>
+                            <th style={{ padding: "10px 12px", width: "150px", color: "#475569", fontWeight: "700" }}>In Group</th>
+                            <th style={{ padding: "10px 12px", color: "#475569", fontWeight: "700" }}>Description</th>
+                            <th style={{ padding: "10px 12px", width: "110px", color: "#475569", fontWeight: "700", textAlign: "center" }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.length === 0 ? (
+                            <tr>
+                              <td colSpan={8} style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8" }}>
+                                <div style={{ fontSize: "36px", marginBottom: "8px" }}>📊</div>
+                                <div style={{ fontWeight: "800", fontSize: "15px", color: "#334155" }}>
+                                  {accountGroups.length === 0 ? "No Account Groups Added Yet" : "No matching groups found"}
+                                </div>
+                                <div style={{ fontSize: "12px", marginTop: "4px", color: "#64748b" }}>
+                                  {accountGroups.length === 0 ? "Use the form above to add your custom account groups, or click 'Load Standard Groups'." : "Try changing your search keywords or type filter."}
+                                </div>
+                                {accountGroups.length === 0 && (
+                                  <div style={{ marginTop: "14px" }}>
+                                    <button
+                                      onClick={handleLoadStandardAccountGroups}
+                                      style={{
+                                        padding: "8px 16px",
+                                        background: "#2563eb",
+                                        color: "#ffffff",
+                                        border: "none",
+                                        borderRadius: "6px",
+                                        fontSize: "12px",
+                                        fontWeight: "700",
+                                        cursor: "pointer"
+                                      }}
+                                    >
+                                      ⚡ Load Standard Groups Preset
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ) : (
+                            filtered.map((item: any) => {
+                              const isSelected = selectedAccountGroupIds.includes(item.id);
+                              const isEditing = editingAccountGroupId === item.id;
+                              const typeObj = getTypeObj(item.typeId);
+                              return (
+                                <tr
+                                  key={item.id}
+                                  style={{
+                                    borderBottom: "1px solid #f1f5f9",
+                                    background: isEditing ? "#eff6ff" : isSelected ? "#f8fafc" : "#ffffff",
+                                    transition: "background 0.15s"
+                                  }}
+                                >
+                                  <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => handleToggleSelect(item.id)}
+                                    />
+                                  </td>
+                                  <td style={{ padding: "10px 12px", fontWeight: "700", color: "#64748b" }}>
+                                    #{item.srNo}
+                                  </td>
+                                  <td style={{ padding: "10px 12px", fontWeight: "800", color: "#0f172a" }}>
+                                    {item.name}
+                                  </td>
+                                  <td style={{ padding: "10px 12px" }}>
+                                    <span style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                      padding: "3px 8px",
+                                      borderRadius: "6px",
+                                      background: typeObj.bg,
+                                      color: typeObj.color,
+                                      border: "1px solid " + typeObj.border,
+                                      fontSize: "11px",
+                                      fontWeight: "800"
+                                    }}>
+                                      <span>{typeObj.id}</span>
+                                      <span>•</span>
+                                      <span>{typeObj.name}</span>
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: "700", color: "#334155" }}>
+                                    {item.seq ?? 0}
+                                  </td>
+                                  <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px" }}>
+                                    {item.inGroup && item.inGroup !== "0" ? (
+                                      <span style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", color: "#334155", fontWeight: "600" }}>
+                                        ↳ {item.inGroup}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: "#94a3b8" }}>0 (Root)</span>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: "10px 12px", color: "#475569", fontSize: "12px" }}>
+                                    {item.description || <span style={{ color: "#cbd5e1" }}>-</span>}
+                                  </td>
+                                  <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                                    <div style={{ display: "inline-flex", gap: "6px" }}>
+                                      <button
+                                        onClick={() => handleEditAccountGroup(item)}
+                                        title="Edit this account group"
+                                        style={{
+                                          padding: "4px 8px",
+                                          background: "#f1f5f9",
+                                          color: "#0284c7",
+                                          border: "1px solid #cbd5e1",
+                                          borderRadius: "4px",
+                                          fontSize: "11px",
+                                          fontWeight: "700",
+                                          cursor: "pointer"
+                                        }}
+                                      >
+                                        ✏️ Edit
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteAccountGroup(item.id, item.name)}
+                                        title="Delete this account group"
+                                        style={{
+                                          padding: "4px 8px",
+                                          background: "#fef2f2",
+                                          color: "#ef4444",
+                                          border: "1px solid #fecaca",
+                                          borderRadius: "4px",
+                                          fontSize: "11px",
+                                          fontWeight: "700",
+                                          cursor: "pointer"
+                                        }}
+                                      >
+                                        🗑️
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* BOTTOM FOOTER BAR MATCHING LEGACY FORM BUTTONS */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                      <div style={{ fontSize: "12px", color: "#64748b" }}>
+                        Total <strong>{filtered.length}</strong> Groups displayed &nbsp;•&nbsp; Sorted by <strong>{accountGroupSort.toUpperCase()}</strong>
+                      </div>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          onClick={() => {
+                            if (filtered.length > 0) {
+                              handleDeleteAccountGroup(filtered[0].id, filtered[0].name);
+                            } else {
+                              alert("No account group to delete.");
+                            }
+                          }}
+                          style={{
+                            padding: "7px 14px",
+                            background: "#f1f5f9",
+                            color: "#475569",
+                            border: "1px solid #cbd5e1",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Delete Group
+                        </button>
+                        <button
+                          onClick={handleDeleteAllAccountGroups}
+                          style={{
+                            padding: "7px 14px",
+                            background: "#fee2e2",
+                            color: "#b91c1c",
+                            border: "1px solid #fca5a5",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Delete All
+                        </button>
+                        <button
+                          onClick={() => setOwnerSubTab("accounts")}
+                          style={{
+                            padding: "7px 16px",
+                            background: "#334155",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PRINT MODAL FOR ACCOUNT GROUPS DIRECTORY */}
+                  {showAccountGroupPrintModal && (
+                    <div style={{
+                      position: "fixed",
+                      inset: 0,
+                      background: "rgba(15, 23, 42, 0.65)",
+                      backdropFilter: "blur(3px)",
+                      zIndex: 9999,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "20px"
+                    }}>
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "12px",
+                        maxWidth: "800px",
+                        width: "100%",
+                        maxHeight: "90vh",
+                        overflowY: "auto",
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                        padding: "24px"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "16px" }}>
+                          <div>
+                            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#0f172a" }}>
+                              SHIV DHARA MEDICAL STORE
+                            </h2>
+                            <div style={{ fontSize: "12px", color: "#475569" }}>
+                              Official Chart of Accounts &amp; Financial Groups Directory
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right", fontSize: "11px", color: "#64748b" }}>
+                            Date: {new Date().toLocaleDateString("en-GB")}<br />
+                            GST Ver. 1005A
+                          </div>
+                        </div>
+
+                        <div style={{ marginBottom: "16px" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                            <thead>
+                              <tr style={{ background: "#f1f5f9", borderBottom: "1.5px solid #cbd5e1" }}>
+                                <th style={{ padding: "8px 10px", textAlign: "left", width: "50px" }}>Sr.</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left" }}>Group Name</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left", width: "140px" }}>Type</th>
+                                <th style={{ padding: "8px 10px", textAlign: "center", width: "60px" }}>Seq</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left", width: "120px" }}>In Group</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left" }}>Description</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {accountGroups.map((it: any) => {
+                                const typeObj = getTypeObj(it.typeId);
+                                return (
+                                  <tr key={it.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                                    <td style={{ padding: "8px 10px", fontWeight: "700" }}>#{it.srNo}</td>
+                                    <td style={{ padding: "8px 10px", fontWeight: "700", color: "#0f172a" }}>{it.name}</td>
+                                    <td style={{ padding: "8px 10px" }}>{typeObj.label}</td>
+                                    <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: "600" }}>{it.seq ?? 0}</td>
+                                    <td style={{ padding: "8px 10px", color: "#64748b" }}>{it.inGroup && it.inGroup !== "0" ? it.inGroup : "0"}</td>
+                                    <td style={{ padding: "8px 10px", color: "#475569" }}>{it.description || "-"}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
+                          <button
+                            onClick={() => window.print()}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#0284c7",
+                              color: "#ffffff",
+                              borderRadius: "6px",
+                              border: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            🖨️ Print Now
+                          </button>
+                          <button
+                            onClick={() => setShowAccountGroupPrintModal(false)}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#f1f5f9",
+                              color: "#475569",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e1",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              );
+            })()}
+
 
           </>
         )}
