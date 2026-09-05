@@ -1091,6 +1091,43 @@ export default function OwnerPanel() {
   const [newSupplierInput, setNewSupplierInput] = useState("");
   const [supplierFilterText, setSupplierFilterText] = useState("");
 
+  // ═════════════════════════════════════════════════════════════
+  // SUPPLIER MASTER STATES (Theme matching Inventory / Image 2)
+  // ═════════════════════════════════════════════════════════════
+  const defaultSupplierMasterForm = {
+    id: "",
+    srNo: 1,
+    code: "",
+    name: "",
+    person: "",
+    address: "",
+    area: "",
+    city: "",
+    contact: "",
+    mobile: "",
+    email: "",
+    message: "",
+    dlNo: "",
+    stNo: "",
+    remarks: "",
+    relatedCompanies: [], // array of company names
+    status: "active"
+  };
+
+  const [suppMasterForm, setSuppMasterForm] = useState(defaultSupplierMasterForm);
+  const [showSuppMasterForm, setShowSuppMasterForm] = useState(false);
+  const [editingSuppMaster, setEditingSuppMaster] = useState(null);
+  const [suppMasterSearch, setSuppMasterSearch] = useState("");
+  const [suppMasterSearchDropdown, setSuppMasterSearchDropdown] = useState(false);
+  const [suppMasterSearchHighlight, setSuppMasterSearchHighlight] = useState(0);
+  const [suppMasterStatusFilter, setSuppMasterStatusFilter] = useState("All");
+  const [suppMasterSortBy, setSuppMasterSortBy] = useState("name");
+  const [newCompanyInput, setNewCompanyInput] = useState("");
+  const [companyFilterText, setCompanyFilterText] = useState("");
+  const [showLabelModal, setShowLabelModal] = useState(false);
+  const [labelSupplier, setLabelSupplier] = useState(null);
+
+
 
   const [pbdActiveTab, setPbdActiveTab] = useState<"delete" | "renumber">("delete");
   const [pbdFromDate, setPbdFromDate] = useState(() => {
@@ -5709,51 +5746,1018 @@ const pending = [];
             )}
 
             {/* SUPPLIERS */}
-            {ownerSubTab === "suppliers" && (
-              <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                  <h2 style={{ margin: 0, fontSize: "17px", fontWeight: "800" }}>🏭 Supplier Master</h2>
-                  <div style={{ position: "relative" }}>
-                    <Search size={13} style={{ position: "absolute", left: "10px", top: "10px", color: "#64748b" }} />
-                    <input
-                      placeholder="Search Supplier..."
-                      value={masterSearch}
-                      onChange={e => setMasterSearch(e.target.value)}
-                      style={{ ...inp, width: "200px", paddingLeft: "28px", borderRadius: "20px", background: "#f8fafc" }}
-                    />
+            {ownerSubTab === "suppliers" && (() => {
+              // Filtering & Sorting
+              const q = (suppMasterSearch || "").trim().toLowerCase();
+              let filtered = (suppliers || []).filter(s => {
+                if (suppMasterStatusFilter === "active" && s.status === "inactive") return false;
+                if (suppMasterStatusFilter === "inactive" && s.status !== "inactive") return false;
+                if (!q) return true;
+                return (
+                  (s.name || "").toLowerCase().includes(q) ||
+                  (s.code || "").toLowerCase().includes(q) ||
+                  (s.city || "").toLowerCase().includes(q) ||
+                  (s.person || "").toLowerCase().includes(q) ||
+                  (s.mobile || "").includes(q) ||
+                  (s.gstTin || "").toLowerCase().includes(q) ||
+                  (s.stNo || "").toLowerCase().includes(q) ||
+                  String(s.srNo || "").includes(q)
+                );
+              });
+
+              if (suppMasterSortBy === "name") {
+                filtered = [...filtered].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+              } else if (suppMasterSortBy === "code") {
+                filtered = [...filtered].sort((a, b) => (a.code || "").localeCompare(b.code || ""));
+              } else if (suppMasterSortBy === "sr_desc") {
+                filtered = [...filtered].sort((a, b) => Number(b.srNo || 0) - Number(a.srNo || 0));
+              } else if (suppMasterSortBy === "comp_desc") {
+                filtered = [...filtered].sort((a, b) => ((b.relatedCompanies || []).length) - ((a.relatedCompanies || []).length));
+              }
+
+              // Search dropdown results (max 10)
+              const searchDropdownResults = q ? (suppliers || []).filter(s =>
+                (s.name || "").toLowerCase().includes(q) ||
+                (s.code || "").toLowerCase().includes(q) ||
+                (s.city || "").toLowerCase().includes(q) ||
+                (s.mobile || "").includes(q)
+              ).slice(0, 10) : [];
+
+              // Open Form Handler
+              const handleOpenSuppForm = (supp = null) => {
+                if (supp) {
+                  setEditingSuppMaster(supp);
+                  setSuppMasterForm({
+                    ...defaultSupplierMasterForm,
+                    ...supp,
+                    stNo: supp.stNo || supp.gstTin || "",
+                    relatedCompanies: supp.relatedCompanies || []
+                  });
+                } else {
+                  setEditingSuppMaster(null);
+                  const nextSr = suppliers.length > 0 ? Math.max(...suppliers.map(s => Number(s.srNo || 0))) + 1 : 1;
+                  setSuppMasterForm({
+                    ...defaultSupplierMasterForm,
+                    id: uid(),
+                    srNo: nextSr,
+                    relatedCompanies: []
+                  });
+                }
+                setShowSuppMasterForm(true);
+              };
+
+              // Save Supplier Handler
+              const handleSaveSuppMaster = () => {
+                if (!suppMasterForm.name || !suppMasterForm.name.trim()) {
+                  showToast("Supplier Name is required!", "error");
+                  return;
+                }
+
+                const sId = suppMasterForm.id || uid();
+                const suppData = {
+                  ...suppMasterForm,
+                  id: sId,
+                  name: suppMasterForm.name.trim().toUpperCase(),
+                  code: (suppMasterForm.code || suppMasterForm.name.substring(0, 4)).trim().toUpperCase(),
+                  gstTin: (suppMasterForm.stNo || suppMasterForm.gstTin || "").trim().toUpperCase(),
+                  stNo: (suppMasterForm.stNo || suppMasterForm.gstTin || "").trim().toUpperCase(),
+                  srNo: Number(suppMasterForm.srNo) || (suppliers.length + 1),
+                  updatedAt: new Date().toISOString()
+                };
+
+                let updatedList;
+                if (editingSuppMaster) {
+                  updatedList = suppliers.map(s => s.id === editingSuppMaster.id ? suppData : s);
+                } else {
+                  updatedList = [...suppliers, suppData];
+                }
+
+                saveSuppliers(updatedList);
+
+                // Also sync with accounts if an account with same name or id exists
+                try {
+                  const storedAccounts = JSON.parse(localStorage.getItem("store_accounts") || "[]");
+                  const accMatch = storedAccounts.find(a => a.id === suppData.id || a.name === suppData.name);
+                  if (accMatch) {
+                    const nextAccs = storedAccounts.map(a => a.id === accMatch.id ? { ...a, name: suppData.name, mobile: suppData.mobile, city: suppData.city, gstTin: suppData.gstTin } : a);
+                    localStorage.setItem("store_accounts", JSON.stringify(nextAccs));
+                  }
+                } catch (_) {}
+
+                showToast(editingSuppMaster ? "Supplier updated successfully!" : "Supplier created successfully!");
+                setShowSuppMasterForm(false);
+                setEditingSuppMaster(null);
+              };
+
+              // Delete Supplier Handler
+              const handleDeleteSuppMaster = (supp) => {
+                showConfirm(`Are you sure you want to delete supplier "${supp.name}"?`, () => {
+                  const nextList = suppliers.filter(s => s.id !== supp.id);
+                  saveSuppliers(nextList);
+                  if (editingSuppMaster?.id === supp.id) {
+                    setShowSuppMasterForm(false);
+                    setEditingSuppMaster(null);
+                  }
+                  showToast(`Supplier "${supp.name}" deleted successfully!`);
+                });
+              };
+
+              // Record Navigation (< Prev & Next >)
+              const handleNavigateSupp = (direction) => {
+                if (suppliers.length === 0) return;
+                const currentIdx = editingSuppMaster ? suppliers.findIndex(s => s.id === editingSuppMaster.id) : 0;
+                let nextIdx = direction === "prev" ? currentIdx - 1 : currentIdx + 1;
+                if (nextIdx < 0) nextIdx = suppliers.length - 1;
+                if (nextIdx >= suppliers.length) nextIdx = 0;
+                const target = suppliers[nextIdx];
+                setEditingSuppMaster(target);
+                setSuppMasterForm({
+                  ...defaultSupplierMasterForm,
+                  ...target,
+                  stNo: target.stNo || target.gstTin || "",
+                  relatedCompanies: target.relatedCompanies || []
+                });
+              };
+
+              // All available companies in the system (starts completely blank if no companies exist!)
+              const allSystemCompanies = (companies || []).map(c => c.name?.trim().toUpperCase()).filter(Boolean);
+              // Plus any companies in items
+              const itemComps = (items || []).map(i => i.company?.trim().toUpperCase()).filter(Boolean);
+              // Combined company pool (NO hardcoded dummy list!)
+              const combinedCompanyPool = [...new Set([...allSystemCompanies, ...itemComps, ...(suppMasterForm.relatedCompanies || [])])];
+
+              const filteredPoolCompanies = combinedCompanyPool.filter(cName => {
+                if (!companyFilterText) return true;
+                return cName.toLowerCase().includes(companyFilterText.toLowerCase());
+              });
+
+              // Add Company to Supplier Related List
+              const handleAddRelatedCompany = (compName) => {
+                if (!compName || !compName.trim()) return;
+                const clean = compName.trim().toUpperCase();
+                if ((suppMasterForm.relatedCompanies || []).includes(clean)) {
+                  showToast(`Company "${clean}" is already mapped to this supplier`, "error");
+                  return;
+                }
+                setSuppMasterForm(prev => ({
+                  ...prev,
+                  relatedCompanies: [...(prev.relatedCompanies || []), clean]
+                }));
+                setNewCompanyInput("");
+              };
+
+              // Remove Company from Related List
+              const handleRemoveRelatedCompany = (compName) => {
+                setSuppMasterForm(prev => ({
+                  ...prev,
+                  relatedCompanies: (prev.relatedCompanies || []).filter(c => c !== compName)
+                }));
+              };
+
+              // Move Related Company Up/Down
+              const handleMoveCompany = (idx, direction) => {
+                const list = [...(suppMasterForm.relatedCompanies || [])];
+                const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+                if (targetIdx < 0 || targetIdx >= list.length) return;
+                const temp = list[idx];
+                list[idx] = list[targetIdx];
+                list[targetIdx] = temp;
+                setSuppMasterForm(prev => ({ ...prev, relatedCompanies: list }));
+              };
+
+              // Print Suppliers Directory
+              const handlePrintSuppList = () => {
+                const printWindow = window.open("", "_blank");
+                if (!printWindow) return;
+                const rows = filtered.map((s, i) => {
+                  const compList = (s.relatedCompanies || []).join(", ") || "-";
+                  return `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                      <td style="padding: 6px; text-align: center;">${i + 1}</td>
+                      <td style="padding: 6px; text-align: center; font-weight: bold;">${s.code || '-'}</td>
+                      <td style="padding: 6px; font-weight: bold;">${s.name}</td>
+                      <td style="padding: 6px;">${s.person || '-'}</td>
+                      <td style="padding: 6px;">${s.city || '-'}</td>
+                      <td style="padding: 6px;">${s.mobile || '-'}</td>
+                      <td style="padding: 6px;">${s.gstTin || s.stNo || '-'}</td>
+                      <td style="padding: 6px; font-size: 11px;">${compList}</td>
+                      <td style="padding: 6px; text-align: center;">${s.status === 'inactive' ? 'Inactive' : 'Active'}</td>
+                    </tr>
+                  `;
+                }).join("");
+
+                printWindow.document.write(`
+                  <html>
+                    <head>
+                      <title>Supplier Master Directory - Shiv Dhara Medical Store</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; color: #111; }
+                        h2, h4 { margin: 0 0 6px 0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th { background: #0f172a; color: white; padding: 8px 6px; text-align: left; }
+                      </style>
+                    </head>
+                    <body>
+                      <h2>Shiv Dhara Medical Store</h2>
+                      <h4>Supplier Master Directory Register (Total: ${filtered.length})</h4>
+                      <p style="font-size: 11px; color: #555;">Generated: ${new Date().toLocaleString()}</p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style="width: 35px; text-align: center;">#</th>
+                            <th style="width: 55px; text-align: center;">Code</th>
+                            <th>Supplier Name</th>
+                            <th>Representative</th>
+                            <th>City</th>
+                            <th>Mobile</th>
+                            <th>GSTIN / ST No</th>
+                            <th>Related Companies</th>
+                            <th style="width: 60px; text-align: center;">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                      </table>
+                    </body>
+                  </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => printWindow.print(), 300);
+              };
+
+              return (
+                <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
+                  {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "26px" }}>🏭</span>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Supplier Master</h2>
+                      <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>Distributors, Stockists & Company Supply Mapping</p>
+                    </div>
+
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center" }}>
+                      <button
+                        onClick={handlePrintSuppList}
+                        style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Printer size={13} /> Print Directory
+                      </button>
+                      <button
+                        onClick={() => handleOpenSuppForm(null)}
+                        style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Plus size={13} /> Add Supplier
+                      </button>
+                    </div>
                   </div>
-                </div>
-                {suppliers.length === 0 && !showSupplierForm ? (
-                  <div style={{ textAlign: "center", padding: "60px", color: "#64748b" }}><div style={{ fontSize: "44px" }}>🏭</div><p>No suppliers found</p></div>
-                ) : (
-                  <div style={{ display: "grid", gap: "10px" }}>
-                    {suppliers.filter(s => !masterSearch || s.name?.toLowerCase().includes(masterSearch.toLowerCase())).map(s => (
-                      <div key={s.id} style={{ background: "white", borderRadius: "5px", padding: "14px 16px", border: "1px solid var(--color-border)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
-                          <div>
-                            <div style={{ fontWeight: "800", fontSize: "14px" }}>{s.name}</div>
-                            <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px", display: "flex", gap: "14px", flexWrap: "wrap" }}>
-                              {s.mobile && <span>📱 {s.mobile}</span>}
-                              {s.gstTin && <span>GST: {s.gstTin}</span>}
-                              {s.dlNo && <span>DL: {s.dlNo}</span>}
-                              {s.creditLimit && <span>Credit: ₹{s.creditLimit} ({s.creditDays} days)</span>}
-                              {s.city && <span>📍 {s.city}, {s.state}</span>}
+
+                  {/* ─── SEARCH & FILTER BAR (Inventory Style / Image 2) ─── */}
+                  <div style={{ background: "white", borderRadius: "12px", padding: "14px 16px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                    <div style={{ flex: 1, minWidth: "220px", position: "relative" }}>
+                      <Search size={13} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                      <input
+                        placeholder="Search Supplier Name, Code, City or Mobile... + Enter"
+                        value={suppMasterSearch}
+                        onChange={e => {
+                          setSuppMasterSearch(e.target.value);
+                          setSuppMasterSearchDropdown(true);
+                          setSuppMasterSearchHighlight(0);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setSuppMasterSearchHighlight(prev => Math.min(prev + 1, searchDropdownResults.length - 1));
+                          } else if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setSuppMasterSearchHighlight(prev => Math.max(prev - 1, 0));
+                          } else if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (searchDropdownResults.length > 0 && suppMasterSearchDropdown) {
+                              handleOpenSuppForm(searchDropdownResults[suppMasterSearchHighlight]);
+                              setSuppMasterSearchDropdown(false);
+                              setSuppMasterSearch("");
+                            } else if (q && filtered.length > 0) {
+                              handleOpenSuppForm(filtered[0]);
+                              setSuppMasterSearchDropdown(false);
+                              setSuppMasterSearch("");
+                            } else if (q) {
+                              showToast("No supplier found matching: " + suppMasterSearch, "error");
+                            }
+                          }
+                        }}
+                        onFocus={() => setSuppMasterSearchDropdown(true)}
+                        onBlur={() => setTimeout(() => setSuppMasterSearchDropdown(false), 200)}
+                        style={{ ...inp, paddingLeft: "30px", width: "100%", height: "36px" }}
+                      />
+
+                      {/* Search Dropdown Popup */}
+                      {suppMasterSearchDropdown && searchDropdownResults.length > 0 && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden", maxHeight: "280px", overflowY: "auto" }}>
+                          {searchDropdownResults.map((supp, idx) => (
+                            <div
+                              key={supp.id}
+                              onClick={() => {
+                                handleOpenSuppForm(supp);
+                                setSuppMasterSearchDropdown(false);
+                                setSuppMasterSearch("");
+                              }}
+                              onMouseEnter={() => setSuppMasterSearchHighlight(idx)}
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                background: idx === suppMasterSearchHighlight ? "#f1f5f9" : "white",
+                                borderBottom: "1px solid #f1f5f9",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center"
+                              }}
+                            >
+                              <div>
+                                <div style={{ fontSize: "12px", fontWeight: "700", color: "#1e293b" }}>
+                                  {supp.name} <span style={{ color: "#3b82f6", fontSize: "11px" }}>({supp.code || 'SUP'})</span>
+                                </div>
+                                <div style={{ fontSize: "10px", color: "#64748b" }}>
+                                  {supp.city ? `City: ${supp.city}` : ""} {supp.mobile ? `· 📱 ${supp.mobile}` : ""} {supp.person ? `· Rep: ${supp.person}` : ""}
+                                </div>
+                              </div>
+                              <span style={{ fontSize: "11px", fontWeight: "700", color: "#1e40af", background: "#dbeafe", padding: "2px 6px", borderRadius: "4px" }}>
+                                {(supp.relatedCompanies || []).length} Companies
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <select
+                      value={suppMasterStatusFilter}
+                      onChange={e => setSuppMasterStatusFilter(e.target.value)}
+                      style={{ ...inp, width: "auto", height: "36px" }}
+                    >
+                      <option value="All">All Status</option>
+                      <option value="active">Active Only</option>
+                      <option value="inactive">Inactive Only</option>
+                    </select>
+
+                    <select
+                      value={suppMasterSortBy}
+                      onChange={e => setSuppMasterSortBy(e.target.value)}
+                      style={{ ...inp, width: "auto", height: "36px" }}
+                    >
+                      <option value="name">Name A-Z</option>
+                      <option value="code">Code A-Z</option>
+                      <option value="comp_desc">Companies Count ↓</option>
+                      <option value="sr_desc">Sr No ↓</option>
+                    </select>
+                  </div>
+
+                  {/* ─── ADD / EDIT SUPPLIER CARD (Theme: Add Item in Image 2 + Dual Panel Mapping) ─── */}
+                  {showSuppMasterForm && (
+                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                      {/* Form Header */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "18px" }}>🏭</span>
+                          <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
+                            {editingSuppMaster ? `Edit Supplier: ${editingSuppMaster.name}` : "Add New Supplier"}
+                          </h3>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: "4px" }}>
+                            Sr. No: {suppMasterForm.srNo || "Auto"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => { setShowSuppMasterForm(false); setEditingSuppMaster(null); }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                      {/* Dual Panel Layout (Supplier Details Left, Company Mapping Right) */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.9fr", gap: "20px", marginBottom: "16px" }}>
+                        {/* ─── LEFT PANEL: SUPPLIER DETAILS (Matching Image 4 Screenshot) ─── */}
+                        <div>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: "10px" }}>
+                            {/* Sr. No (Pink Accent Box from Legacy Screenshot) */}
+                            <div>
+                              <label style={lbl}>Sr. No.</label>
+                              <input
+                                type="number"
+                                value={suppMasterForm.srNo || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, srNo: e.target.value })}
+                                placeholder="Auto"
+                                style={{ ...inp, background: "#fce7f3", border: "1px solid #f472b6", fontWeight: "800", color: "#831843" }}
+                              />
+                            </div>
+
+                            {/* Code */}
+                            <div>
+                              <label style={lbl}>Supplier Code *</label>
+                              <input
+                                value={suppMasterForm.code || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, code: e.target.value.toUpperCase() })}
+                                placeholder="e.g. SUP01, ABHA"
+                                maxLength={10}
+                                style={{ ...inp, textTransform: "uppercase", fontWeight: "800", color: "#1e3a8a" }}
+                              />
+                            </div>
+
+                            {/* Supplier Name */}
+                            <div style={{ gridColumn: "span 2" }}>
+                              <label style={lbl}>Supplier / Agency Name *</label>
+                              <input
+                                value={suppMasterForm.name || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, name: e.target.value.toUpperCase() })}
+                                placeholder="e.g. AAI SHREE KHODIYAR MARKETING"
+                                style={{ ...inp, textTransform: "uppercase", fontWeight: "800" }}
+                              />
+                            </div>
+
+                            {/* Person (Contact Person / Representative) */}
+                            <div>
+                              <label style={lbl}>Contact Person</label>
+                              <input
+                                value={suppMasterForm.person || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, person: e.target.value.toUpperCase() })}
+                                placeholder="Owner / Manager / Rep"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Area */}
+                            <div>
+                              <label style={lbl}>Area</label>
+                              <input
+                                value={suppMasterForm.area || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, area: e.target.value.toUpperCase() })}
+                                placeholder="e.g. RING ROAD"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* City */}
+                            <div>
+                              <label style={lbl}>City</label>
+                              <input
+                                value={suppMasterForm.city || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, city: e.target.value.toUpperCase() })}
+                                placeholder="e.g. SURAT, AHMEDABAD"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Contact (Landline / Office) */}
+                            <div>
+                              <label style={lbl}>Contact Phone</label>
+                              <input
+                                value={suppMasterForm.contact || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, contact: e.target.value })}
+                                placeholder="Office landline"
+                                style={inp}
+                              />
+                            </div>
+
+                            {/* Mobile */}
+                            <div>
+                              <label style={lbl}>Mobile Number</label>
+                              <input
+                                value={suppMasterForm.mobile || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, mobile: e.target.value.replace(/[^0-9]/g, "") })}
+                                placeholder="10-digit mobile"
+                                maxLength={10}
+                                style={{ ...inp, fontWeight: "600" }}
+                              />
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                              <label style={lbl}>Email Address</label>
+                              <input
+                                type="email"
+                                value={suppMasterForm.email || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, email: e.target.value })}
+                                placeholder="orders@distributor.com"
+                                style={inp}
+                              />
+                            </div>
+
+                            {/* Drug License No (D.L.No) */}
+                            <div>
+                              <label style={lbl}>D.L. No. (Drug License)</label>
+                              <input
+                                value={suppMasterForm.dlNo || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, dlNo: e.target.value.toUpperCase() })}
+                                placeholder="e.g. 20B/21B-GJ-1122"
+                                style={{ ...inp, textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Sales Tax / GSTIN (S.T.No) */}
+                            <div>
+                              <label style={lbl}>S.T. No. / GSTIN</label>
+                              <input
+                                value={suppMasterForm.stNo || suppMasterForm.gstTin || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, stNo: e.target.value.toUpperCase(), gstTin: e.target.value.toUpperCase() })}
+                                placeholder="15-digit GSTIN / ST No"
+                                maxLength={15}
+                                style={{ ...inp, textTransform: "uppercase", fontWeight: "700" }}
+                              />
+                            </div>
+
+                            {/* Billing Message Alert */}
+                            <div style={{ gridColumn: "span 2" }}>
+                              <label style={lbl}>Billing Alert Message</label>
+                              <input
+                                value={suppMasterForm.message || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, message: e.target.value })}
+                                placeholder="Alert message shown during purchase billing..."
+                                style={inp}
+                              />
+                            </div>
+
+                            {/* Status */}
+                            <div>
+                              <label style={lbl}>Status</label>
+                              <select
+                                value={suppMasterForm.status || "active"}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, status: e.target.value })}
+                                style={{ ...inp, fontWeight: "700", color: suppMasterForm.status === "inactive" ? "#dc2626" : "#16a34a" }}
+                              >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                              </select>
+                            </div>
+
+                            {/* Address */}
+                            <div style={{ gridColumn: "1 / -1" }}>
+                              <label style={lbl}>Supplier Address</label>
+                              <textarea
+                                value={suppMasterForm.address || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, address: e.target.value.toUpperCase() })}
+                                placeholder="Godown / Office Address..."
+                                style={{ ...inp, height: "42px", resize: "vertical", textTransform: "uppercase" }}
+                              />
+                            </div>
+
+                            {/* Remarks */}
+                            <div style={{ gridColumn: "1 / -1" }}>
+                              <label style={lbl}>Remarks / Terms</label>
+                              <input
+                                value={suppMasterForm.remarks || ""}
+                                onChange={e => setSuppMasterForm({ ...suppMasterForm, remarks: e.target.value })}
+                                placeholder="Payment terms, bank details, return policy notes..."
+                                style={inp}
+                              />
                             </div>
                           </div>
-                          <div style={{ display: "flex", gap: "6px" }}>
-                            <button onClick={() => openSupplierForm(s)} style={{ ...btn(), fontSize: "11px", padding: "5px 10px" }}><Edit2 size={11} />Edit</button>
-                            <button onClick={() => { setLedgerSupplierId(s.id); setShowSupplierLedger(true); }} style={{ ...btn("#7c3aed"), fontSize: "11px", padding: "5px 10px" }}>📒 Ledger</button>
-                            <button onClick={() => handleDeleteSupplier(s.id)} style={{ ...btn("#ef4444"), fontSize: "11px", padding: "5px 10px" }}><Trash2 size={11} /></button>
+                        </div>
+
+                        {/* ─── RIGHT PANEL: COMPANY MAPPING (Blank by default, no hardcoded dummy list!) ─── */}
+                        <div style={{ background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", padding: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                          {/* Function Keys Shortcut Banner (Matching Legacy Screenshot Image 4) */}
+                          <div style={{ background: "#1e293b", color: "#f8fafc", padding: "6px 10px", borderRadius: "5px", fontSize: "10px", fontWeight: "700", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "4px" }}>
+                            <span>F5-Supplier Name</span>
+                            <span>F6-New Company</span>
+                            <span>F7-All Company</span>
+                            <span>F8-Supplier Company</span>
+                          </div>
+
+                          {/* Quick Add / Register Company */}
+                          <div>
+                            <label style={{ ...lbl, fontSize: "10px" }}>Add New Company to List</label>
+                            <div style={{ display: "flex", gap: "6px" }}>
+                              <input
+                                value={newCompanyInput}
+                                onChange={e => setNewCompanyInput(e.target.value.toUpperCase())}
+                                onKeyDown={e => e.key === "Enter" && handleAddRelatedCompany(newCompanyInput)}
+                                placeholder="Type company name..."
+                                style={{ ...inp, textTransform: "uppercase", fontSize: "11px", height: "30px" }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleAddRelatedCompany(newCompanyInput)}
+                                style={{ ...btn("var(--color-primary)"), padding: "4px 10px", fontSize: "11px" }}
+                              >
+                                Add
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Top Box: List of All Company (Blank if no companies created yet!) */}
+                          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "11px", fontWeight: "800", color: "#334155" }}>
+                                List of All Company ({combinedCompanyPool.length})
+                              </span>
+                              <input
+                                placeholder="Filter companies..."
+                                value={companyFilterText}
+                                onChange={e => setCompanyFilterText(e.target.value)}
+                                style={{ ...inp, width: "110px", height: "22px", fontSize: "10px", padding: "2px 6px" }}
+                              />
+                            </div>
+
+                            <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "5px", height: "130px", overflowY: "auto", padding: "4px" }}>
+                              {filteredPoolCompanies.length === 0 ? (
+                                <div style={{ padding: "30px 10px", textAlign: "center", color: "#94a3b8", fontSize: "11px" }}>
+                                  No companies in system yet.<br/>Type above or add in Company Master to populate.
+                                </div>
+                              ) : (
+                                filteredPoolCompanies.map(cName => {
+                                  const isAlreadyRelated = (suppMasterForm.relatedCompanies || []).includes(cName);
+                                  return (
+                                    <div
+                                      key={cName}
+                                      onClick={() => !isAlreadyRelated && handleAddRelatedCompany(cName)}
+                                      style={{
+                                        padding: "4px 8px",
+                                        fontSize: "11px",
+                                        cursor: isAlreadyRelated ? "default" : "pointer",
+                                        borderRadius: "3px",
+                                        marginBottom: "2px",
+                                        background: isAlreadyRelated ? "#f1f5f9" : "transparent",
+                                        color: isAlreadyRelated ? "#94a3b8" : "#0f172a",
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center"
+                                      }}
+                                      onMouseEnter={e => { if (!isAlreadyRelated) e.currentTarget.style.background = "#e0e7ff"; }}
+                                      onMouseLeave={e => { if (!isAlreadyRelated) e.currentTarget.style.background = "transparent"; }}
+                                    >
+                                      <span style={{ fontWeight: isAlreadyRelated ? "400" : "600" }}>{cName}</span>
+                                      {isAlreadyRelated ? (
+                                        <span style={{ fontSize: "9px", color: "#16a34a", fontWeight: "700" }}>Mapped</span>
+                                      ) : (
+                                        <span style={{ fontSize: "10px", color: "#2563eb", fontWeight: "700" }}>+ Map</span>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Bottom Box: List of Company Related Supplier */}
+                          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "11px", fontWeight: "800", color: "#1e3a8a" }}>
+                                List of Company Related Supplier ({(suppMasterForm.relatedCompanies || []).length})
+                              </span>
+                              <span style={{ fontSize: "10px", color: "#64748b" }}>Use UP/DOWN to reorder</span>
+                            </div>
+
+                            <div style={{ background: "#ffffff", border: "1px solid #93c5fd", borderRadius: "5px", height: "130px", overflowY: "auto", padding: "4px" }}>
+                              {(suppMasterForm.relatedCompanies || []).length === 0 ? (
+                                <div style={{ padding: "30px 10px", textAlign: "center", color: "#94a3b8", fontSize: "11px" }}>
+                                  No companies mapped to this supplier yet.<br/>Click "+ Map" above to link distributed brands.
+                                </div>
+                              ) : (
+                                (suppMasterForm.relatedCompanies || []).map((cName, idx) => (
+                                  <div
+                                    key={cName}
+                                    style={{
+                                      padding: "4px 8px",
+                                      fontSize: "11px",
+                                      background: "#eff6ff",
+                                      borderBottom: "1px solid #dbeafe",
+                                      borderRadius: "3px",
+                                      marginBottom: "2px",
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center"
+                                    }}
+                                  >
+                                    <span style={{ fontWeight: "700", color: "#1e40af" }}>
+                                      {idx + 1}. {cName}
+                                    </span>
+                                    <div style={{ display: "flex", gap: "3px" }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMoveCompany(idx, "up")}
+                                        disabled={idx === 0}
+                                        style={{ padding: "1px 5px", fontSize: "9px", border: "1px solid #cbd5e1", borderRadius: "2px", background: "white", cursor: idx === 0 ? "default" : "pointer", opacity: idx === 0 ? 0.4 : 1 }}
+                                        title="Move UP"
+                                      >
+                                        ▲
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMoveCompany(idx, "down")}
+                                        disabled={idx === (suppMasterForm.relatedCompanies || []).length - 1}
+                                        style={{ padding: "1px 5px", fontSize: "9px", border: "1px solid #cbd5e1", borderRadius: "2px", background: "white", cursor: idx === (suppMasterForm.relatedCompanies || []).length - 1 ? "default" : "pointer", opacity: idx === (suppMasterForm.relatedCompanies || []).length - 1 ? 0.4 : 1 }}
+                                        title="Move DOWN"
+                                      >
+                                        ▼
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveRelatedCompany(cName)}
+                                        style={{ padding: "1px 5px", fontSize: "9px", border: "none", borderRadius: "2px", background: "#fee2e2", color: "#dc2626", cursor: "pointer", fontWeight: "700" }}
+                                        title="Remove"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
 
-            {/* Doctors */}
+                      {/* ─── FORM ACTION BUTTONS (Matching Legacy Controls & Image 2 Theme) ─── */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateSupp("prev")}
+                            style={{ ...btn("#475569"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Previous Supplier"
+                          >
+                            <ChevronLeft size={14} /> Prev
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateSupp("next")}
+                            style={{ ...btn("#475569"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Next Supplier"
+                          >
+                            Next <ChevronRight size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLabelSupplier(suppMasterForm);
+                              setShowLabelModal(true);
+                            }}
+                            style={{ ...btn("#0284c7"), padding: "7px 12px", fontSize: "12px" }}
+                          >
+                            🏷️ Label
+                          </button>
+                          {editingSuppMaster && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLedgerSupplierId(editingSuppMaster.id);
+                                setShowSupplierLedger(true);
+                              }}
+                              style={{ ...btn("#7c3aed"), padding: "7px 12px", fontSize: "12px" }}
+                            >
+                              📒 Ledger
+                            </button>
+                          )}
+                          {editingSuppMaster && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSuppMaster(editingSuppMaster)}
+                              style={{ ...btn("#dc2626"), padding: "7px 12px", fontSize: "12px" }}
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={() => { setShowSuppMasterForm(false); setEditingSuppMaster(null); }}
+                            style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), padding: "7px 14px", fontSize: "12px" }}
+                          >
+                            <X size={13} /> Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveSuppMaster}
+                            style={{ ...btn("var(--color-primary)"), padding: "7px 18px", fontSize: "12px", fontWeight: "800" }}
+                          >
+                            <CheckCircle size={14} /> {editingSuppMaster ? "Update Supplier" : "Save Supplier"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── SUPPLIERS DIRECTORY TABLE (Inventory Style / Image 2) ─── */}
+                  <div style={{ background: "white", borderRadius: "12px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b" }}>
+                        Registered Suppliers ({filtered.length})
+                      </span>
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>
+                        Click any supplier to edit details or manage distributed companies
+                      </span>
+                    </div>
+
+                    {filtered.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
+                        <div style={{ fontSize: "40px", opacity: 0.6 }}>🏭</div>
+                        <p style={{ marginTop: "12px", fontWeight: "700", fontSize: "15px", color: "#334155" }}>
+                          No suppliers found matching your criteria
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#64748b" }}>
+                          Add a new distributor or change your search keywords.
+                        </p>
+                        <button
+                          onClick={() => handleOpenSuppForm(null)}
+                          style={{ ...btn("var(--color-primary)"), margin: "14px auto 0", fontSize: "12px" }}
+                        >
+                          <Plus size={13} /> Add New Supplier
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                          <thead>
+                            <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>Sr No</th>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "65px" }}>Code</th>
+                              <th style={{ padding: "10px 12px", textAlign: "left" }}>Supplier / Agency Name</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "140px" }}>Representative</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>City</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>Mobile</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "135px" }}>GSTIN / ST No</th>
+                              <th style={{ padding: "10px 12px", textAlign: "left", width: "170px" }}>Mapped Companies</th>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "75px" }}>Status</th>
+                              <th style={{ padding: "10px 12px", textAlign: "center", width: "140px" }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filtered.map((supp, idx) => {
+                              const isInactive = supp.status === "inactive";
+                              return (
+                                <tr
+                                  key={supp.id}
+                                  style={{
+                                    borderBottom: "1px solid #f1f5f9",
+                                    background: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                    transition: "background 0.15s ease"
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
+                                  onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f8fafc"}
+                                >
+                                  <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>
+                                    {supp.srNo || idx + 1}
+                                  </td>
+                                  <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "800", color: "#2563eb", fontFamily: "monospace" }}>
+                                    {supp.code || "SUP"}
+                                  </td>
+                                  <td
+                                    onClick={() => handleOpenSuppForm(supp)}
+                                    style={{ padding: "8px 12px", fontWeight: "800", color: "#1e3a8a", cursor: "pointer" }}
+                                    title="Click to edit supplier"
+                                  >
+                                    {supp.name}
+                                    {supp.address && <span style={{ display: "block", fontSize: "10px", fontWeight: "400", color: "#64748b" }}>{supp.address}</span>}
+                                  </td>
+                                  <td style={{ padding: "8px 10px", color: "#334155" }}>{supp.person || "-"}</td>
+                                  <td style={{ padding: "8px 10px", color: "#475569" }}>{supp.city || "-"}</td>
+                                  <td style={{ padding: "8px 10px", color: "#475569", fontWeight: "600" }}>{supp.mobile || "-"}</td>
+                                  <td style={{ padding: "8px 10px", fontFamily: "monospace", fontSize: "11px", color: "#334155" }}>
+                                    {supp.stNo || supp.gstTin || "-"}
+                                  </td>
+                                  <td style={{ padding: "8px 12px", fontSize: "11px", color: "#475569" }}>
+                                    {(supp.relatedCompanies || []).length === 0 ? (
+                                      <span style={{ color: "#94a3b8", fontStyle: "italic" }}>None</span>
+                                    ) : (
+                                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                                        {(supp.relatedCompanies || []).slice(0, 2).map(c => (
+                                          <span key={c} style={{ background: "#dbeafe", color: "#1e40af", padding: "1px 5px", borderRadius: "3px", fontSize: "10px", fontWeight: "600" }}>
+                                            {c}
+                                          </span>
+                                        ))}
+                                        {(supp.relatedCompanies || []).length > 2 && (
+                                          <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "700" }}>
+                                            +{(supp.relatedCompanies || []).length - 2} more
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: "8px 6px", textAlign: "center" }}>
+                                    <span style={{ background: isInactive ? "#fee2e2" : "#dcfce7", color: isInactive ? "#991b1b" : "#166534", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "700" }}>
+                                      {isInactive ? "Off" : "Active"}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                                    <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                                      <button
+                                        onClick={() => handleOpenSuppForm(supp)}
+                                        style={{ ...btn("#2563eb"), padding: "4px 8px", fontSize: "11px" }}
+                                        title="Edit Supplier"
+                                      >
+                                        <Edit2 size={11} /> Edit
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setLabelSupplier(supp);
+                                          setShowLabelModal(true);
+                                        }}
+                                        style={{ ...btn("#0284c7"), padding: "4px 6px", fontSize: "11px" }}
+                                        title="Print Address Label"
+                                      >
+                                        🏷️
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setLedgerSupplierId(supp.id);
+                                          setShowSupplierLedger(true);
+                                        }}
+                                        style={{ ...btn("#7c3aed"), padding: "4px 6px", fontSize: "11px" }}
+                                        title="Supplier Ledger"
+                                      >
+                                        📒
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteSuppMaster(supp)}
+                                        style={{ ...btn("#dc2626"), padding: "4px 6px", fontSize: "11px" }}
+                                        title="Delete Supplier"
+                                      >
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ─── SUPPLIER SHIPPING / COURIER LABEL MODAL ─── */}
+                  {showLabelModal && labelSupplier && (
+                    <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+                      <div style={{ background: "white", borderRadius: "12px", width: "100%", maxWidth: "540px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+                        <div style={{ padding: "14px 20px", background: "#1e293b", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: "700", fontSize: "14px" }}>🏷️ Print Supplier Address Label</span>
+                          <button onClick={() => setShowLabelModal(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}><X size={16} /></button>
+                        </div>
+                        <div style={{ padding: "24px", border: "2px dashed #cbd5e1", margin: "20px", borderRadius: "8px", background: "#ffffff" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px", marginBottom: "12px" }}>
+                            <span style={{ fontSize: "11px", fontWeight: "800", color: "#2563eb", letterSpacing: "1px" }}>PHARMA PARCEL LABEL</span>
+                            <span style={{ fontSize: "11px", color: "#64748b" }}>Code: {labelSupplier.code || "SUP"}</span>
+                          </div>
+                          <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: "700" }}>To Supplier:</div>
+                          <div style={{ fontWeight: "900", fontSize: "16px", color: "#0f172a", marginTop: "2px" }}>{labelSupplier.name}</div>
+                          {labelSupplier.person && <div style={{ fontSize: "12px", color: "#334155", fontWeight: "600" }}>Attn: {labelSupplier.person}</div>}
+                          <div style={{ fontSize: "13px", color: "#334155", marginTop: "4px" }}>{labelSupplier.address || "Godown / Office Address"}</div>
+                          <div style={{ fontSize: "13px", color: "#334155" }}>
+                            {labelSupplier.area ? `${labelSupplier.area}, ` : ""}{labelSupplier.city || ""}
+                          </div>
+                          {labelSupplier.mobile && <div style={{ fontWeight: "700", fontSize: "13px", color: "#0f172a", marginTop: "6px" }}>📱 Phone: {labelSupplier.mobile}</div>}
+                          {labelSupplier.dlNo && <div style={{ fontSize: "11px", color: "#64748b" }}>D.L. No: {labelSupplier.dlNo}</div>}
+                          {(labelSupplier.stNo || labelSupplier.gstTin) && <div style={{ fontSize: "11px", color: "#64748b" }}>GSTIN / ST: {labelSupplier.stNo || labelSupplier.gstTin}</div>}
+                        </div>
+                        <div style={{ padding: "12px 20px", background: "#f8fafc", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                          <button onClick={() => setShowLabelModal(false)} style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px" }}>Close</button>
+                          <button
+                            onClick={() => {
+                              const pw = window.open("", "_blank");
+                              if (!pw) return;
+                              pw.document.write(`
+                                <html>
+                                  <head>
+                                    <title>Label - ${labelSupplier.name}</title>
+                                    <style>
+                                      body { font-family: Arial, sans-serif; padding: 20px; }
+                                      .label-box { border: 2px solid #000; padding: 20px; width: 400px; border-radius: 6px; }
+                                      .title { font-size: 10px; font-weight: bold; color: #555; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 8px; }
+                                      .name { font-size: 16px; font-weight: bold; }
+                                      .line { font-size: 13px; margin: 3px 0; }
+                                    </style>
+                                  </head>
+                                  <body>
+                                    <div class="label-box">
+                                      <div class="title">SUPPLIER DISPATCH LABEL · CODE: ${labelSupplier.code || 'SUP'}</div>
+                                      <div class="name">${labelSupplier.name}</div>
+                                      ${labelSupplier.person ? `<div class="line">Attn: ${labelSupplier.person}</div>` : ''}
+                                      <div class="line">${labelSupplier.address || ''}</div>
+                                      <div class="line">${labelSupplier.area ? labelSupplier.area + ', ' : ''}${labelSupplier.city || ''}</div>
+                                      ${labelSupplier.mobile ? `<div class="line"><strong>Phone: ${labelSupplier.mobile}</strong></div>` : ''}
+                                      ${labelSupplier.dlNo ? `<div class="line" style="font-size:11px;">D.L. No: ${labelSupplier.dlNo}</div>` : ''}
+                                      ${(labelSupplier.stNo || labelSupplier.gstTin) ? `<div class="line" style="font-size:11px;">GSTIN/ST: ${labelSupplier.stNo || labelSupplier.gstTin}</div>` : ''}
+                                    </div>
+                                  </body>
+                                </html>
+                              `);
+                              pw.document.close();
+                              pw.focus();
+                              setTimeout(() => pw.print(), 300);
+                            }}
+                            style={{ ...btn("#0284c7"), fontSize: "12px" }}
+                          >
+                            <Printer size={13} /> Print Label
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+{/* Doctors */}
             {ownerSubTab === "doctors" && (
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
