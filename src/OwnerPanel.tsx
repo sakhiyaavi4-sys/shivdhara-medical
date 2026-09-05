@@ -11277,7 +11277,8 @@ const pending = [];
         })()}
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* SUPERVISOR — CHANGE BILLS / SALES INVOICE AUDIT & MODIFICATION (100% FULLSCREEN) */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* SUPERVISOR — CHANGE BILLS / SALES INVOICE AUDIT & MODIFICATION (100% FULLSCREEN LIGHT THEME) */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         {showChangeBills && (() => {
           // Normalize and filter sales bills
@@ -11542,33 +11543,33 @@ const pending = [];
               style={{
                 position: "fixed",
                 inset: 0,
-                zIndex: 99999,
-                background: "#0f172a",
-                color: "#f8fafc",
+                zIndex: 9999,
+                background: "#f1f5f9",
+                color: "#0f172a",
                 display: "flex",
                 flexDirection: "column",
-                fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                animation: "fadeIn 0.2s ease-out"
+                fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
               }}
             >
-              {/* Top Header Bar */}
+              {/* Top Header Bar (Light / Modern Theme) */}
               <div
                 style={{
-                  background: "linear-gradient(90deg, #1e293b 0%, #0f172a 100%)",
-                  padding: "10px 20px",
-                  borderBottom: "1px solid #334155",
+                  background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+                  padding: "12px 24px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
+                  color: "#ffffff",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
                   flexShrink: 0
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div
                     style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "8px",
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "10px",
                       background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
                       display: "flex",
                       alignItems: "center",
@@ -11576,18 +11577,18 @@ const pending = [];
                       boxShadow: "0 2px 8px rgba(59, 130, 246, 0.4)"
                     }}
                   >
-                    <FileText size={20} color="#ffffff" />
+                    <FileText size={22} color="#ffffff" />
                   </div>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff", letterSpacing: "-0.3px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ fontSize: "17px", fontWeight: "800", color: "#ffffff", letterSpacing: "-0.3px" }}>
                         Change Bills / Sales Invoice Audit &amp; Modification Manager
                       </span>
                       <span
                         style={{
-                          background: "#1e3a8a",
+                          background: "rgba(59, 130, 246, 0.25)",
                           color: "#93c5fd",
-                          border: "1px solid #3b82f6",
+                          border: "1px solid rgba(147, 197, 253, 0.4)",
                           padding: "2px 8px",
                           borderRadius: "12px",
                           fontSize: "11px",
@@ -11604,7 +11605,7 @@ const pending = [];
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ fontSize: "11px", color: "#64748b", background: "#1e293b", padding: "4px 8px", borderRadius: "4px", border: "1px solid #334155" }}>
+                  <span style={{ fontSize: "11px", color: "#cbd5e1", background: "rgba(255,255,255,0.1)", padding: "4px 10px", borderRadius: "6px" }}>
                     ESC: Close | Double-click: Quick Edit
                   </span>
                   <button
@@ -11613,9 +11614,9 @@ const pending = [];
                       background: "#ef4444",
                       color: "#ffffff",
                       border: "none",
-                      padding: "6px 14px",
+                      padding: "7px 16px",
                       borderRadius: "6px",
-                      fontWeight: "600",
+                      fontWeight: "700",
                       fontSize: "12px",
                       cursor: "pointer",
                       display: "flex",
@@ -11633,11 +11634,11 @@ const pending = [];
               {cbActionMsg && (
                 <div
                   style={{
-                    padding: "8px 20px",
-                    background: cbActionMsg.type === "success" ? "#064e3b" : "#7f1d1d",
-                    borderBottom: `1px solid ${cbActionMsg.type === "success" ? "#059669" : "#dc2626"}`,
-                    color: cbActionMsg.type === "success" ? "#6ee7b7" : "#fca5a5",
-                    fontSize: "12px",
+                    padding: "10px 24px",
+                    background: cbActionMsg.type === "success" ? "#ecfdf5" : "#fef2f2",
+                    borderBottom: `1px solid ${cbActionMsg.type === "success" ? "#a7f3d0" : "#fecaca"}`,
+                    color: cbActionMsg.type === "success" ? "#065f46" : "#991b1b",
+                    fontSize: "13px",
                     fontWeight: "600",
                     display: "flex",
                     alignItems: "center",
@@ -11645,57 +11646,60 @@ const pending = [];
                     flexShrink: 0
                   }}
                 >
-                  {cbActionMsg.type === "success" ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+                  {cbActionMsg.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
                   <span>{cbActionMsg.msg}</span>
                 </div>
               )}
 
-              {/* Filter Controls Bar */}
+              {/* Filter Controls Bar (Light Theme) */}
               <div
                 style={{
-                  background: "#1e293b",
-                  padding: "10px 20px",
-                  borderBottom: "1px solid #334155",
+                  background: "#ffffff",
+                  padding: "12px 24px",
+                  borderBottom: "1px solid #e2e8f0",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: "12px",
                   flexWrap: "wrap",
-                  flexShrink: 0
+                  flexShrink: 0,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
                 }}
               >
                 {/* Date Filters & Presets */}
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>From:</span>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>From:</span>
                     <input
                       type="date"
                       value={cbFromDate}
                       onChange={(e) => setCbFromDate(e.target.value)}
                       style={{
-                        background: "#0f172a",
-                        border: "1px solid #475569",
-                        color: "#f8fafc",
-                        padding: "5px 8px",
-                        borderRadius: "5px",
-                        fontSize: "12px"
+                        background: "#ffffff",
+                        border: "1px solid #cbd5e1",
+                        color: "#0f172a",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        fontWeight: "600"
                       }}
                     />
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>To:</span>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>To:</span>
                     <input
                       type="date"
                       value={cbToDate}
                       onChange={(e) => setCbToDate(e.target.value)}
                       style={{
-                        background: "#0f172a",
-                        border: "1px solid #475569",
-                        color: "#f8fafc",
-                        padding: "5px 8px",
-                        borderRadius: "5px",
-                        fontSize: "12px"
+                        background: "#ffffff",
+                        border: "1px solid #cbd5e1",
+                        color: "#0f172a",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        fontWeight: "600"
                       }}
                     />
                   </div>
@@ -11710,13 +11714,13 @@ const pending = [];
                         setCbToDate(t);
                       }}
                       style={{
-                        background: "#334155",
-                        border: "none",
-                        color: "#e2e8f0",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
+                        background: "#f1f5f9",
+                        border: "1px solid #e2e8f0",
+                        color: "#334155",
+                        padding: "5px 10px",
+                        borderRadius: "6px",
                         fontSize: "11px",
-                        fontWeight: "600",
+                        fontWeight: "700",
                         cursor: "pointer"
                       }}
                     >
@@ -11731,13 +11735,13 @@ const pending = [];
                         setCbToDate(t);
                       }}
                       style={{
-                        background: "#334155",
-                        border: "none",
-                        color: "#e2e8f0",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
+                        background: "#f1f5f9",
+                        border: "1px solid #e2e8f0",
+                        color: "#334155",
+                        padding: "5px 10px",
+                        borderRadius: "6px",
                         fontSize: "11px",
-                        fontWeight: "600",
+                        fontWeight: "700",
                         cursor: "pointer"
                       }}
                     >
@@ -11749,13 +11753,13 @@ const pending = [];
                         setCbToDate("");
                       }}
                       style={{
-                        background: "#334155",
-                        border: "none",
-                        color: "#e2e8f0",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
+                        background: "#f1f5f9",
+                        border: "1px solid #e2e8f0",
+                        color: "#334155",
+                        padding: "5px 10px",
+                        borderRadius: "6px",
                         fontSize: "11px",
-                        fontWeight: "600",
+                        fontWeight: "700",
                         cursor: "pointer"
                       }}
                     >
@@ -11765,20 +11769,20 @@ const pending = [];
 
                   {/* Search Query */}
                   <div style={{ position: "relative" }}>
-                    <Search size={14} color="#94a3b8" style={{ position: "absolute", left: "8px", top: "8px" }} />
+                    <Search size={15} color="#94a3b8" style={{ position: "absolute", left: "9px", top: "8px" }} />
                     <input
                       type="text"
                       placeholder="Search Bill No, Customer, Mobile..."
                       value={cbSearchQuery}
                       onChange={(e) => setCbSearchQuery(e.target.value)}
                       style={{
-                        background: "#0f172a",
-                        border: "1px solid #475569",
-                        color: "#ffffff",
-                        padding: "5px 10px 5px 28px",
-                        borderRadius: "5px",
+                        background: "#ffffff",
+                        border: "1px solid #cbd5e1",
+                        color: "#0f172a",
+                        padding: "6px 12px 6px 30px",
+                        borderRadius: "6px",
                         fontSize: "12px",
-                        width: "230px"
+                        width: "240px"
                       }}
                     />
                   </div>
@@ -11788,12 +11792,13 @@ const pending = [];
                     value={cbFilterType}
                     onChange={(e) => setCbFilterType(e.target.value)}
                     style={{
-                      background: "#0f172a",
-                      border: "1px solid #475569",
-                      color: "#f8fafc",
-                      padding: "5px 10px",
-                      borderRadius: "5px",
+                      background: "#ffffff",
+                      border: "1px solid #cbd5e1",
+                      color: "#0f172a",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
                       fontSize: "12px",
+                      fontWeight: "600",
                       cursor: "pointer"
                     }}
                   >
@@ -11809,12 +11814,13 @@ const pending = [];
                     value={cbFilterYN}
                     onChange={(e) => setCbFilterYN(e.target.value)}
                     style={{
-                      background: "#0f172a",
-                      border: "1px solid #475569",
-                      color: "#f8fafc",
-                      padding: "5px 10px",
-                      borderRadius: "5px",
+                      background: "#ffffff",
+                      border: "1px solid #cbd5e1",
+                      color: "#0f172a",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
                       fontSize: "12px",
+                      fontWeight: "600",
                       cursor: "pointer"
                     }}
                   >
@@ -11835,14 +11841,11 @@ const pending = [];
                       background: "#2563eb",
                       color: "#ffffff",
                       border: "none",
-                      padding: "6px 12px",
-                      borderRadius: "5px",
+                      padding: "7px 14px",
+                      borderRadius: "6px",
                       fontSize: "12px",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px"
+                      fontWeight: "700",
+                      cursor: "pointer"
                     }}
                   >
                     Show
@@ -11854,10 +11857,10 @@ const pending = [];
                       background: "#0284c7",
                       color: "#ffffff",
                       border: "none",
-                      padding: "6px 12px",
-                      borderRadius: "5px",
+                      padding: "7px 14px",
+                      borderRadius: "6px",
                       fontSize: "12px",
-                      fontWeight: "600",
+                      fontWeight: "700",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -11874,13 +11877,13 @@ const pending = [];
                       setReportSubTab("sales");
                     }}
                     style={{
-                      background: "#475569",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "6px 12px",
-                      borderRadius: "5px",
+                      background: "#f1f5f9",
+                      border: "1px solid #cbd5e1",
+                      color: "#334155",
+                      padding: "7px 14px",
+                      borderRadius: "6px",
                       fontSize: "12px",
-                      fontWeight: "600",
+                      fontWeight: "700",
                       cursor: "pointer"
                     }}
                   >
@@ -11893,10 +11896,10 @@ const pending = [];
                       background: "#059669",
                       color: "#ffffff",
                       border: "none",
-                      padding: "6px 12px",
-                      borderRadius: "5px",
+                      padding: "7px 14px",
+                      borderRadius: "6px",
                       fontSize: "12px",
-                      fontWeight: "600",
+                      fontWeight: "700",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -11908,240 +11911,242 @@ const pending = [];
                 </div>
               </div>
 
-              {/* KPI Summary Cards */}
+              {/* KPI Summary Cards (Light Theme) */}
               <div
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(5, 1fr)",
-                  gap: "12px",
-                  padding: "12px 20px",
-                  background: "#090d16",
-                  borderBottom: "1px solid #1e293b",
+                  gap: "14px",
+                  padding: "14px 24px",
+                  background: "#f8fafc",
+                  borderBottom: "1px solid #e2e8f0",
                   flexShrink: 0
                 }}
               >
-                <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Total Bills</div>
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#60a5fa", marginTop: "2px" }}>{totalBillsCount}</div>
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Total Bills</div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#2563eb", marginTop: "2px" }}>{totalBillsCount}</div>
                 </div>
 
-                <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Taxable Base</div>
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#e2e8f0", marginTop: "2px" }}>₹{totalBaseAmt.toFixed(2)}</div>
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Taxable Base</div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#0f172a", marginTop: "2px" }}>₹{totalBaseAmt.toFixed(2)}</div>
                 </div>
 
-                <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>GST / Tax</div>
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#fbbf24", marginTop: "2px" }}>₹{totalGstAmt.toFixed(2)}</div>
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>GST / Tax</div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#d97706", marginTop: "2px" }}>₹{totalGstAmt.toFixed(2)}</div>
                 </div>
 
-                <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Net Revenue (Total)</div>
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#34d399", marginTop: "2px" }}>₹{totalNetAmt.toFixed(2)}</div>
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Net Revenue (Total)</div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#059669", marginTop: "2px" }}>₹{totalNetAmt.toFixed(2)}</div>
                 </div>
 
-                <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Audited Bills (Y)</div>
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#a78bfa", marginTop: "2px" }}>{totalAuditedCount} / {totalBillsCount}</div>
+                <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Audited Bills (Y)</div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#7c3aed", marginTop: "2px" }}>{totalAuditedCount} / {totalBillsCount}</div>
                 </div>
               </div>
 
-              {/* Main Data Table */}
-              <div style={{ flex: 1, overflow: "auto", padding: "0 20px 20px 20px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", marginTop: "12px" }}>
-                  <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
-                    <tr style={{ background: "#1e293b", borderBottom: "2px solid #475569", color: "#cbd5e1" }}>
-                      <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>SrNo</th>
-                      <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>Bill No</th>
-                      <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>R/T</th>
-                      <th style={{ padding: "10px 10px", textAlign: "left", width: "95px" }}>Date</th>
-                      <th style={{ padding: "10px 10px", textAlign: "left", width: "85px" }}>Type</th>
-                      <th style={{ padding: "10px 12px", textAlign: "left" }}>Customer Name</th>
-                      <th style={{ padding: "10px 10px", textAlign: "right", width: "105px" }}>Base</th>
-                      <th style={{ padding: "10px 10px", textAlign: "right", width: "95px" }}>Vat/GST Rs</th>
-                      <th style={{ padding: "10px 10px", textAlign: "right", width: "80px" }}>Ad.Tax</th>
-                      <th style={{ padding: "10px 12px", textAlign: "right", width: "120px" }}>Amount</th>
-                      <th style={{ padding: "10px 8px", textAlign: "center", width: "65px" }}>Y/N</th>
-                      <th style={{ padding: "10px 10px", textAlign: "center", width: "180px" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredBills.length === 0 ? (
-                      <tr>
-                        <td colSpan={12} style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-                          No sales bills found matching the selected period and criteria.
-                        </td>
+              {/* Main Data Table (Light Theme) */}
+              <div style={{ flex: 1, overflow: "auto", padding: "16px 24px" }}>
+                <div style={{ background: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                    <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
+                      <tr style={{ background: "#0f172a", color: "#ffffff" }}>
+                        <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>SrNo</th>
+                        <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>Bill No</th>
+                        <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>R/T</th>
+                        <th style={{ padding: "10px 10px", textAlign: "left", width: "95px" }}>Date</th>
+                        <th style={{ padding: "10px 10px", textAlign: "left", width: "85px" }}>Type</th>
+                        <th style={{ padding: "10px 12px", textAlign: "left" }}>Customer Name</th>
+                        <th style={{ padding: "10px 10px", textAlign: "right", width: "105px" }}>Base</th>
+                        <th style={{ padding: "10px 10px", textAlign: "right", width: "95px" }}>Vat/GST Rs</th>
+                        <th style={{ padding: "10px 10px", textAlign: "right", width: "80px" }}>Ad.Tax</th>
+                        <th style={{ padding: "10px 12px", textAlign: "right", width: "120px" }}>Amount</th>
+                        <th style={{ padding: "10px 8px", textAlign: "center", width: "65px" }}>Y/N</th>
+                        <th style={{ padding: "10px 10px", textAlign: "center", width: "180px" }}>Actions</th>
                       </tr>
-                    ) : (
-                      filteredBills.map((bill: any, idx: number) => {
-                        const isAudited = bill._yn === "Y";
-                        return (
-                          <tr
-                            key={bill.id || idx}
-                            onDoubleClick={() => handleOpenEdit(bill)}
-                            style={{
-                              borderBottom: "1px solid #1e293b",
-                              background: idx % 2 === 0 ? "#0f172a" : "#141e33",
-                              transition: "background 0.15s ease"
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "#1e293b")}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? "#0f172a" : "#141e33")}
-                          >
-                            <td style={{ padding: "8px", textAlign: "center", color: "#64748b", fontWeight: "600" }}>
-                              {idx + 1}
-                            </td>
-                            <td style={{ padding: "8px 10px", fontWeight: "700", color: "#60a5fa" }}>
-                              {bill._billNo}
-                            </td>
-                            <td style={{ padding: "8px", textAlign: "center" }}>
-                              <span
-                                style={{
-                                  padding: "2px 6px",
-                                  borderRadius: "4px",
-                                  fontSize: "10px",
-                                  fontWeight: "700",
-                                  background: bill._rt === "T" ? "#312e81" : "#134e4a",
-                                  color: bill._rt === "T" ? "#c7d2fe" : "#99f6e4"
-                                }}
-                              >
-                                {bill._rt}
-                              </span>
-                            </td>
-                            <td style={{ padding: "8px 10px", color: "#cbd5e1" }}>
-                              {bill._date}
-                            </td>
-                            <td style={{ padding: "8px 10px" }}>
-                              <span
-                                style={{
-                                  padding: "2px 8px",
-                                  borderRadius: "4px",
-                                  fontSize: "10px",
-                                  fontWeight: "700",
-                                  background: /credit/i.test(bill._type) ? "#451a03" : /upi|online/i.test(bill._type) ? "#1e3a8a" : "#064e3b",
-                                  color: /credit/i.test(bill._type) ? "#fcd34d" : /upi|online/i.test(bill._type) ? "#93c5fd" : "#6ee7b7"
-                                }}
-                              >
-                                {bill._type}
-                              </span>
-                            </td>
-                            <td style={{ padding: "8px 12px", color: "#ffffff", fontWeight: "500" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <span>{bill._customerName}</span>
-                                {bill._doctorName && bill._doctorName !== "-" && (
-                                  <span style={{ fontSize: "10px", color: "#94a3b8" }}>
-                                    (Dr. {bill._doctorName})
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td style={{ padding: "8px 10px", textAlign: "right", color: "#94a3b8", fontFamily: "monospace" }}>
-                              ₹{bill._base.toFixed(2)}
-                            </td>
-                            <td style={{ padding: "8px 10px", textAlign: "right", color: "#fbbf24", fontFamily: "monospace" }}>
-                              ₹{bill._gst.toFixed(2)}
-                            </td>
-                            <td style={{ padding: "8px 10px", textAlign: "right", color: "#64748b", fontFamily: "monospace" }}>
-                              ₹{bill._adTax.toFixed(2)}
-                            </td>
-                            <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: "700", color: "#34d399", fontFamily: "monospace", fontSize: "13px" }}>
-                              ₹{bill._amount.toFixed(2)}
-                            </td>
-                            <td style={{ padding: "8px", textAlign: "center" }}>
-                              <button
-                                onClick={() => handleToggleYN(bill)}
-                                title="Click to toggle Audited status (Y/N)"
-                                style={{
-                                  background: isAudited ? "#059669" : "#334155",
-                                  color: isAudited ? "#ffffff" : "#94a3b8",
-                                  border: "none",
-                                  borderRadius: "4px",
-                                  padding: "2px 8px",
-                                  fontSize: "11px",
-                                  fontWeight: "800",
-                                  cursor: "pointer",
-                                  transition: "all 0.15s ease"
-                                }}
-                              >
-                                {bill._yn}
-                              </button>
-                            </td>
-                            <td style={{ padding: "8px 10px", textAlign: "center" }}>
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
-                                <button
-                                  onClick={() => handleOpenEdit(bill)}
-                                  title="Change Bill Details"
+                    </thead>
+                    <tbody>
+                      {filteredBills.length === 0 ? (
+                        <tr>
+                          <td colSpan={12} style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+                            No sales bills found matching the selected period and criteria.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredBills.map((bill: any, idx: number) => {
+                          const isAudited = bill._yn === "Y";
+                          return (
+                            <tr
+                              key={bill.id || idx}
+                              onDoubleClick={() => handleOpenEdit(bill)}
+                              style={{
+                                borderBottom: "1px solid #e2e8f0",
+                                background: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                transition: "background 0.15s ease"
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "#f1f5f9")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f8fafc")}
+                            >
+                              <td style={{ padding: "9px 8px", textAlign: "center", color: "#64748b", fontWeight: "600" }}>
+                                {idx + 1}
+                              </td>
+                              <td style={{ padding: "9px 10px", fontWeight: "700", color: "#1d4ed8" }}>
+                                {bill._billNo}
+                              </td>
+                              <td style={{ padding: "9px 8px", textAlign: "center" }}>
+                                <span
                                   style={{
-                                    background: "#2563eb",
-                                    color: "#ffffff",
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    fontSize: "10px",
+                                    fontWeight: "700",
+                                    background: bill._rt === "T" ? "#e0e7ff" : "#ccfbf1",
+                                    color: bill._rt === "T" ? "#3730a3" : "#0f766e"
+                                  }}
+                                >
+                                  {bill._rt}
+                                </span>
+                              </td>
+                              <td style={{ padding: "9px 10px", color: "#334155" }}>
+                                {bill._date}
+                              </td>
+                              <td style={{ padding: "9px 10px" }}>
+                                <span
+                                  style={{
+                                    padding: "2px 8px",
+                                    borderRadius: "4px",
+                                    fontSize: "10px",
+                                    fontWeight: "700",
+                                    background: /credit/i.test(bill._type) ? "#fef3c7" : /upi|online/i.test(bill._type) ? "#dbeafe" : "#dcfce7",
+                                    color: /credit/i.test(bill._type) ? "#92400e" : /upi|online/i.test(bill._type) ? "#1e40af" : "#166534"
+                                  }}
+                                >
+                                  {bill._type}
+                                </span>
+                              </td>
+                              <td style={{ padding: "9px 12px", color: "#0f172a", fontWeight: "600" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <span>{bill._customerName}</span>
+                                  {bill._doctorName && bill._doctorName !== "-" && (
+                                    <span style={{ fontSize: "11px", color: "#64748b" }}>
+                                      (Dr. {bill._doctorName})
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", color: "#475569", fontFamily: "monospace" }}>
+                                ₹{bill._base.toFixed(2)}
+                              </td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", color: "#d97706", fontFamily: "monospace", fontWeight: "600" }}>
+                                ₹{bill._gst.toFixed(2)}
+                              </td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", color: "#64748b", fontFamily: "monospace" }}>
+                                ₹{bill._adTax.toFixed(2)}
+                              </td>
+                              <td style={{ padding: "9px 12px", textAlign: "right", fontWeight: "800", color: "#047857", fontFamily: "monospace", fontSize: "13px" }}>
+                                ₹{bill._amount.toFixed(2)}
+                              </td>
+                              <td style={{ padding: "9px 8px", textAlign: "center" }}>
+                                <button
+                                  onClick={() => handleToggleYN(bill)}
+                                  title="Click to toggle Audited status (Y/N)"
+                                  style={{
+                                    background: isAudited ? "#059669" : "#e2e8f0",
+                                    color: isAudited ? "#ffffff" : "#475569",
                                     border: "none",
                                     borderRadius: "4px",
-                                    padding: "3px 8px",
+                                    padding: "3px 9px",
                                     fontSize: "11px",
-                                    fontWeight: "600",
+                                    fontWeight: "800",
                                     cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "3px"
+                                    transition: "all 0.15s ease"
                                   }}
                                 >
-                                  <Edit2 size={11} /> Change
+                                  {bill._yn}
                                 </button>
-                                <button
-                                  onClick={() => setCbDetailModal(bill)}
-                                  title="View Line Items"
-                                  style={{
-                                    background: "#334155",
-                                    color: "#cbd5e1",
-                                    border: "none",
-                                    borderRadius: "4px",
-                                    padding: "3px 8px",
-                                    fontSize: "11px",
-                                    fontWeight: "600",
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "3px"
-                                  }}
-                                >
-                                  <Eye size={11} /> Items
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (typeof handlePrintSalesBill === 'function') {
-                                      handlePrintSalesBill(bill);
-                                    }
-                                  }}
-                                  title="Reprint Bill"
-                                  style={{
-                                    background: "#0284c7",
-                                    color: "#ffffff",
-                                    border: "none",
-                                    borderRadius: "4px",
-                                    padding: "3px 7px",
-                                    fontSize: "11px",
-                                    cursor: "pointer"
-                                  }}
-                                >
-                                  <Printer size={11} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                              </td>
+                              <td style={{ padding: "9px 10px", textAlign: "center" }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+                                  <button
+                                    onClick={() => handleOpenEdit(bill)}
+                                    title="Change Bill Details"
+                                    style={{
+                                      background: "#2563eb",
+                                      color: "#ffffff",
+                                      border: "none",
+                                      borderRadius: "4px",
+                                      padding: "4px 8px",
+                                      fontSize: "11px",
+                                      fontWeight: "600",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "3px"
+                                    }}
+                                  >
+                                    <Edit2 size={11} /> Change
+                                  </button>
+                                  <button
+                                    onClick={() => setCbDetailModal(bill)}
+                                    title="View Line Items"
+                                    style={{
+                                      background: "#f1f5f9",
+                                      color: "#334155",
+                                      border: "1px solid #cbd5e1",
+                                      borderRadius: "4px",
+                                      padding: "4px 8px",
+                                      fontSize: "11px",
+                                      fontWeight: "600",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "3px"
+                                    }}
+                                  >
+                                    <Eye size={11} /> Items
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (typeof handlePrintSalesBill === 'function') {
+                                        handlePrintSalesBill(bill);
+                                      }
+                                    }}
+                                    title="Reprint Bill"
+                                    style={{
+                                      background: "#0284c7",
+                                      color: "#ffffff",
+                                      border: "none",
+                                      borderRadius: "4px",
+                                      padding: "4px 8px",
+                                      fontSize: "11px",
+                                      cursor: "pointer"
+                                    }}
+                                  >
+                                    <Printer size={11} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              {/* Submodal A: Quick Edit Bill Details */}
+              {/* Submodal A: Quick Edit Bill Details (Light Theme) */}
               {cbEditModal && (
                 <div
                   style={{
                     position: "fixed",
                     inset: 0,
                     zIndex: 100000,
-                    background: "rgba(0, 0, 0, 0.75)",
+                    background: "rgba(15, 23, 42, 0.6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -12150,42 +12155,42 @@ const pending = [];
                 >
                   <div
                     style={{
-                      background: "#1e293b",
-                      border: "1px solid #475569",
-                      borderRadius: "10px",
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "12px",
                       width: "520px",
                       maxWidth: "95vw",
                       overflow: "hidden",
-                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)"
+                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
                     }}
                   >
                     <div
                       style={{
-                        padding: "14px 20px",
-                        background: "#0f172a",
-                        borderBottom: "1px solid #334155",
+                        padding: "16px 20px",
+                        background: "#f8fafc",
+                        borderBottom: "1px solid #e2e8f0",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between"
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Edit2 size={16} color="#60a5fa" />
-                        <span style={{ fontSize: "14px", fontWeight: "700", color: "#ffffff" }}>
+                        <Edit2 size={16} color="#2563eb" />
+                        <span style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>
                           Change Bill #{cbEditModal._billNo}
                         </span>
                       </div>
                       <button
                         onClick={() => setCbEditModal(null)}
-                        style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
+                        style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer" }}
                       >
                         <X size={16} />
                       </button>
                     </div>
 
-                    <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                    <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "14px" }}>
                       <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                        <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
                           Payment Mode / Bill Type:
                         </label>
                         <select
@@ -12193,9 +12198,9 @@ const pending = [];
                           onChange={(e) => setCbEditForm({ ...cbEditForm, payMode: e.target.value })}
                           style={{
                             width: "100%",
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#ffffff",
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
                             padding: "8px 10px",
                             borderRadius: "6px",
                             fontSize: "13px"
@@ -12209,7 +12214,7 @@ const pending = [];
                       </div>
 
                       <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                        <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
                           Customer / Patient Name:
                         </label>
                         <input
@@ -12219,9 +12224,9 @@ const pending = [];
                           onChange={(e) => setCbEditForm({ ...cbEditForm, patientName: e.target.value })}
                           style={{
                             width: "100%",
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#ffffff",
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
                             padding: "8px 10px",
                             borderRadius: "6px",
                             fontSize: "13px",
@@ -12231,7 +12236,7 @@ const pending = [];
                       </div>
 
                       <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                        <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
                           Doctor Name:
                         </label>
                         <input
@@ -12241,9 +12246,9 @@ const pending = [];
                           onChange={(e) => setCbEditForm({ ...cbEditForm, doctorName: e.target.value })}
                           style={{
                             width: "100%",
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#ffffff",
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
                             padding: "8px 10px",
                             borderRadius: "6px",
                             fontSize: "13px",
@@ -12253,7 +12258,7 @@ const pending = [];
                       </div>
 
                       <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                        <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
                           Audited Status (Y/N):
                         </label>
                         <select
@@ -12261,9 +12266,9 @@ const pending = [];
                           onChange={(e) => setCbEditForm({ ...cbEditForm, yn: e.target.value })}
                           style={{
                             width: "100%",
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#ffffff",
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
                             padding: "8px 10px",
                             borderRadius: "6px",
                             fontSize: "13px"
@@ -12275,7 +12280,7 @@ const pending = [];
                       </div>
 
                       <div>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                        <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
                           Change / Audit Reason:
                         </label>
                         <input
@@ -12285,9 +12290,9 @@ const pending = [];
                           onChange={(e) => setCbEditForm({ ...cbEditForm, remarks: e.target.value })}
                           style={{
                             width: "100%",
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#ffffff",
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
                             padding: "8px 10px",
                             borderRadius: "6px",
                             fontSize: "13px",
@@ -12299,9 +12304,9 @@ const pending = [];
 
                     <div
                       style={{
-                        padding: "12px 20px",
-                        background: "#0f172a",
-                        borderTop: "1px solid #334155",
+                        padding: "14px 20px",
+                        background: "#f8fafc",
+                        borderTop: "1px solid #e2e8f0",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between"
@@ -12317,13 +12322,13 @@ const pending = [];
                           }
                         }}
                         style={{
-                          background: "#3b82f6",
+                          background: "#2563eb",
                           color: "#ffffff",
                           border: "none",
                           borderRadius: "6px",
                           padding: "8px 14px",
                           fontSize: "12px",
-                          fontWeight: "600",
+                          fontWeight: "700",
                           cursor: "pointer"
                         }}
                       >
@@ -12334,9 +12339,9 @@ const pending = [];
                         <button
                           onClick={() => setCbEditModal(null)}
                           style={{
-                            background: "#334155",
-                            color: "#e2e8f0",
-                            border: "none",
+                            background: "#ffffff",
+                            color: "#475569",
+                            border: "1px solid #cbd5e1",
                             borderRadius: "6px",
                             padding: "8px 14px",
                             fontSize: "12px",
@@ -12367,14 +12372,14 @@ const pending = [];
                 </div>
               )}
 
-              {/* Submodal B: View Bill Line Items */}
+              {/* Submodal B: View Bill Line Items (Light Theme) */}
               {cbDetailModal && (
                 <div
                   style={{
                     position: "fixed",
                     inset: 0,
                     zIndex: 100000,
-                    background: "rgba(0, 0, 0, 0.75)",
+                    background: "rgba(15, 23, 42, 0.6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -12383,23 +12388,23 @@ const pending = [];
                 >
                   <div
                     style={{
-                      background: "#1e293b",
-                      border: "1px solid #475569",
-                      borderRadius: "10px",
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "12px",
                       width: "750px",
                       maxWidth: "95vw",
                       maxHeight: "85vh",
                       display: "flex",
                       flexDirection: "column",
                       overflow: "hidden",
-                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)"
+                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
                     }}
                   >
                     <div
                       style={{
-                        padding: "14px 20px",
-                        background: "#0f172a",
-                        borderBottom: "1px solid #334155",
+                        padding: "16px 20px",
+                        background: "#f8fafc",
+                        borderBottom: "1px solid #e2e8f0",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
@@ -12407,16 +12412,16 @@ const pending = [];
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: "15px", fontWeight: "700", color: "#ffffff" }}>
+                        <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
                           Bill #{cbDetailModal._billNo} Line Items
                         </div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
+                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
                           Customer: {cbDetailModal._customerName} | Date: {cbDetailModal._date} | Type: {cbDetailModal._type}
                         </div>
                       </div>
                       <button
                         onClick={() => setCbDetailModal(null)}
-                        style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
+                        style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer" }}
                       >
                         <X size={16} />
                       </button>
@@ -12424,23 +12429,23 @@ const pending = [];
 
                     <div style={{ flex: 1, overflow: "auto", padding: "16px 20px" }}>
                       {(!cbDetailModal.items || cbDetailModal.items.length === 0) && (!cbDetailModal.saleItems || cbDetailModal.saleItems.length === 0) ? (
-                        <div style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}>
+                        <div style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>
                           No line items recorded for this invoice.
                         </div>
                       ) : (
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                           <thead>
-                            <tr style={{ background: "#0f172a", borderBottom: "1px solid #475569", color: "#94a3b8" }}>
-                              <th style={{ padding: "6px", textAlign: "center" }}>#</th>
-                              <th style={{ padding: "6px 8px", textAlign: "left" }}>Medicine / Item</th>
-                              <th style={{ padding: "6px 8px", textAlign: "left" }}>Batch</th>
-                              <th style={{ padding: "6px 8px", textAlign: "center" }}>Exp</th>
-                              <th style={{ padding: "6px 8px", textAlign: "right" }}>Qty</th>
-                              <th style={{ padding: "6px 8px", textAlign: "right" }}>MRP</th>
-                              <th style={{ padding: "6px 8px", textAlign: "right" }}>Rate</th>
-                              <th style={{ padding: "6px 8px", textAlign: "right" }}>Disc %</th>
-                              <th style={{ padding: "6px 8px", textAlign: "right" }}>GST %</th>
-                              <th style={{ padding: "6px 8px", textAlign: "right" }}>Total (₹)</th>
+                            <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #cbd5e1", color: "#475569" }}>
+                              <th style={{ padding: "8px 6px", textAlign: "center" }}>#</th>
+                              <th style={{ padding: "8px", textAlign: "left" }}>Medicine / Item</th>
+                              <th style={{ padding: "8px", textAlign: "left" }}>Batch</th>
+                              <th style={{ padding: "8px", textAlign: "center" }}>Exp</th>
+                              <th style={{ padding: "8px", textAlign: "right" }}>Qty</th>
+                              <th style={{ padding: "8px", textAlign: "right" }}>MRP</th>
+                              <th style={{ padding: "8px", textAlign: "right" }}>Rate</th>
+                              <th style={{ padding: "8px", textAlign: "right" }}>Disc %</th>
+                              <th style={{ padding: "8px", textAlign: "right" }}>GST %</th>
+                              <th style={{ padding: "8px", textAlign: "right" }}>Total (₹)</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -12449,17 +12454,17 @@ const pending = [];
                               const lineRate = it.rate || it.sellingRate || it.mrp || 0;
                               const lineTotal = it.total || it.amount || (lineQty * lineRate);
                               return (
-                                <tr key={i} style={{ borderBottom: "1px solid #334155" }}>
-                                  <td style={{ padding: "6px", textAlign: "center", color: "#64748b" }}>{i + 1}</td>
-                                  <td style={{ padding: "6px 8px", color: "#ffffff", fontWeight: "600" }}>{it.name || it.itemName || it.drugName || "Item"}</td>
-                                  <td style={{ padding: "6px 8px", color: "#94a3b8", fontFamily: "monospace" }}>{it.batch || it.batchNo || "-"}</td>
-                                  <td style={{ padding: "6px 8px", textAlign: "center", color: "#94a3b8" }}>{it.expiry || it.expiryDate || "-"}</td>
-                                  <td style={{ padding: "6px 8px", textAlign: "right", color: "#60a5fa", fontWeight: "700" }}>{lineQty}</td>
-                                  <td style={{ padding: "6px 8px", textAlign: "right", color: "#94a3b8" }}>₹{Number(it.mrp || lineRate).toFixed(2)}</td>
-                                  <td style={{ padding: "6px 8px", textAlign: "right", color: "#e2e8f0" }}>₹{Number(lineRate).toFixed(2)}</td>
-                                  <td style={{ padding: "6px 8px", textAlign: "right", color: "#cbd5e1" }}>{it.discount || it.disc || 0}%</td>
-                                  <td style={{ padding: "6px 8px", textAlign: "right", color: "#fbbf24" }}>{it.gst || it.tax || 12}%</td>
-                                  <td style={{ padding: "6px 8px", textAlign: "right", color: "#34d399", fontWeight: "700" }}>₹{Number(lineTotal).toFixed(2)}</td>
+                                <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                  <td style={{ padding: "8px 6px", textAlign: "center", color: "#94a3b8" }}>{i + 1}</td>
+                                  <td style={{ padding: "8px", color: "#0f172a", fontWeight: "700" }}>{it.name || it.itemName || it.drugName || "Item"}</td>
+                                  <td style={{ padding: "8px", color: "#64748b", fontFamily: "monospace" }}>{it.batch || it.batchNo || "-"}</td>
+                                  <td style={{ padding: "8px", textAlign: "center", color: "#64748b" }}>{it.expiry || it.expiryDate || "-"}</td>
+                                  <td style={{ padding: "8px", textAlign: "right", color: "#1d4ed8", fontWeight: "700" }}>{lineQty}</td>
+                                  <td style={{ padding: "8px", textAlign: "right", color: "#64748b" }}>₹{Number(it.mrp || lineRate).toFixed(2)}</td>
+                                  <td style={{ padding: "8px", textAlign: "right", color: "#334155" }}>₹{Number(lineRate).toFixed(2)}</td>
+                                  <td style={{ padding: "8px", textAlign: "right", color: "#64748b" }}>{it.discount || it.disc || 0}%</td>
+                                  <td style={{ padding: "8px", textAlign: "right", color: "#d97706" }}>{it.gst || it.tax || 12}%</td>
+                                  <td style={{ padding: "8px", textAlign: "right", color: "#047857", fontWeight: "800" }}>₹{Number(lineTotal).toFixed(2)}</td>
                                 </tr>
                               );
                             })}
@@ -12471,17 +12476,18 @@ const pending = [];
                         style={{
                           marginTop: "16px",
                           padding: "12px 16px",
-                          background: "#0f172a",
-                          borderRadius: "6px",
+                          background: "#f8fafc",
+                          borderRadius: "8px",
+                          border: "1px solid #e2e8f0",
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center"
                         }}
                       >
-                        <div style={{ fontSize: "12px", color: "#94a3b8" }}>
+                        <div style={{ fontSize: "12px", color: "#64748b" }}>
                           Total Items: <strong>{(cbDetailModal.items || cbDetailModal.saleItems || []).length}</strong>
                         </div>
-                        <div style={{ fontSize: "14px", fontWeight: "800", color: "#34d399" }}>
+                        <div style={{ fontSize: "16px", fontWeight: "800", color: "#047857" }}>
                           Net Bill Total: ₹{cbDetailModal._amount.toFixed(2)}
                         </div>
                       </div>
@@ -12489,9 +12495,9 @@ const pending = [];
 
                     <div
                       style={{
-                        padding: "12px 20px",
-                        background: "#0f172a",
-                        borderTop: "1px solid #334155",
+                        padding: "14px 20px",
+                        background: "#f8fafc",
+                        borderTop: "1px solid #e2e8f0",
                         display: "flex",
                         justifyContent: "flex-end",
                         gap: "8px",
@@ -12509,9 +12515,9 @@ const pending = [];
                           color: "#ffffff",
                           border: "none",
                           borderRadius: "6px",
-                          padding: "6px 14px",
+                          padding: "8px 16px",
                           fontSize: "12px",
-                          fontWeight: "600",
+                          fontWeight: "700",
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
@@ -12523,13 +12529,13 @@ const pending = [];
                       <button
                         onClick={() => setCbDetailModal(null)}
                         style={{
-                          background: "#334155",
-                          color: "#ffffff",
-                          border: "none",
+                          background: "#ffffff",
+                          color: "#475569",
+                          border: "1px solid #cbd5e1",
                           borderRadius: "6px",
-                          padding: "6px 14px",
+                          padding: "8px 16px",
                           fontSize: "12px",
-                          fontWeight: "600",
+                          fontWeight: "700",
                           cursor: "pointer"
                         }}
                       >
@@ -12544,7 +12550,7 @@ const pending = [];
         })()}
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* SUPERVISOR — SALES BILL DELETE & RENUMBERING (100% FULLSCREEN) */}
+        {/* SUPERVISOR — SALES BILL DELETE & RENUMBERING (100% FULLSCREEN LIGHT THEME) */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         {showSalesBillDelete && (() => {
           // Normalize sales bills - Filter for Cash bills only (Per system rule: NO DEBIT BILLS)
@@ -12749,30 +12755,29 @@ const pending = [];
               style={{
                 position: "fixed",
                 inset: 0,
-                zIndex: 99999,
-                background: "#0f172a",
-                color: "#f8fafc",
+                zIndex: 9999,
+                background: "#f1f5f9",
+                color: "#0f172a",
                 display: "flex",
                 flexDirection: "column",
-                fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                animation: "fadeIn 0.2s ease-out"
+                fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
               }}
             >
-              {/* Top Warning Banner (Red/Brown Legacy Style) */}
+              {/* Top Warning Banner (Light Red Alert Theme) */}
               <div
                 style={{
-                  background: "linear-gradient(90deg, #7f1d1d 0%, #991b1b 100%)",
-                  padding: "8px 20px",
+                  background: "#fef2f2",
+                  padding: "8px 24px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  borderBottom: "1px solid #b91c1c",
+                  borderBottom: "1px solid #fecaca",
                   flexShrink: 0
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <AlertCircle size={17} color="#fecaca" />
-                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#ffffff", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                  <AlertCircle size={17} color="#dc2626" />
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#991b1b", letterSpacing: "0.5px", textTransform: "uppercase" }}>
                     USE THIS FACILITY ONLY IF YOU MAKE CASH BILLS ONLY — NO DEBIT / CREDIT BILLS
                   </span>
                 </div>
@@ -12781,8 +12786,8 @@ const pending = [];
                   onClick={() => setShowSalesBillDelete(false)}
                   style={{
                     background: "#ffffff",
-                    color: "#991b1b",
-                    border: "none",
+                    color: "#dc2626",
+                    border: "1px solid #fca5a5",
                     padding: "4px 12px",
                     borderRadius: "4px",
                     fontWeight: "700",
@@ -12797,24 +12802,25 @@ const pending = [];
                 </button>
               </div>
 
-              {/* Header Title & Subtabs */}
+              {/* Header Title & Subtabs (Light/Modern Theme) */}
               <div
                 style={{
-                  background: "#1e293b",
-                  padding: "10px 20px",
-                  borderBottom: "1px solid #334155",
+                  background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+                  padding: "12px 24px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
+                  color: "#ffffff",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
                   flexShrink: 0
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                   <div
                     style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "8px",
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "10px",
                       background: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)",
                       display: "flex",
                       alignItems: "center",
@@ -12822,18 +12828,18 @@ const pending = [];
                       boxShadow: "0 2px 8px rgba(239, 68, 68, 0.4)"
                     }}
                   >
-                    <Trash2 size={20} color="#ffffff" />
+                    <Trash2 size={22} color="#ffffff" />
                   </div>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ fontSize: "17px", fontWeight: "800", color: "#ffffff" }}>
                         Sales Bill Delete &amp; Renumbering Facility
                       </span>
                       <span
                         style={{
-                          background: "#450a0a",
+                          background: "rgba(239, 68, 68, 0.25)",
                           color: "#fca5a5",
-                          border: "1px solid #ef4444",
+                          border: "1px solid rgba(252, 165, 165, 0.4)",
                           padding: "2px 8px",
                           borderRadius: "12px",
                           fontSize: "11px",
@@ -12850,12 +12856,12 @@ const pending = [];
                 </div>
 
                 {/* Sub-tabs Selector */}
-                <div style={{ display: "flex", background: "#0f172a", padding: "3px", borderRadius: "8px", border: "1px solid #334155" }}>
+                <div style={{ display: "flex", background: "rgba(255,255,255,0.1)", padding: "3px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)" }}>
                   <button
                     onClick={() => setSbdActiveTab("delete")}
                     style={{
                       background: sbdActiveTab === "delete" ? "#ef4444" : "transparent",
-                      color: sbdActiveTab === "delete" ? "#ffffff" : "#94a3b8",
+                      color: "#ffffff",
                       border: "none",
                       padding: "6px 14px",
                       borderRadius: "6px",
@@ -12875,7 +12881,7 @@ const pending = [];
                     onClick={() => setSbdActiveTab("renumber")}
                     style={{
                       background: sbdActiveTab === "renumber" ? "#3b82f6" : "transparent",
-                      color: sbdActiveTab === "renumber" ? "#ffffff" : "#94a3b8",
+                      color: "#ffffff",
                       border: "none",
                       padding: "6px 14px",
                       borderRadius: "6px",
@@ -12897,11 +12903,11 @@ const pending = [];
               {sbdStatusMsg && (
                 <div
                   style={{
-                    padding: "8px 20px",
-                    background: sbdStatusMsg.type === "success" ? "#064e3b" : "#7f1d1d",
-                    borderBottom: `1px solid ${sbdStatusMsg.type === "success" ? "#059669" : "#dc2626"}`,
-                    color: sbdStatusMsg.type === "success" ? "#6ee7b7" : "#fca5a5",
-                    fontSize: "12px",
+                    padding: "10px 24px",
+                    background: sbdStatusMsg.type === "success" ? "#ecfdf5" : "#fef2f2",
+                    borderBottom: `1px solid ${sbdStatusMsg.type === "success" ? "#a7f3d0" : "#fecaca"}`,
+                    color: sbdStatusMsg.type === "success" ? "#065f46" : "#991b1b",
+                    fontSize: "13px",
                     fontWeight: "600",
                     display: "flex",
                     alignItems: "center",
@@ -12909,60 +12915,63 @@ const pending = [];
                     flexShrink: 0
                   }}
                 >
-                  {sbdStatusMsg.type === "success" ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+                  {sbdStatusMsg.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
                   <span>{sbdStatusMsg.msg}</span>
                 </div>
               )}
 
-              {/* ─── TAB 1: DELETE CASH SALES BILL ─── */}
+              {/* ─── TAB 1: DELETE CASH SALES BILL (LIGHT THEME) ─── */}
               {sbdActiveTab === "delete" && (
                 <>
-                  {/* Controls & Filter Panel (Matching Legacy System) */}
+                  {/* Controls & Filter Panel (Light Theme) */}
                   <div
                     style={{
-                      background: "#1e293b",
-                      padding: "12px 20px",
-                      borderBottom: "1px solid #334155",
+                      background: "#ffffff",
+                      padding: "12px 24px",
+                      borderBottom: "1px solid #e2e8f0",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       gap: "14px",
                       flexWrap: "wrap",
-                      flexShrink: 0
+                      flexShrink: 0,
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
                     }}
                   >
                     {/* Left Filters */}
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>From:</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>From:</span>
                         <input
                           type="date"
                           value={sbdFromDate}
                           onChange={(e) => setSbdFromDate(e.target.value)}
                           style={{
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#f8fafc",
-                            padding: "5px 8px",
-                            borderRadius: "5px",
-                            fontSize: "12px"
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: "600"
                           }}
                         />
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>To:</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>To:</span>
                         <input
                           type="date"
                           value={sbdToDate}
                           onChange={(e) => setSbdToDate(e.target.value)}
                           style={{
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#f8fafc",
-                            padding: "5px 8px",
-                            borderRadius: "5px",
-                            fontSize: "12px"
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: "600"
                           }}
                         />
                       </div>
@@ -12975,11 +12984,11 @@ const pending = [];
                           setSbdToDate(t);
                         }}
                         style={{
-                          background: "#334155",
-                          border: "none",
-                          color: "#ffffff",
-                          padding: "5px 10px",
-                          borderRadius: "5px",
+                          background: "#f1f5f9",
+                          border: "1px solid #e2e8f0",
+                          color: "#334155",
+                          padding: "6px 12px",
+                          borderRadius: "6px",
                           fontSize: "11px",
                           fontWeight: "700",
                           cursor: "pointer"
@@ -12990,39 +12999,39 @@ const pending = [];
 
                       {/* Lower / Higher Amount Filter */}
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>Lower Amount:</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>Lower Amount:</span>
                         <input
                           type="number"
                           placeholder="Min ₹"
                           value={sbdLowerAmt}
                           onChange={(e) => setSbdLowerAmt(e.target.value)}
                           style={{
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#ffffff",
-                            padding: "5px 8px",
-                            borderRadius: "5px",
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
+                            padding: "6px 8px",
+                            borderRadius: "6px",
                             fontSize: "12px",
-                            width: "80px"
+                            width: "85px"
                           }}
                         />
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>Higher Amount:</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>Higher Amount:</span>
                         <input
                           type="number"
                           placeholder="Max ₹"
                           value={sbdHigherAmt}
                           onChange={(e) => setSbdHigherAmt(e.target.value)}
                           style={{
-                            background: "#0f172a",
-                            border: "1px solid #475569",
-                            color: "#ffffff",
-                            padding: "5px 8px",
-                            borderRadius: "5px",
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
+                            padding: "6px 8px",
+                            borderRadius: "6px",
                             fontSize: "12px",
-                            width: "80px"
+                            width: "85px"
                           }}
                         />
                       </div>
@@ -13031,38 +13040,38 @@ const pending = [];
                     {/* Right Summary & Action Buttons */}
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>Total (₹):</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>Total (₹):</span>
                         <input
                           type="text"
                           readOnly
                           value={`₹${selectedTotalAmt.toFixed(2)}`}
                           style={{
-                            background: "#0f172a",
-                            border: "1px solid #3b82f6",
-                            color: "#60a5fa",
-                            padding: "5px 8px",
-                            borderRadius: "5px",
-                            fontSize: "12px",
+                            background: "#eff6ff",
+                            border: "1px solid #bfdbfe",
+                            color: "#1d4ed8",
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            fontSize: "13px",
                             fontWeight: "800",
-                            width: "110px",
+                            width: "120px",
                             textAlign: "right"
                           }}
                         />
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8" }}>Sales (Qty):</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#475569" }}>Sales (Qty):</span>
                         <input
                           type="text"
                           readOnly
                           value={selectedCount}
                           style={{
-                            background: "#0f172a",
-                            border: "1px solid #f59e0b",
-                            color: "#fbbf24",
-                            padding: "5px 8px",
-                            borderRadius: "5px",
-                            fontSize: "12px",
+                            background: "#fef3c7",
+                            border: "1px solid #fde68a",
+                            color: "#b45309",
+                            padding: "6px 8px",
+                            borderRadius: "6px",
+                            fontSize: "13px",
                             fontWeight: "800",
                             width: "55px",
                             textAlign: "center"
@@ -13077,8 +13086,8 @@ const pending = [];
                           background: "#059669",
                           color: "#ffffff",
                           border: "none",
-                          padding: "6px 12px",
-                          borderRadius: "5px",
+                          padding: "7px 14px",
+                          borderRadius: "6px",
                           fontSize: "11px",
                           fontWeight: "700",
                           cursor: "pointer"
@@ -13090,11 +13099,11 @@ const pending = [];
                       <button
                         onClick={handleDeselectAll}
                         style={{
-                          background: "#475569",
-                          color: "#ffffff",
-                          border: "none",
-                          padding: "6px 12px",
-                          borderRadius: "5px",
+                          background: "#f1f5f9",
+                          border: "1px solid #cbd5e1",
+                          color: "#334155",
+                          padding: "7px 14px",
+                          borderRadius: "6px",
                           fontSize: "11px",
                           fontWeight: "700",
                           cursor: "pointer"
@@ -13116,8 +13125,8 @@ const pending = [];
                           background: "#ef4444",
                           color: "#ffffff",
                           border: "none",
-                          padding: "6px 16px",
-                          borderRadius: "5px",
+                          padding: "7px 18px",
+                          borderRadius: "6px",
                           fontSize: "12px",
                           fontWeight: "800",
                           cursor: "pointer",
@@ -13132,156 +13141,160 @@ const pending = [];
                     </div>
                   </div>
 
-                  {/* 4 KPI Summary Cards */}
+                  {/* 4 KPI Summary Cards (Light Theme) */}
                   <div
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(4, 1fr)",
-                      gap: "12px",
-                      padding: "12px 20px",
-                      background: "#090d16",
-                      borderBottom: "1px solid #1e293b",
+                      gap: "14px",
+                      padding: "14px 24px",
+                      background: "#f8fafc",
+                      borderBottom: "1px solid #e2e8f0",
                       flexShrink: 0
                     }}
                   >
-                    <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                      <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Eligible Cash Bills</div>
-                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#60a5fa", marginTop: "2px" }}>{eligibleBills.length}</div>
+                    <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Eligible Cash Bills</div>
+                      <div style={{ fontSize: "22px", fontWeight: "800", color: "#2563eb", marginTop: "2px" }}>{eligibleBills.length}</div>
                     </div>
 
-                    <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                      <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Selected For Deletion</div>
-                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#ef4444", marginTop: "2px" }}>{selectedCount} / {eligibleBills.length}</div>
+                    <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Selected For Deletion</div>
+                      <div style={{ fontSize: "22px", fontWeight: "800", color: "#dc2626", marginTop: "2px" }}>{selectedCount} / {eligibleBills.length}</div>
                     </div>
 
-                    <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                      <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Selected Total Value</div>
-                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#f59e0b", marginTop: "2px" }}>₹{selectedTotalAmt.toFixed(2)}</div>
+                    <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Selected Total Value</div>
+                      <div style={{ fontSize: "22px", fontWeight: "800", color: "#b45309", marginTop: "2px" }}>₹{selectedTotalAmt.toFixed(2)}</div>
                     </div>
 
-                    <div style={{ background: "#1e293b", padding: "10px 14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                      <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase" }}>Stock Units to Restore</div>
-                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#34d399", marginTop: "2px" }}>{totalUnitsToRestore} Units</div>
+                    <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Stock Units to Restore</div>
+                      <div style={{ fontSize: "22px", fontWeight: "800", color: "#059669", marginTop: "2px" }}>{totalUnitsToRestore} Units</div>
                     </div>
                   </div>
 
-                  {/* Main 9-Column Table */}
-                  <div style={{ flex: 1, overflow: "auto", padding: "0 20px 20px 20px" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", marginTop: "12px" }}>
-                      <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
-                        <tr style={{ background: "#1e293b", borderBottom: "2px solid #475569", color: "#cbd5e1" }}>
-                          <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>SrNo</th>
-                          <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>Bill No</th>
-                          <th style={{ padding: "10px 10px", textAlign: "left", width: "95px" }}>Date</th>
-                          <th style={{ padding: "10px 10px", textAlign: "left", width: "85px" }}>Type</th>
-                          <th style={{ padding: "10px 12px", textAlign: "left" }}>Customer Name</th>
-                          <th style={{ padding: "10px 10px", textAlign: "right", width: "100px" }}>Vat/GST Rs</th>
-                          <th style={{ padding: "10px 12px", textAlign: "right", width: "120px" }}>Amount</th>
-                          <th style={{ padding: "10px 10px", textAlign: "left", width: "100px" }}>User</th>
-                          <th style={{ padding: "10px 8px", textAlign: "center", width: "65px" }}>Y/N</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {eligibleBills.length === 0 ? (
-                          <tr>
-                            <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-                              No cash sales bills found matching the selected period and amount criteria.
-                            </td>
+                  {/* Main 9-Column Table (Light Theme) */}
+                  <div style={{ flex: 1, overflow: "auto", padding: "16px 24px" }}>
+                    <div style={{ background: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                        <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
+                          <tr style={{ background: "#0f172a", color: "#ffffff" }}>
+                            <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>SrNo</th>
+                            <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>Bill No</th>
+                            <th style={{ padding: "10px 10px", textAlign: "left", width: "95px" }}>Date</th>
+                            <th style={{ padding: "10px 10px", textAlign: "left", width: "85px" }}>Type</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left" }}>Customer Name</th>
+                            <th style={{ padding: "10px 10px", textAlign: "right", width: "100px" }}>Vat/GST Rs</th>
+                            <th style={{ padding: "10px 12px", textAlign: "right", width: "120px" }}>Amount</th>
+                            <th style={{ padding: "10px 10px", textAlign: "left", width: "100px" }}>User</th>
+                            <th style={{ padding: "10px 8px", textAlign: "center", width: "65px" }}>Y/N</th>
                           </tr>
-                        ) : (
-                          eligibleBills.map((bill: any, idx: number) => {
-                            const isSelected = !!sbdSelectedMap[bill._id];
-                            return (
-                              <tr
-                                key={bill._id}
-                                onClick={() => handleToggleRow(bill._id)}
-                                style={{
-                                  borderBottom: "1px solid #1e293b",
-                                  background: isSelected ? "rgba(239, 68, 68, 0.15)" : idx % 2 === 0 ? "#0f172a" : "#141e33",
-                                  cursor: "pointer",
-                                  transition: "background 0.15s ease"
-                                }}
-                              >
-                                <td style={{ padding: "8px", textAlign: "center", color: "#64748b", fontWeight: "600" }}>
-                                  {idx + 1}
-                                </td>
-                                <td style={{ padding: "8px 10px", fontWeight: "700", color: "#60a5fa" }}>
-                                  {bill._billNo}
-                                </td>
-                                <td style={{ padding: "8px 10px", color: "#cbd5e1" }}>
-                                  {bill._date}
-                                </td>
-                                <td style={{ padding: "8px 10px" }}>
-                                  <span
-                                    style={{
-                                      padding: "2px 8px",
-                                      borderRadius: "4px",
-                                      fontSize: "10px",
-                                      fontWeight: "700",
-                                      background: "#064e3b",
-                                      color: "#6ee7b7"
-                                    }}
-                                  >
-                                    Cash
-                                  </span>
-                                </td>
-                                <td style={{ padding: "8px 12px", color: "#ffffff", fontWeight: "500" }}>
-                                  {bill._customerName}
-                                </td>
-                                <td style={{ padding: "8px 10px", textAlign: "right", color: "#fbbf24", fontFamily: "monospace" }}>
-                                  ₹{bill._gst.toFixed(2)}
-                                </td>
-                                <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: "700", color: "#34d399", fontFamily: "monospace", fontSize: "13px" }}>
-                                  ₹{bill._amount.toFixed(2)}
-                                </td>
-                                <td style={{ padding: "8px 10px", color: "#94a3b8" }}>
-                                  {bill._user}
-                                </td>
-                                <td style={{ padding: "8px", textAlign: "center" }}>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleToggleRow(bill._id);
-                                    }}
-                                    style={{
-                                      background: isSelected ? "#ef4444" : "#334155",
-                                      color: "#ffffff",
-                                      border: "none",
-                                      borderRadius: "4px",
-                                      padding: "2px 8px",
-                                      fontSize: "11px",
-                                      fontWeight: "800",
-                                      cursor: "pointer"
-                                    }}
-                                  >
-                                    {isSelected ? "Y" : "N"}
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {eligibleBills.length === 0 ? (
+                            <tr>
+                              <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+                                No cash sales bills found matching the selected period and amount criteria.
+                              </td>
+                            </tr>
+                          ) : (
+                            eligibleBills.map((bill: any, idx: number) => {
+                              const isSelected = !!sbdSelectedMap[bill._id];
+                              return (
+                                <tr
+                                  key={bill._id}
+                                  onClick={() => handleToggleRow(bill._id)}
+                                  style={{
+                                    borderBottom: "1px solid #e2e8f0",
+                                    background: isSelected ? "#fee2e2" : idx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                    cursor: "pointer",
+                                    transition: "background 0.15s ease"
+                                  }}
+                                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "#f1f5f9"; }}
+                                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f8fafc"; }}
+                                >
+                                  <td style={{ padding: "9px 8px", textAlign: "center", color: "#64748b", fontWeight: "600" }}>
+                                    {idx + 1}
+                                  </td>
+                                  <td style={{ padding: "9px 10px", fontWeight: "700", color: "#1d4ed8" }}>
+                                    {bill._billNo}
+                                  </td>
+                                  <td style={{ padding: "9px 10px", color: "#334155" }}>
+                                    {bill._date}
+                                  </td>
+                                  <td style={{ padding: "9px 10px" }}>
+                                    <span
+                                      style={{
+                                        padding: "2px 8px",
+                                        borderRadius: "4px",
+                                        fontSize: "10px",
+                                        fontWeight: "700",
+                                        background: "#dcfce7",
+                                        color: "#166534"
+                                      }}
+                                    >
+                                      Cash
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "9px 12px", color: "#0f172a", fontWeight: "600" }}>
+                                    {bill._customerName}
+                                  </td>
+                                  <td style={{ padding: "9px 10px", textAlign: "right", color: "#d97706", fontFamily: "monospace", fontWeight: "600" }}>
+                                    ₹{bill._gst.toFixed(2)}
+                                  </td>
+                                  <td style={{ padding: "9px 12px", textAlign: "right", fontWeight: "800", color: "#047857", fontFamily: "monospace", fontSize: "13px" }}>
+                                    ₹{bill._amount.toFixed(2)}
+                                  </td>
+                                  <td style={{ padding: "9px 10px", color: "#64748b" }}>
+                                    {bill._user}
+                                  </td>
+                                  <td style={{ padding: "9px 8px", textAlign: "center" }}>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleRow(bill._id);
+                                      }}
+                                      style={{
+                                        background: isSelected ? "#dc2626" : "#e2e8f0",
+                                        color: isSelected ? "#ffffff" : "#475569",
+                                        border: "none",
+                                        borderRadius: "4px",
+                                        padding: "3px 9px",
+                                        fontSize: "11px",
+                                        fontWeight: "800",
+                                        cursor: "pointer"
+                                      }}
+                                    >
+                                      {isSelected ? "Y" : "N"}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </>
               )}
 
-              {/* ─── TAB 2: SALES BILL RENUMBERING ─── */}
+              {/* ─── TAB 2: SALES BILL RENUMBERING (LIGHT THEME) ─── */}
               {sbdActiveTab === "renumber" && (
                 <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
                   <div style={{ maxWidth: "750px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
-                    <div style={{ background: "#1e293b", padding: "20px", borderRadius: "10px", border: "1px solid #334155" }}>
-                      <div style={{ fontSize: "16px", fontWeight: "700", color: "#ffffff", marginBottom: "6px" }}>
+                    <div style={{ background: "#ffffff", padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                      <div style={{ fontSize: "17px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>
                         Sequential Sales Bill Renumbering Configuration
                       </div>
-                      <div style={{ fontSize: "12px", color: "#94a3b8", lineHeight: "1.5" }}>
+                      <div style={{ fontSize: "12px", color: "#64748b", lineHeight: "1.5" }}>
                         After deleting sales bills, gaps appear in the invoice sequence. This utility re-sequences all existing sales bills consecutively by date.
                       </div>
 
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginTop: "20px" }}>
                         <div>
-                          <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
                             Invoice Prefix:
                           </label>
                           <input
@@ -13291,9 +13304,9 @@ const pending = [];
                             placeholder="e.g. INV-"
                             style={{
                               width: "100%",
-                              background: "#0f172a",
-                              border: "1px solid #475569",
-                              color: "#ffffff",
+                              background: "#ffffff",
+                              border: "1px solid #cbd5e1",
+                              color: "#0f172a",
                               padding: "8px 10px",
                               borderRadius: "6px",
                               fontSize: "13px",
@@ -13303,7 +13316,7 @@ const pending = [];
                         </div>
 
                         <div>
-                          <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
                             Starting Number:
                           </label>
                           <input
@@ -13313,9 +13326,9 @@ const pending = [];
                             onChange={(e) => setSbdRenumberStart(Number(e.target.value) || 1)}
                             style={{
                               width: "100%",
-                              background: "#0f172a",
-                              border: "1px solid #475569",
-                              color: "#ffffff",
+                              background: "#ffffff",
+                              border: "1px solid #cbd5e1",
+                              color: "#0f172a",
                               padding: "8px 10px",
                               borderRadius: "6px",
                               fontSize: "13px",
@@ -13325,7 +13338,7 @@ const pending = [];
                         </div>
 
                         <div>
-                          <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "4px" }}>
+                          <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
                             Zero Padding Digits:
                           </label>
                           <input
@@ -13336,9 +13349,9 @@ const pending = [];
                             onChange={(e) => setSbdRenumberDigits(Number(e.target.value) || 4)}
                             style={{
                               width: "100%",
-                              background: "#0f172a",
-                              border: "1px solid #475569",
-                              color: "#ffffff",
+                              background: "#ffffff",
+                              border: "1px solid #cbd5e1",
+                              color: "#0f172a",
                               padding: "8px 10px",
                               borderRadius: "6px",
                               fontSize: "13px",
@@ -13351,29 +13364,29 @@ const pending = [];
                       <div
                         style={{
                           marginTop: "20px",
-                          padding: "14px",
-                          background: "#0f172a",
+                          padding: "16px",
+                          background: "#f8fafc",
                           borderRadius: "8px",
-                          border: "1px solid #334155",
+                          border: "1px solid #e2e8f0",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between"
                         }}
                       >
                         <div>
-                          <div style={{ fontSize: "11px", color: "#94a3b8", textTransform: "uppercase", fontWeight: "700" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: "700" }}>
                             Sample Renumbered Bill Number:
                           </div>
-                          <div style={{ fontSize: "18px", fontWeight: "800", color: "#38bdf8", marginTop: "2px" }}>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#2563eb", marginTop: "2px" }}>
                             {`${sbdRenumberPrefix}${String(sbdRenumberStart).padStart(sbdRenumberDigits, '0')}`}
                           </div>
                         </div>
 
                         <div>
-                          <div style={{ fontSize: "11px", color: "#94a3b8", textTransform: "uppercase", fontWeight: "700" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: "700" }}>
                             Total Invoices to Sequence:
                           </div>
-                          <div style={{ fontSize: "18px", fontWeight: "800", color: "#a78bfa", marginTop: "2px" }}>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#7c3aed", marginTop: "2px" }}>
                             {(salesBills || []).length} Invoices
                           </div>
                         </div>
@@ -13387,11 +13400,11 @@ const pending = [];
                             color: "#ffffff",
                             border: "none",
                             borderRadius: "6px",
-                            padding: "10px 20px",
+                            padding: "10px 22px",
                             fontSize: "13px",
                             fontWeight: "700",
                             cursor: "pointer",
-                            boxShadow: "0 2px 8px rgba(37, 99, 235, 0.4)"
+                            boxShadow: "0 2px 8px rgba(37, 99, 235, 0.3)"
                           }}
                         >
                           Execute Renumbering
@@ -13402,14 +13415,14 @@ const pending = [];
                 </div>
               )}
 
-              {/* Confirmation Modal for Batch Delete */}
+              {/* Confirmation Modal for Batch Delete (Light Theme) */}
               {sbdConfirmModal && (
                 <div
                   style={{
                     position: "fixed",
                     inset: 0,
                     zIndex: 100000,
-                    background: "rgba(0, 0, 0, 0.8)",
+                    background: "rgba(15, 23, 42, 0.6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -13418,44 +13431,44 @@ const pending = [];
                 >
                   <div
                     style={{
-                      background: "#1e293b",
-                      border: "1px solid #ef4444",
-                      borderRadius: "10px",
+                      background: "#ffffff",
+                      border: "1px solid #fecaca",
+                      borderRadius: "12px",
                       width: "480px",
                       maxWidth: "95vw",
                       overflow: "hidden",
-                      boxShadow: "0 25px 50px -12px rgba(239, 68, 68, 0.3)"
+                      boxShadow: "0 25px 50px -12px rgba(220, 38, 38, 0.25)"
                     }}
                   >
-                    <div style={{ padding: "16px 20px", background: "#450a0a", borderBottom: "1px solid #ef4444", display: "flex", alignItems: "center", gap: "10px" }}>
-                      <AlertCircle size={20} color="#fca5a5" />
-                      <span style={{ fontSize: "15px", fontWeight: "800", color: "#ffffff" }}>
+                    <div style={{ padding: "16px 20px", background: "#fef2f2", borderBottom: "1px solid #fecaca", display: "flex", alignItems: "center", gap: "10px" }}>
+                      <AlertCircle size={22} color="#dc2626" />
+                      <span style={{ fontSize: "16px", fontWeight: "800", color: "#991b1b" }}>
                         Confirm Permanent Sales Bill Deletion
                       </span>
                     </div>
 
-                    <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px", color: "#e2e8f0" }}>
+                    <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px", color: "#334155" }}>
                       <p style={{ margin: 0 }}>
-                        Are you sure you want to permanently delete <strong>{selectedCount}</strong> sales bills totaling <strong style={{ color: "#34d399" }}>₹{selectedTotalAmt.toFixed(2)}</strong>?
+                        Are you sure you want to permanently delete <strong>{selectedCount}</strong> sales bills totaling <strong style={{ color: "#047857" }}>₹{selectedTotalAmt.toFixed(2)}</strong>?
                       </p>
-                      <div style={{ background: "#0f172a", padding: "10px 14px", borderRadius: "6px", border: "1px solid #334155", fontSize: "12px" }}>
-                        <div style={{ color: "#38bdf8", fontWeight: "700" }}>✓ Inventory Auto-Restoration:</div>
-                        <div style={{ color: "#94a3b8", marginTop: "4px" }}>
+                      <div style={{ background: "#f0fdf4", padding: "12px 14px", borderRadius: "8px", border: "1px solid #bbf7d0", fontSize: "12px" }}>
+                        <div style={{ color: "#166534", fontWeight: "700" }}>✓ Inventory Auto-Restoration:</div>
+                        <div style={{ color: "#15803d", marginTop: "4px" }}>
                           Approximately <strong>{totalUnitsToRestore} medicine units</strong> will be returned to their respective batch stock.
                         </div>
                       </div>
-                      <p style={{ margin: 0, color: "#f87171", fontSize: "12px" }}>
+                      <p style={{ margin: 0, color: "#dc2626", fontSize: "12px", fontWeight: "600" }}>
                         ⚠️ This action cannot be undone directly. A supervisor audit log entry will be permanently recorded.
                       </p>
                     </div>
 
-                    <div style={{ padding: "12px 20px", background: "#0f172a", borderTop: "1px solid #334155", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                    <div style={{ padding: "14px 20px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
                       <button
                         onClick={() => setSbdConfirmModal(false)}
                         style={{
-                          background: "#334155",
-                          color: "#ffffff",
-                          border: "none",
+                          background: "#ffffff",
+                          color: "#475569",
+                          border: "1px solid #cbd5e1",
                           borderRadius: "6px",
                           padding: "8px 16px",
                           fontSize: "12px",
@@ -13468,7 +13481,7 @@ const pending = [];
                       <button
                         onClick={handleExecuteDelete}
                         style={{
-                          background: "#ef4444",
+                          background: "#dc2626",
                           color: "#ffffff",
                           border: "none",
                           borderRadius: "6px",
@@ -13476,7 +13489,7 @@ const pending = [];
                           fontSize: "12px",
                           fontWeight: "800",
                           cursor: "pointer",
-                          boxShadow: "0 2px 8px rgba(239, 68, 68, 0.4)"
+                          boxShadow: "0 2px 8px rgba(220, 38, 38, 0.3)"
                         }}
                       >
                         Confirm &amp; Delete
@@ -13486,14 +13499,14 @@ const pending = [];
                 </div>
               )}
 
-              {/* Confirmation Modal for Renumbering */}
+              {/* Confirmation Modal for Renumbering (Light Theme) */}
               {sbdRenumberConfirm && (
                 <div
                   style={{
                     position: "fixed",
                     inset: 0,
                     zIndex: 100000,
-                    background: "rgba(0, 0, 0, 0.8)",
+                    background: "rgba(15, 23, 42, 0.6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -13502,38 +13515,38 @@ const pending = [];
                 >
                   <div
                     style={{
-                      background: "#1e293b",
-                      border: "1px solid #3b82f6",
-                      borderRadius: "10px",
+                      background: "#ffffff",
+                      border: "1px solid #bfdbfe",
+                      borderRadius: "12px",
                       width: "480px",
                       maxWidth: "95vw",
                       overflow: "hidden",
-                      boxShadow: "0 25px 50px -12px rgba(59, 130, 246, 0.3)"
+                      boxShadow: "0 25px 50px -12px rgba(37, 99, 235, 0.25)"
                     }}
                   >
-                    <div style={{ padding: "16px 20px", background: "#1e3a8a", borderBottom: "1px solid #3b82f6", display: "flex", alignItems: "center", gap: "10px" }}>
-                      <TrendingUp size={20} color="#93c5fd" />
-                      <span style={{ fontSize: "15px", fontWeight: "800", color: "#ffffff" }}>
+                    <div style={{ padding: "16px 20px", background: "#eff6ff", borderBottom: "1px solid #bfdbfe", display: "flex", alignItems: "center", gap: "10px" }}>
+                      <TrendingUp size={22} color="#1d4ed8" />
+                      <span style={{ fontSize: "16px", fontWeight: "800", color: "#1e40af" }}>
                         Confirm Consecutive Renumbering
                       </span>
                     </div>
 
-                    <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px", color: "#e2e8f0" }}>
+                    <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px", color: "#334155" }}>
                       <p style={{ margin: 0 }}>
-                        All <strong>{(salesBills || []).length}</strong> sales invoices will be sorted by date and renumbered sequentially starting from <strong style={{ color: "#38bdf8" }}>{`${sbdRenumberPrefix}${String(sbdRenumberStart).padStart(sbdRenumberDigits, '0')}`}</strong>.
+                        All <strong>{(salesBills || []).length}</strong> sales invoices will be sorted by date and renumbered sequentially starting from <strong style={{ color: "#1d4ed8" }}>{`${sbdRenumberPrefix}${String(sbdRenumberStart).padStart(sbdRenumberDigits, '0')}`}</strong>.
                       </p>
-                      <p style={{ margin: 0, color: "#fcd34d", fontSize: "12px" }}>
+                      <p style={{ margin: 0, color: "#b45309", fontSize: "12px" }}>
                         Please ensure you have printed or archived any historical reports if old invoice numbers are required.
                       </p>
                     </div>
 
-                    <div style={{ padding: "12px 20px", background: "#0f172a", borderTop: "1px solid #334155", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                    <div style={{ padding: "14px 20px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
                       <button
                         onClick={() => setSbdRenumberConfirm(false)}
                         style={{
-                          background: "#334155",
-                          color: "#ffffff",
-                          border: "none",
+                          background: "#ffffff",
+                          color: "#475569",
+                          border: "1px solid #cbd5e1",
                           borderRadius: "6px",
                           padding: "8px 16px",
                           fontSize: "12px",
