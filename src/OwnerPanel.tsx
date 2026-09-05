@@ -1768,6 +1768,67 @@ export default function OwnerPanel() {
   const [newAccGroupDesc, setNewAccGroupDesc] = useState("");
   const [showAccountGroupPrintModal, setShowAccountGroupPrintModal] = useState(false);
 
+  // ─── GENERIC GROUP ITEM LIST STATES ───
+  const [genericDrugGroupSearch, setGenericDrugGroupSearch] = useState("");
+  const [genericProductNameSearch, setGenericProductNameSearch] = useState("");
+  const [genericCategoryFilter, setGenericCategoryFilter] = useState("All");
+  const [genericDiscountInput, setGenericDiscountInput] = useState("");
+  const [genericRxOnlyFilter, setGenericRxOnlyFilter] = useState(false);
+  const [genericNoDiscountFilter, setGenericNoDiscountFilter] = useState(false);
+  const [genericTbOnlyFilter, setGenericTbOnlyFilter] = useState(false);
+  const [genericScheduleOnlyFilter, setGenericScheduleOnlyFilter] = useState(false);
+  const [genericStockOnlyFilter, setGenericStockOnlyFilter] = useState(false);
+  const [genericSelectedDetailItem, setGenericSelectedDetailItem] = useState<any>(null);
+  const [showGenericScheduleModal, setShowGenericScheduleModal] = useState(false);
+  const [showGenericPrintModal, setShowGenericPrintModal] = useState(false);
+  const [showGenericDrugDropdown, setShowGenericDrugDropdown] = useState(false);
+
+  // Common Pharmacy Drug Groups / Molecules for quick autocomplete suggestion
+  const COMMON_DRUG_GROUPS = [
+    "2, 4-DICHLOROBENZYL ALCOHOL + AMYLMETACRESOL",
+    "5-AMINOSALICYLIC ACID (MESALAZINE)",
+    "A-B ARTEETHER 150 MG",
+    "ACAMPROSATE CALCIUM 333 MG",
+    "ACARBOSE 50 MG",
+    "ACEBROPHYLLINE 100 MG",
+    "ACECLOFENAC 100 MG",
+    "ACECLOFENAC + PARACETAMOL (100MG + 325MG)",
+    "ACECLOFENAC + PARACETAMOL + CHLORZOXAZONE",
+    "ACECLOFENAC + PARACETAMOL + RABEPRAZOLE",
+    "ACECLOFENAC + SERRATIOPEPTIDASE",
+    "ALBENDazole 400 MG",
+    "AMLODIPINE 5 MG",
+    "AMLODIPINE + ATENOLOL (5MG + 50MG)",
+    "AMOXICILLIN 500 MG",
+    "AMOXICILLIN + CLAVULANIC ACID (625MG)",
+    "ATORVASTATIN 10 MG",
+    "ATORVASTATIN 20 MG",
+    "AZITHROMYCIN 500 MG",
+    "CEFIXIME 200 MG",
+    "CEFPODOXIME PROXETIL 200 MG",
+    "CETIRIZINE 10 MG",
+    "CIPROFLOXACIN 500 MG",
+    "DEXAMETHASONE 0.5 MG",
+    "DICLOFENAC SODIUM 50 MG",
+    "DOLO 650 (PARACETAMOL 650 MG)",
+    "GLIMEPIRIDE + METFORMIN (2MG + 500MG)",
+    "IBUPROFEN + PARACETAMOL (400MG + 325MG)",
+    "LEVOCETIRIZINE + MONTELUKAST (5MG + 10MG)",
+    "METFORMIN HCL 500 MG",
+    "OMEPRAZOLE 20 MG",
+    "PANTOPRAZOLE 40 MG",
+    "PANTOPRAZOLE + DOMPERIDONE (40MG + 30MG)",
+    "PARACETAMOL 500 MG",
+    "PARACETAMOL 650 MG",
+    "RABEPRAZOLE 20 MG",
+    "RABEPRAZOLE + LEVOSULPIRIDE",
+    "ROSUVASTATIN 10 MG",
+    "TELMISARTAN 40 MG",
+    "TELMISARTAN + AMLODIPINE (40MG + 5MG)",
+    "TELMISARTAN + HYDROCHLOROTHIAZIDE (40MG + 12.5MG)"
+  ];
+
+
   const saveAccountGroups = (updater: any) => {
     setAccountGroups((prev: any) => {
       const updated = typeof updater === "function" ? updater(prev) : updater;
@@ -2241,7 +2302,7 @@ export default function OwnerPanel() {
                 {label:"Contract Employee Master", action:()=>{setActiveSection("masters");setOwnerSubTab("contract_employees");setContractEmpViewMode("editor");setActiveMenu(null);}},
                 {label:"Other Masters", action:()=>{setActiveSection("masters");setOwnerSubTab("other_masters");setActiveMenu(null);}},
                 {label:"Account Group", action:()=>{setActiveSection("masters");setOwnerSubTab("account_groups");setActiveMenu(null);}},
-                {label:"Generic Group Item List", action:()=>{setShowWipModal("Generic Group Item List");}},
+                {label:"Generic Group Item List", action:()=>{setActiveSection("masters");setOwnerSubTab("generic_group_items");setActiveMenu(null);}},
               ]},
               {id:"transaction", label:"Transaction", items:[
                 {label:"Sales Bill", action:()=>{setActiveSection("sales_pos");setTimeout(()=>openSalesForm(false),50);setActiveMenu(null);}},
@@ -4696,7 +4757,7 @@ const pending = [];
         {isOwner && activeSection === "masters" && (
           <>
             <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
-              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "contract_employees", label: "👷 Contract Employee Master" }, { id: "other_masters", label: "📑 Other Masters" }, { id: "account_groups", label: "📊 Account Groups" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
+              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "contract_employees", label: "👷 Contract Employee Master" }, { id: "other_masters", label: "📑 Other Masters" }, { id: "account_groups", label: "📊 Account Groups" }, { id: "generic_group_items", label: "💊 Generic Group Items" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
             </div>
@@ -14328,6 +14389,1351 @@ const pending = [];
                           </button>
                           <button
                             onClick={() => setShowAccountGroupPrintModal(false)}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#f1f5f9",
+                              color: "#475569",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e1",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              );
+            })()}
+
+
+
+            {/* ═════════════════════════════════════════════════════════════
+                GENERIC GROUP ITEM LIST (Molecule & Brand Cross-Index)
+                Pure English UI - Matching Inventory Light Theme
+            ═════════════════════════════════════════════════════════════ */}
+            {ownerSubTab === "generic_group_items" && (() => {
+              // Prepare enriched item list combining items from context with generic/schedule attributes
+              const inventoryList = (items && items.length > 0) ? items : [
+                {
+                  id: "gen-1",
+                  srNo: 1,
+                  name: "Zerodol-P Tablet (10 Tab)",
+                  company: "Ipca Laboratories Ltd",
+                  generic: "ACECLOFENAC + PARACETAMOL (100MG + 325MG)",
+                  supplier: "Shivam Pharma Distribution",
+                  category: "Ethical",
+                  division: "Tablets",
+                  breakSale: "Yes",
+                  rxRequired: true,
+                  taxPercent: 12,
+                  stock: 150,
+                  unit: "Strip",
+                  mrp: 68.50,
+                  rate: 49.00,
+                  schedule: "Schedule H",
+                  tbItem: false,
+                  discountAllowed: true,
+                  discountPercent: 10
+                },
+                {
+                  id: "gen-2",
+                  srNo: 2,
+                  name: "Augmentin 625 Duo Tablet (10 Tab)",
+                  company: "GlaxoSmithKline Pharmaceuticals",
+                  generic: "AMOXICILLIN + CLAVULANIC ACID (625MG)",
+                  supplier: "Royal Healthcare Agency",
+                  category: "Ethical",
+                  division: "Tablets",
+                  breakSale: "No",
+                  rxRequired: true,
+                  taxPercent: 12,
+                  stock: 80,
+                  unit: "Strip",
+                  mrp: 204.00,
+                  rate: 155.00,
+                  schedule: "Schedule H1",
+                  tbItem: false,
+                  discountAllowed: false,
+                  discountPercent: 0
+                },
+                {
+                  id: "gen-3",
+                  srNo: 3,
+                  name: "Pan-D Capsule (15 Cap)",
+                  company: "Alkem Laboratories Ltd",
+                  generic: "PANTOPRAZOLE + DOMPERIDONE (40MG + 30MG)",
+                  supplier: "Shreeji Medico Syndicate",
+                  category: "Ethical",
+                  division: "Capsules",
+                  breakSale: "Yes",
+                  rxRequired: true,
+                  taxPercent: 12,
+                  stock: 120,
+                  unit: "Strip",
+                  mrp: 199.00,
+                  rate: 142.00,
+                  schedule: "Schedule H",
+                  tbItem: false,
+                  discountAllowed: true,
+                  discountPercent: 12
+                },
+                {
+                  id: "gen-4",
+                  srNo: 4,
+                  name: "Dolo 650 Tablet (15 Tab)",
+                  company: "Micro Labs Ltd",
+                  generic: "PARACETAMOL 650 MG",
+                  supplier: "Apex Surgical Supplies",
+                  category: "OTC",
+                  division: "Tablets",
+                  breakSale: "Yes",
+                  rxRequired: false,
+                  taxPercent: 12,
+                  stock: 350,
+                  unit: "Strip",
+                  mrp: 34.00,
+                  rate: 26.50,
+                  schedule: "General",
+                  tbItem: false,
+                  discountAllowed: true,
+                  discountPercent: 5
+                },
+                {
+                  id: "gen-5",
+                  srNo: 5,
+                  name: "Akilozox Tablet (10 Tab)",
+                  company: "Torrent Pharmaceuticals",
+                  generic: "ACECLOFENAC + PARACETAMOL + CHLORZOXAZONE",
+                  supplier: "Shivam Pharma Distribution",
+                  category: "Ethical",
+                  division: "Tablets",
+                  breakSale: "Yes",
+                  rxRequired: true,
+                  taxPercent: 12,
+                  stock: 95,
+                  unit: "Strip",
+                  mrp: 115.00,
+                  rate: 82.00,
+                  schedule: "Schedule H",
+                  tbItem: false,
+                  discountAllowed: true,
+                  discountPercent: 10
+                },
+                {
+                  id: "gen-6",
+                  srNo: 6,
+                  name: "Forecox 4-FDC Tablet (3 Tab blister)",
+                  company: "Macleods Pharmaceuticals",
+                  generic: "RIFAMPICIN + ISONIAZID + PYRAZINAMIDE + ETHAMBUTOL",
+                  supplier: "State DOTS Depot",
+                  category: "Ethical",
+                  division: "Tablets",
+                  breakSale: "No",
+                  rxRequired: true,
+                  taxPercent: 5,
+                  stock: 200,
+                  unit: "Blister",
+                  mrp: 45.00,
+                  rate: 32.00,
+                  schedule: "Schedule H1",
+                  tbItem: true,
+                  discountAllowed: false,
+                  discountPercent: 0
+                },
+                {
+                  id: "gen-7",
+                  srNo: 7,
+                  name: "Montair-LC Tablet (10 Tab)",
+                  company: "Cipla Ltd",
+                  generic: "LEVOCETIRIZINE + MONTELUKAST (5MG + 10MG)",
+                  supplier: "Royal Healthcare Agency",
+                  category: "Ethical",
+                  division: "Tablets",
+                  breakSale: "Yes",
+                  rxRequired: true,
+                  taxPercent: 12,
+                  stock: 140,
+                  unit: "Strip",
+                  mrp: 220.00,
+                  rate: 165.00,
+                  schedule: "Schedule H",
+                  tbItem: false,
+                  discountAllowed: true,
+                  discountPercent: 8
+                },
+                {
+                  id: "gen-8",
+                  srNo: 8,
+                  name: "Glycomet-GP 2 Tablet (15 Tab)",
+                  company: "USV Private Limited",
+                  generic: "GLIMEPIRIDE + METFORMIN (2MG + 500MG)",
+                  supplier: "MedPlus Dealers",
+                  category: "Ethical",
+                  division: "Tablets",
+                  breakSale: "Yes",
+                  rxRequired: true,
+                  taxPercent: 12,
+                  stock: 110,
+                  unit: "Strip",
+                  mrp: 158.00,
+                  rate: 118.00,
+                  schedule: "Schedule H",
+                  tbItem: false,
+                  discountAllowed: true,
+                  discountPercent: 10
+                },
+                {
+                  id: "gen-9",
+                  srNo: 9,
+                  name: "Azithral 500 Tablet (5 Tab)",
+                  company: "Alembic Pharmaceuticals Ltd",
+                  generic: "AZITHROMYCIN 500 MG",
+                  supplier: "Shivam Pharma Distribution",
+                  category: "Ethical",
+                  division: "Tablets",
+                  breakSale: "No",
+                  rxRequired: true,
+                  taxPercent: 12,
+                  stock: 65,
+                  unit: "Strip",
+                  mrp: 132.00,
+                  rate: 98.00,
+                  schedule: "Schedule H1",
+                  tbItem: false,
+                  discountAllowed: false,
+                  discountPercent: 0
+                },
+                {
+                  id: "gen-10",
+                  srNo: 10,
+                  name: "Telma 40 Tablet (30 Tab)",
+                  company: "Glenmark Pharmaceuticals",
+                  generic: "TELMISARTAN 40 MG",
+                  supplier: "Shreeji Medico Syndicate",
+                  category: "Ethical",
+                  division: "Tablets",
+                  breakSale: "Yes",
+                  rxRequired: true,
+                  taxPercent: 12,
+                  stock: 90,
+                  unit: "Strip",
+                  mrp: 260.00,
+                  rate: 195.00,
+                  schedule: "Schedule H",
+                  tbItem: false,
+                  discountAllowed: true,
+                  discountPercent: 12
+                }
+              ];
+
+              // Filtering logic
+              const dgQuery = (genericDrugGroupSearch || "").trim().toLowerCase();
+              const prodQuery = (genericProductNameSearch || "").trim().toLowerCase();
+
+              const filteredItems = inventoryList.filter((item: any) => {
+                // Drug Group filter
+                if (dgQuery) {
+                  const gen = (item.generic || item.molecule || item.drugGroup || "").toLowerCase();
+                  if (!gen.includes(dgQuery)) return false;
+                }
+
+                // Product name filter
+                if (prodQuery) {
+                  const name = (item.name || "").toLowerCase();
+                  const comp = (item.company || item.mfg || "").toLowerCase();
+                  if (!name.includes(prodQuery) && !comp.includes(prodQuery)) return false;
+                }
+
+                // Category filter
+                if (genericCategoryFilter !== "All" && (item.category || "Ethical") !== genericCategoryFilter) {
+                  return false;
+                }
+
+                // Rx required filter
+                if (genericRxOnlyFilter && !item.rxRequired) return false;
+
+                // No discount filter
+                if (genericNoDiscountFilter && (item.discountAllowed !== false && Number(item.discountPercent || 0) > 0)) {
+                  return false;
+                }
+
+                // TB item filter
+                if (genericTbOnlyFilter && !item.tbItem) return false;
+
+                // Schedule drug filter
+                if (genericScheduleOnlyFilter && (!item.schedule || item.schedule === "General")) return false;
+
+                // Stock filter
+                if (genericStockOnlyFilter && Number(item.stock || 0) <= 0) return false;
+
+                return true;
+              });
+
+              // Autocomplete suggestions for Drug Group input
+              const suggestedDrugGroups = COMMON_DRUG_GROUPS.filter(dg => {
+                if (!dgQuery) return true;
+                return dg.toLowerCase().includes(dgQuery);
+              }).slice(0, 10);
+
+              const handleClearAllFilters = () => {
+                setGenericDrugGroupSearch("");
+                setGenericProductNameSearch("");
+                setGenericCategoryFilter("All");
+                setGenericDiscountInput("");
+                setGenericRxOnlyFilter(false);
+                setGenericNoDiscountFilter(false);
+                setGenericTbOnlyFilter(false);
+                setGenericScheduleOnlyFilter(false);
+                setGenericStockOnlyFilter(false);
+                showToast("All filters cleared!");
+              };
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px", animation: "fadeIn 0.2s ease-in" }}>
+                  
+                  {/* TOP HEADER BAR */}
+                  <div style={{
+                    background: "#ffffff",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e8f0",
+                    padding: "16px 20px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "12px"
+                  }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "24px" }}>💊</span>
+                        <div>
+                          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}>
+                            Generic Group Item List
+                            <span style={{ fontSize: "11px", fontWeight: "700", background: "#f3e8ff", color: "#7e22ce", padding: "2px 8px", borderRadius: "12px" }}>
+                              GST Ver. 1005A
+                            </span>
+                          </h2>
+                          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                            Lic To: SHIV DHARA MEDICAL STORE : 2026 - 2027 &nbsp;•&nbsp; Active Salt / Generic Formulation &amp; Commercial Brand Directory
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <button
+                        onClick={() => setShowGenericPrintModal(true)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          borderRadius: "6px",
+                          background: "#0284c7",
+                          color: "#ffffff",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                        }}
+                      >
+                        🖨️ Print Directory
+                      </button>
+                      <button
+                        onClick={() => setOwnerSubTab("accounts")}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          borderRadius: "6px",
+                          background: "#ef4444",
+                          color: "#ffffff",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                        }}
+                      >
+                        ✕ Close
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* FUNCTION KEY SHORTCUTS STRIP (F3 to F9 matching screenshot) */}
+                  <div style={{
+                    background: "#0f172a",
+                    color: "#ffffff",
+                    borderRadius: "8px",
+                    padding: "8px 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    fontSize: "11.5px"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "800", color: "#94a3b8", textTransform: "uppercase", fontSize: "10.5px" }}>
+                      ⚡ QUICK ACCESS:
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                      <button
+                        onClick={handleClearAllFilters}
+                        style={{ background: "transparent", border: "1px solid #475569", color: "#f8fafc", padding: "3px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "700", fontSize: "11px" }}
+                      >
+                        <span style={{ color: "#38bdf8" }}>F3</span> Clear All
+                      </button>
+                      <button
+                        onClick={() => setShowGenericDrugDropdown(true)}
+                        style={{ background: "transparent", border: "1px solid #475569", color: "#f8fafc", padding: "3px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "700", fontSize: "11px" }}
+                      >
+                        <span style={{ color: "#38bdf8" }}>F4</span> Generic List
+                      </button>
+                      <button
+                        onClick={() => { setGenericDrugGroupSearch(""); setGenericProductNameSearch(""); }}
+                        style={{ background: "transparent", border: "1px solid #475569", color: "#f8fafc", padding: "3px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "700", fontSize: "11px" }}
+                      >
+                        <span style={{ color: "#38bdf8" }}>F5</span> Item List
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (filteredItems.length > 0) setGenericSelectedDetailItem(filteredItems[0]);
+                        }}
+                        style={{ background: "transparent", border: "1px solid #475569", color: "#f8fafc", padding: "3px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "700", fontSize: "11px" }}
+                      >
+                        <span style={{ color: "#38bdf8" }}>F6</span> Item Detail
+                      </button>
+                      <button
+                        onClick={() => setGenericStockOnlyFilter(!genericStockOnlyFilter)}
+                        style={{
+                          background: genericStockOnlyFilter ? "#2563eb" : "transparent",
+                          border: "1px solid " + (genericStockOnlyFilter ? "#3b82f6" : "#475569"),
+                          color: "#f8fafc",
+                          padding: "3px 8px",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          fontWeight: "700",
+                          fontSize: "11px"
+                        }}
+                      >
+                        <span style={{ color: "#38bdf8" }}>F7</span> Stock Detail {genericStockOnlyFilter ? "✓" : ""}
+                      </button>
+                      <button
+                        onClick={() => setOwnerSubTab("suppliers")}
+                        style={{ background: "transparent", border: "1px solid #475569", color: "#f8fafc", padding: "3px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "700", fontSize: "11px" }}
+                      >
+                        <span style={{ color: "#38bdf8" }}>F8</span> Stockiest List
+                      </button>
+                      <button
+                        onClick={() => setOwnerSubTab("companies")}
+                        style={{ background: "transparent", border: "1px solid #475569", color: "#f8fafc", padding: "3px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "700", fontSize: "11px" }}
+                      >
+                        <span style={{ color: "#38bdf8" }}>F9</span> Company List
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* WORKBENCH: TOP INPUTS & RIGHT-HAND CATEGORY BUTTONS */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "16px", alignItems: "start" }}>
+                    
+                    {/* LEFT WORKBENCH: DRUGGROUP & PRODUCT NAME INPUTS */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      
+                      {/* SEARCH BOX CARD */}
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "10px",
+                        border: "1px solid #e2e8f0",
+                        padding: "16px 20px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                      }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "14px" }}>
+                          
+                          {/* DRUGGROUP SEARCH WITH AUTOCOMPLETE POPUP (MATCHING SCREENSHOT) */}
+                          <div style={{ position: "relative" }}>
+                            <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#1e293b", marginBottom: "6px" }}>
+                              DrugGroup : <span style={{ fontSize: "11px", fontWeight: "600", color: "#64748b" }}>(Molecule Formulation)</span>
+                            </label>
+                            <div style={{ position: "relative" }}>
+                              <input
+                                type="text"
+                                value={genericDrugGroupSearch}
+                                onChange={(e) => {
+                                  setGenericDrugGroupSearch(e.target.value);
+                                  setShowGenericDrugDropdown(true);
+                                }}
+                                onFocus={() => setShowGenericDrugDropdown(true)}
+                                placeholder="Type molecule: e.g. ACECLOFENAC, PARACETAMOL..."
+                                style={{
+                                  width: "100%",
+                                  padding: "9px 12px 9px 32px",
+                                  borderRadius: "6px",
+                                  border: "1.5px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  color: "#0f172a",
+                                  fontWeight: "700",
+                                  outline: "none",
+                                  background: "#ffffff",
+                                  boxSizing: "border-box"
+                                }}
+                              />
+                              <span style={{ position: "absolute", left: "10px", top: "9px", fontSize: "13px", color: "#94a3b8" }}>🧪</span>
+                              {genericDrugGroupSearch && (
+                                <button
+                                  type="button"
+                                  onClick={() => setGenericDrugGroupSearch("")}
+                                  style={{
+                                    position: "absolute",
+                                    right: "8px",
+                                    top: "8px",
+                                    background: "#f1f5f9",
+                                    border: "none",
+                                    borderRadius: "50%",
+                                    width: "20px",
+                                    height: "20px",
+                                    fontSize: "10px",
+                                    cursor: "pointer",
+                                    color: "#64748b"
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+
+                            {/* AUTOCOMPLETE POPUP (MATCHING LEGACY DROP-DOWN IN SCREENSHOT) */}
+                            {showGenericDrugDropdown && suggestedDrugGroups.length > 0 && (
+                              <div style={{
+                                position: "absolute",
+                                top: "100%",
+                                left: 0,
+                                right: 0,
+                                background: "#ffffff",
+                                border: "1.5px solid #2563eb",
+                                borderRadius: "8px",
+                                marginTop: "4px",
+                                maxHeight: "240px",
+                                overflowY: "auto",
+                                zIndex: 1000,
+                                boxShadow: "0 10px 25px rgba(0,0,0,0.15)"
+                              }}>
+                                <div style={{ padding: "6px 10px", background: "#eff6ff", borderBottom: "1px solid #dbeafe", fontSize: "11px", fontWeight: "800", color: "#1d4ed8", display: "flex", justifyContent: "space-between" }}>
+                                  <span>SELECT DRUG GROUP MOLECULE</span>
+                                  <button
+                                    onClick={() => setShowGenericDrugDropdown(false)}
+                                    style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: "10px", fontWeight: "700" }}
+                                  >
+                                    CLOSE ✕
+                                  </button>
+                                </div>
+                                {suggestedDrugGroups.map((dg, idx) => (
+                                  <div
+                                    key={idx}
+                                    onClick={() => {
+                                      setGenericDrugGroupSearch(dg);
+                                      setShowGenericDrugDropdown(false);
+                                    }}
+                                    style={{
+                                      padding: "8px 12px",
+                                      borderBottom: "1px solid #f1f5f9",
+                                      fontSize: "12px",
+                                      fontWeight: "700",
+                                      fontFamily: "monospace",
+                                      color: "#1e293b",
+                                      cursor: "pointer",
+                                      background: "#ffffff",
+                                      transition: "background 0.1s"
+                                    }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f1f5f9")}
+                                    onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+                                  >
+                                    • {dg}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* PRODUCT NAME INPUT */}
+                          <div>
+                            <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#1e293b", marginBottom: "6px" }}>
+                              Product Name : <span style={{ fontSize: "11px", fontWeight: "600", color: "#64748b" }}>(Brand Medicine)</span>
+                            </label>
+                            <div style={{ position: "relative" }}>
+                              <input
+                                type="text"
+                                value={genericProductNameSearch}
+                                onChange={(e) => setGenericProductNameSearch(e.target.value)}
+                                placeholder="Search brand: e.g. Zerodol, Augmentin, Pan-D..."
+                                style={{
+                                  width: "100%",
+                                  padding: "9px 12px 9px 32px",
+                                  borderRadius: "6px",
+                                  border: "1.5px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  color: "#0f172a",
+                                  outline: "none",
+                                  background: "#ffffff",
+                                  boxSizing: "border-box"
+                                }}
+                              />
+                              <span style={{ position: "absolute", left: "10px", top: "9px", fontSize: "13px", color: "#94a3b8" }}>🔍</span>
+                              {genericProductNameSearch && (
+                                <button
+                                  type="button"
+                                  onClick={() => setGenericProductNameSearch("")}
+                                  style={{
+                                    position: "absolute",
+                                    right: "8px",
+                                    top: "8px",
+                                    background: "#f1f5f9",
+                                    border: "none",
+                                    borderRadius: "50%",
+                                    width: "20px",
+                                    height: "20px",
+                                    fontSize: "10px",
+                                    cursor: "pointer",
+                                    color: "#64748b"
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+
+                      {/* DATA TABLE CARD (: Item Detail :) */}
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "10px",
+                        border: "1px solid #e2e8f0",
+                        padding: "16px 20px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ padding: "4px 8px", background: "#f3e8ff", color: "#7e22ce", borderRadius: "6px", fontSize: "11px", fontWeight: "800" }}>
+                              : Item Detail :
+                            </span>
+                            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                              Showing {filteredItems.length} matching pharmaceutical formulations
+                            </span>
+                          </div>
+
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            {genericCategoryFilter !== "All" && (
+                              <span style={{ fontSize: "11px", background: "#e0f2fe", color: "#0369a1", padding: "2px 8px", borderRadius: "10px", fontWeight: "700" }}>
+                                Category: {genericCategoryFilter}
+                              </span>
+                            )}
+                            {genericRxOnlyFilter && (
+                              <span style={{ fontSize: "11px", background: "#ccfbf1", color: "#0f766e", padding: "2px 8px", borderRadius: "10px", fontWeight: "700" }}>
+                                Rx Only
+                              </span>
+                            )}
+                            {genericTbOnlyFilter && (
+                              <span style={{ fontSize: "11px", background: "#ffe4e6", color: "#be123c", padding: "2px 8px", borderRadius: "10px", fontWeight: "700" }}>
+                                TB Regimen
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* TABLE WITH PURPLE ACCENT MATCHING SCREENSHOT */}
+                        <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", overflowX: "auto" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "900px" }}>
+                            <thead>
+                              <tr style={{ background: "#7e22ce", color: "#ffffff", textAlign: "left" }}>
+                                <th style={{ padding: "9px 10px", width: "45px" }}>Sr.</th>
+                                <th style={{ padding: "9px 10px" }}>Message / Item Name</th>
+                                <th style={{ padding: "9px 10px" }}>Company</th>
+                                <th style={{ padding: "9px 10px" }}>Generic Formulation</th>
+                                <th style={{ padding: "9px 10px" }}>Supplier</th>
+                                <th style={{ padding: "9px 10px", width: "75px", textAlign: "center" }}>Break Sale</th>
+                                <th style={{ padding: "9px 10px", width: "80px", textAlign: "center" }}>Prescription</th>
+                                <th style={{ padding: "9px 10px", width: "70px", textAlign: "center" }}>Tax %</th>
+                                <th style={{ padding: "9px 10px", width: "75px" }}>Category</th>
+                                <th style={{ padding: "9px 10px", width: "70px", textAlign: "right" }}>Stock</th>
+                                <th style={{ padding: "9px 10px", width: "75px", textAlign: "right" }}>MRP (₹)</th>
+                                <th style={{ padding: "9px 10px", width: "85px", textAlign: "center" }}>Schedule</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredItems.length === 0 ? (
+                                <tr>
+                                  <td colSpan={12} style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8" }}>
+                                    <div style={{ fontSize: "36px", marginBottom: "8px" }}>🔍</div>
+                                    <div style={{ fontWeight: "800", fontSize: "15px", color: "#334155" }}>No matching medicines found</div>
+                                    <div style={{ fontSize: "12px", marginTop: "4px", color: "#64748b" }}>
+                                      Try clearing search filters or pick another molecule.
+                                    </div>
+                                    <button
+                                      onClick={handleClearAllFilters}
+                                      style={{ marginTop: "12px", padding: "6px 14px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}
+                                    >
+                                      Reset All Filters
+                                    </button>
+                                  </td>
+                                </tr>
+                              ) : (
+                                filteredItems.map((item: any, idx: number) => {
+                                  return (
+                                    <tr
+                                      key={item.id || idx}
+                                      onClick={() => setGenericSelectedDetailItem(item)}
+                                      style={{
+                                        borderBottom: "1px solid #f1f5f9",
+                                        background: idx % 2 === 0 ? "#ffffff" : "#fdf4ff",
+                                        cursor: "pointer",
+                                        transition: "background 0.12s"
+                                      }}
+                                      onMouseEnter={(e) => (e.currentTarget.style.background = "#ede9fe")}
+                                      onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#fdf4ff")}
+                                    >
+                                      <td style={{ padding: "9px 10px", fontWeight: "700", color: "#64748b" }}>
+                                        #{idx + 1}
+                                      </td>
+                                      <td style={{ padding: "9px 10px", fontWeight: "800", color: "#0f172a" }}>
+                                        {item.name}
+                                        {item.tbItem && (
+                                          <span style={{ marginLeft: "6px", fontSize: "10px", background: "#ffe4e6", color: "#be123c", padding: "1px 5px", borderRadius: "4px", fontWeight: "800" }}>
+                                            TB
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td style={{ padding: "9px 10px", color: "#475569", fontWeight: "600" }}>
+                                        {item.company || "Standard Pharma"}
+                                      </td>
+                                      <td style={{ padding: "9px 10px", color: "#7e22ce", fontWeight: "700", fontFamily: "monospace", fontSize: "11px" }}>
+                                        {item.generic || item.molecule || "-"}
+                                      </td>
+                                      <td style={{ padding: "9px 10px", color: "#64748b" }}>
+                                        {item.supplier || "Direct"}
+                                      </td>
+                                      <td style={{ padding: "9px 10px", textAlign: "center" }}>
+                                        <span style={{
+                                          padding: "2px 6px",
+                                          borderRadius: "4px",
+                                          fontSize: "10.5px",
+                                          fontWeight: "800",
+                                          background: item.breakSale === "Yes" ? "#ecfdf5" : "#f1f5f9",
+                                          color: item.breakSale === "Yes" ? "#047857" : "#64748b"
+                                        }}>
+                                          {item.breakSale || "No"}
+                                        </span>
+                                      </td>
+                                      <td style={{ padding: "9px 10px", textAlign: "center" }}>
+                                        <span style={{
+                                          padding: "2px 6px",
+                                          borderRadius: "4px",
+                                          fontSize: "10.5px",
+                                          fontWeight: "800",
+                                          background: item.rxRequired ? "#eff6ff" : "#f1f5f9",
+                                          color: item.rxRequired ? "#1d4ed8" : "#64748b"
+                                        }}>
+                                          {item.rxRequired ? "Rx" : "OTC"}
+                                        </span>
+                                      </td>
+                                      <td style={{ padding: "9px 10px", textAlign: "center", fontWeight: "700", color: "#334155" }}>
+                                        {item.taxPercent ?? 12}%
+                                      </td>
+                                      <td style={{ padding: "9px 10px", color: "#475569" }}>
+                                        {item.category || "Ethical"}
+                                      </td>
+                                      <td style={{ padding: "9px 10px", textAlign: "right", fontWeight: "800", color: Number(item.stock) > 0 ? "#16a34a" : "#dc2626" }}>
+                                        {item.stock} {item.unit || "pcs"}
+                                      </td>
+                                      <td style={{ padding: "9px 10px", textAlign: "right", fontWeight: "800", color: "#0f172a" }}>
+                                        ₹{Number(item.mrp || 0).toFixed(2)}
+                                      </td>
+                                      <td style={{ padding: "9px 10px", textAlign: "center" }}>
+                                        <span style={{
+                                          padding: "2px 6px",
+                                          borderRadius: "4px",
+                                          fontSize: "10.5px",
+                                          fontWeight: "800",
+                                          background: item.schedule === "Schedule H1" ? "#fef2f2" : item.schedule === "Schedule H" ? "#fffbeb" : "#f1f5f9",
+                                          color: item.schedule === "Schedule H1" ? "#b91c1c" : item.schedule === "Schedule H" ? "#b45309" : "#64748b",
+                                          border: item.schedule === "Schedule H1" ? "1px solid #fecaca" : "1px solid #e2e8f0"
+                                        }}>
+                                          {item.schedule || "General"}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* BOTTOM ACTIONS BAR MATCHING SCREENSHOT */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "14px", paddingTop: "10px", borderTop: "1px solid #f1f5f9" }}>
+                          <div>
+                            <button
+                              onClick={() => setShowGenericScheduleModal(true)}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                padding: "7px 14px",
+                                borderRadius: "6px",
+                                background: "#06b6d4",
+                                color: "#ffffff",
+                                fontSize: "12px",
+                                fontWeight: "800",
+                                border: "none",
+                                cursor: "pointer",
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.1)"
+                              }}
+                            >
+                              📋 Schedule List Register
+                            </button>
+                          </div>
+
+                          <div style={{ fontSize: "12px", color: "#64748b" }}>
+                            Click any medicine row to inspect comprehensive stock &amp; composition details
+                          </div>
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    {/* RIGHT-HAND FILTER PANEL MATCHING SCREENSHOT COLOR BUTTONS */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      
+                      {/* 1. ALL ITEM WITH SELECT CATEGORY + DISCOUNT (MATCHING SCREENSHOT) */}
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "10px",
+                        border: "1px solid #e2e8f0",
+                        padding: "14px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px"
+                      }}>
+                        <div style={{
+                          padding: "8px 12px",
+                          background: "#7c3aed",
+                          color: "#ffffff",
+                          fontWeight: "800",
+                          fontSize: "12px",
+                          borderRadius: "6px",
+                          textAlign: "center"
+                        }}>
+                          All Item with Select Category
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
+                            Category
+                          </label>
+                          <select
+                            value={genericCategoryFilter}
+                            onChange={(e) => setGenericCategoryFilter(e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "7px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e1",
+                              fontSize: "12px",
+                              outline: "none",
+                              background: "#ffffff",
+                              cursor: "pointer"
+                            }}
+                          >
+                            <option value="All">All Categories</option>
+                            <option value="Ethical">Ethical Prescription</option>
+                            <option value="Generic">Generic Medicine</option>
+                            <option value="OTC">OTC (Over The Counter)</option>
+                            <option value="Surgical">Surgical &amp; Disposables</option>
+                            <option value="Ayurvedic">Ayurvedic</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
+                            Discount % Filter
+                          </label>
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <input
+                              type="number"
+                              value={genericDiscountInput}
+                              onChange={(e) => setGenericDiscountInput(e.target.value)}
+                              placeholder="Discount %"
+                              style={{
+                                flex: 1,
+                                padding: "7px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #cbd5e1",
+                                fontSize: "12px",
+                                outline: "none",
+                                background: "#ffffff"
+                              }}
+                            />
+                            <button
+                              onClick={() => {
+                                if (genericDiscountInput) showToast("Filtered discount >= " + genericDiscountInput + "%");
+                              }}
+                              style={{
+                                padding: "7px 12px",
+                                background: "#0284c7",
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "6px",
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                cursor: "pointer"
+                              }}
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. ALL ITEM WITH RX REQUIRED (CYAN BUTTON MATCHING SCREENSHOT) */}
+                      <button
+                        onClick={() => setGenericRxOnlyFilter(!genericRxOnlyFilter)}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          background: genericRxOnlyFilter ? "#0891b2" : "#06b6d4",
+                          color: "#ffffff",
+                          fontSize: "12.5px",
+                          fontWeight: "800",
+                          border: genericRxOnlyFilter ? "2px solid #155e75" : "none",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 4px rgba(6, 182, 212, 0.25)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}
+                      >
+                        <span>All Item with Rx Required</span>
+                        <span>{genericRxOnlyFilter ? "✓ ON" : "➔"}</span>
+                      </button>
+
+                      {/* 3. ALL ITEM WITH NO DISCOUNT (GREEN BUTTON MATCHING SCREENSHOT) */}
+                      <button
+                        onClick={() => setGenericNoDiscountFilter(!genericNoDiscountFilter)}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          background: genericNoDiscountFilter ? "#059669" : "#10b981",
+                          color: "#ffffff",
+                          fontSize: "12.5px",
+                          fontWeight: "800",
+                          border: genericNoDiscountFilter ? "2px solid #065f46" : "none",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 4px rgba(16, 185, 129, 0.25)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}
+                      >
+                        <span>All Item with No Discount</span>
+                        <span>{genericNoDiscountFilter ? "✓ ON" : "➔"}</span>
+                      </button>
+
+                      {/* 4. ALL ITEM WITH T.B. ITEM (PINK/ROSE BUTTON MATCHING SCREENSHOT) */}
+                      <button
+                        onClick={() => setGenericTbOnlyFilter(!genericTbOnlyFilter)}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          background: genericTbOnlyFilter ? "#e11d48" : "#f43f5e",
+                          color: "#ffffff",
+                          fontSize: "12.5px",
+                          fontWeight: "800",
+                          border: genericTbOnlyFilter ? "2px solid #9f1239" : "none",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 4px rgba(244, 63, 94, 0.25)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}
+                      >
+                        <span>All Item with T.B. Item</span>
+                        <span>{genericTbOnlyFilter ? "✓ ON" : "➔"}</span>
+                      </button>
+
+                      {/* 5. ALL ITEM WITH SCHEDULE DRUG (AMBER/BROWN BUTTON MATCHING SCREENSHOT) */}
+                      <button
+                        onClick={() => setGenericScheduleOnlyFilter(!genericScheduleOnlyFilter)}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          background: genericScheduleOnlyFilter ? "#b45309" : "#d97706",
+                          color: "#ffffff",
+                          fontSize: "12.5px",
+                          fontWeight: "800",
+                          border: genericScheduleOnlyFilter ? "2px solid #78350f" : "none",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 4px rgba(217, 119, 6, 0.25)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}
+                      >
+                        <span>All Item with Schedule Drug</span>
+                        <span>{genericScheduleOnlyFilter ? "✓ ON" : "➔"}</span>
+                      </button>
+
+                      {/* RESET FILTERS CARD */}
+                      <div style={{
+                        background: "#f8fafc",
+                        borderRadius: "8px",
+                        border: "1px solid #e2e8f0",
+                        padding: "12px",
+                        fontSize: "11.5px",
+                        color: "#64748b"
+                      }}>
+                        <div style={{ fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
+                          Quick Filter Status:
+                        </div>
+                        Active filters automatically restrict table results for fast counter dispensation and regulatory inspection checks.
+                        <button
+                          onClick={handleClearAllFilters}
+                          style={{
+                            marginTop: "8px",
+                            width: "100%",
+                            padding: "6px",
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            borderRadius: "4px",
+                            fontWeight: "700",
+                            color: "#475569",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Clear All Filters
+                        </button>
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                  {/* SCHEDULE DRUG MODAL REGISTER */}
+                  {showGenericScheduleModal && (
+                    <div style={{
+                      position: "fixed",
+                      inset: 0,
+                      background: "rgba(15, 23, 42, 0.65)",
+                      backdropFilter: "blur(3px)",
+                      zIndex: 9999,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "20px"
+                    }}>
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "12px",
+                        maxWidth: "850px",
+                        width: "100%",
+                        maxHeight: "90vh",
+                        overflowY: "auto",
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                        padding: "24px"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #0891b2", paddingBottom: "12px", marginBottom: "16px" }}>
+                          <div>
+                            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span>📋</span> Schedule H / H1 / X Controlled Drug Register
+                            </h2>
+                            <div style={{ fontSize: "12px", color: "#475569" }}>
+                              Drugs and Cosmetics Rules 1945 Statutory Compliance Log
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setShowGenericScheduleModal(false)}
+                            style={{ background: "#f1f5f9", border: "none", borderRadius: "50%", width: "28px", height: "28px", cursor: "pointer", fontWeight: "800" }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        <div style={{ marginBottom: "16px" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                            <thead>
+                              <tr style={{ background: "#f0fdfa", borderBottom: "1.5px solid #99f6e4" }}>
+                                <th style={{ padding: "8px 10px", textAlign: "left" }}>Medicine Name</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left" }}>Generic / Salt</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left" }}>Manufacturer</th>
+                                <th style={{ padding: "8px 10px", textAlign: "center" }}>Schedule</th>
+                                <th style={{ padding: "8px 10px", textAlign: "left" }}>Prescription &amp; Record Rule</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {inventoryList.filter((it: any) => it.schedule && it.schedule !== "General").map((it: any, i: number) => (
+                                <tr key={it.id || i} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                                  <td style={{ padding: "8px 10px", fontWeight: "800", color: "#0f172a" }}>{it.name}</td>
+                                  <td style={{ padding: "8px 10px", color: "#7e22ce", fontFamily: "monospace" }}>{it.generic}</td>
+                                  <td style={{ padding: "8px 10px", color: "#475569" }}>{it.company}</td>
+                                  <td style={{ padding: "8px 10px", textAlign: "center" }}>
+                                    <span style={{
+                                      padding: "2px 8px",
+                                      borderRadius: "4px",
+                                      fontWeight: "800",
+                                      fontSize: "11px",
+                                      background: it.schedule === "Schedule H1" ? "#fef2f2" : "#fffbeb",
+                                      color: it.schedule === "Schedule H1" ? "#b91c1c" : "#b45309"
+                                    }}>
+                                      {it.schedule}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "8px 10px", fontSize: "11.5px", color: "#475569" }}>
+                                    {it.schedule === "Schedule H1"
+                                      ? "Maintain Register for 3 years (Patient, Doctor, Reg No)"
+                                      : "Sell only on Registered Medical Practitioner Rx"}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
+                          <button
+                            onClick={() => window.print()}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#0891b2",
+                              color: "#ffffff",
+                              borderRadius: "6px",
+                              border: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            🖨️ Print Schedule Register
+                          </button>
+                          <button
+                            onClick={() => setShowGenericScheduleModal(false)}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#f1f5f9",
+                              color: "#475569",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e1",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ITEM DETAIL QUICK MODAL */}
+                  {genericSelectedDetailItem && (
+                    <div style={{
+                      position: "fixed",
+                      inset: 0,
+                      background: "rgba(15, 23, 42, 0.65)",
+                      backdropFilter: "blur(3px)",
+                      zIndex: 9999,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "20px"
+                    }}>
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "12px",
+                        maxWidth: "600px",
+                        width: "100%",
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                        padding: "24px"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px", marginBottom: "16px" }}>
+                          <div>
+                            <div style={{ fontSize: "11px", fontWeight: "700", color: "#7e22ce", textTransform: "uppercase" }}>
+                              {genericSelectedDetailItem.category || "Ethical"} • {genericSelectedDetailItem.schedule || "General"}
+                            </div>
+                            <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#0f172a" }}>
+                              {genericSelectedDetailItem.name}
+                            </h3>
+                          </div>
+                          <button
+                            onClick={() => setGenericSelectedDetailItem(null)}
+                            style={{ background: "#f1f5f9", border: "none", borderRadius: "50%", width: "28px", height: "28px", cursor: "pointer", fontWeight: "800" }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "12.5px", marginBottom: "18px" }}>
+                          <div style={{ background: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                            <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700" }}>GENERIC FORMULATION</div>
+                            <div style={{ fontWeight: "800", color: "#7e22ce", marginTop: "2px" }}>{genericSelectedDetailItem.generic}</div>
+                          </div>
+                          <div style={{ background: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                            <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700" }}>MANUFACTURER COMPANY</div>
+                            <div style={{ fontWeight: "800", color: "#0f172a", marginTop: "2px" }}>{genericSelectedDetailItem.company}</div>
+                          </div>
+                          <div style={{ background: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                            <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700" }}>CURRENT INVENTORY STOCK</div>
+                            <div style={{ fontWeight: "800", color: "#16a34a", fontSize: "14px", marginTop: "2px" }}>
+                              {genericSelectedDetailItem.stock} {genericSelectedDetailItem.unit || "pcs"}
+                            </div>
+                          </div>
+                          <div style={{ background: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                            <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700" }}>MAX RETAIL PRICE (MRP)</div>
+                            <div style={{ fontWeight: "800", color: "#0f172a", fontSize: "14px", marginTop: "2px" }}>
+                              ₹{Number(genericSelectedDetailItem.mrp || 0).toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                          <button
+                            onClick={() => {
+                              setGenericSelectedDetailItem(null);
+                              setActiveSection("inventory");
+                            }}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#2563eb",
+                              color: "#ffffff",
+                              borderRadius: "6px",
+                              border: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            Open in Item Master 📦
+                          </button>
+                          <button
+                            onClick={() => setGenericSelectedDetailItem(null)}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#f1f5f9",
+                              color: "#475569",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e1",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PRINT MODAL */}
+                  {showGenericPrintModal && (
+                    <div style={{
+                      position: "fixed",
+                      inset: 0,
+                      background: "rgba(15, 23, 42, 0.65)",
+                      backdropFilter: "blur(3px)",
+                      zIndex: 9999,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "20px"
+                    }}>
+                      <div style={{
+                        background: "#ffffff",
+                        borderRadius: "12px",
+                        maxWidth: "850px",
+                        width: "100%",
+                        maxHeight: "90vh",
+                        overflowY: "auto",
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                        padding: "24px"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "16px" }}>
+                          <div>
+                            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#0f172a" }}>
+                              SHIV DHARA MEDICAL STORE
+                            </h2>
+                            <div style={{ fontSize: "12px", color: "#475569" }}>
+                              Generic Group Item List Directory
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right", fontSize: "11px", color: "#64748b" }}>
+                            Date: {new Date().toLocaleDateString("en-GB")}<br />
+                            GST Ver. 1005A
+                          </div>
+                        </div>
+
+                        <div style={{ marginBottom: "16px" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11.5px" }}>
+                            <thead>
+                              <tr style={{ background: "#f1f5f9", borderBottom: "1.5px solid #cbd5e1" }}>
+                                <th style={{ padding: "8px", textAlign: "left", width: "40px" }}>Sr.</th>
+                                <th style={{ padding: "8px", textAlign: "left" }}>Product Name</th>
+                                <th style={{ padding: "8px", textAlign: "left" }}>Manufacturer</th>
+                                <th style={{ padding: "8px", textAlign: "left" }}>Generic Salt Composition</th>
+                                <th style={{ padding: "8px", textAlign: "center", width: "60px" }}>Rx</th>
+                                <th style={{ padding: "8px", textAlign: "right", width: "70px" }}>MRP</th>
+                                <th style={{ padding: "8px", textAlign: "center", width: "80px" }}>Schedule</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredItems.map((it: any, idx: number) => (
+                                <tr key={it.id || idx} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                                  <td style={{ padding: "8px", fontWeight: "700" }}>#{idx + 1}</td>
+                                  <td style={{ padding: "8px", fontWeight: "700", color: "#0f172a" }}>{it.name}</td>
+                                  <td style={{ padding: "8px", color: "#475569" }}>{it.company}</td>
+                                  <td style={{ padding: "8px", color: "#7e22ce", fontFamily: "monospace" }}>{it.generic}</td>
+                                  <td style={{ padding: "8px", textAlign: "center" }}>{it.rxRequired ? "Yes" : "No"}</td>
+                                  <td style={{ padding: "8px", textAlign: "right", fontWeight: "700" }}>₹{Number(it.mrp || 0).toFixed(2)}</td>
+                                  <td style={{ padding: "8px", textAlign: "center" }}>{it.schedule || "General"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
+                          <button
+                            onClick={() => window.print()}
+                            style={{
+                              padding: "8px 16px",
+                              background: "#0284c7",
+                              color: "#ffffff",
+                              borderRadius: "6px",
+                              border: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer"
+                            }}
+                          >
+                            🖨️ Print Now
+                          </button>
+                          <button
+                            onClick={() => setShowGenericPrintModal(false)}
                             style={{
                               padding: "8px 16px",
                               background: "#f1f5f9",
