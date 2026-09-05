@@ -87,6 +87,18 @@ async function migrateItemsTable() {
     ['note', 'TEXT'],
     ['pRate', 'DECIMAL(10,2) DEFAULT 0'],
     ['mrp', 'DECIMAL(10,2) DEFAULT 0'],
+    ['code', 'VARCHAR(100)'],
+    ['sRate', 'DECIMAL(10,2) DEFAULT 0'],
+    ['maximum', 'INT DEFAULT NULL'],
+    ['message', 'TEXT'],
+    ['scheduleH', 'TINYINT DEFAULT 0'],
+    ['rxRequired', 'TINYINT DEFAULT 0'],
+    ['tbProduct', 'TINYINT DEFAULT 0'],
+    ['breakSaleNotAllowed', 'TINYINT DEFAULT 0'],
+    ['discountNotAllowed', 'TINYINT DEFAULT 0'],
+    ['noMemberPoint', 'TINYINT DEFAULT 0'],
+    ['barcodeNotRequire', 'TINYINT DEFAULT 0'],
+    ['statusOff', 'TINYINT DEFAULT 0'],
   ];
   for (const [col, def] of cols) {
     try {

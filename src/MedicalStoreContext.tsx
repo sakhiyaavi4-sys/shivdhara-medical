@@ -964,14 +964,47 @@ export function MedicalStoreProvider({ children }) {
   // ═══════════════════════════════════════════════════
   // ITEM MASTER
   // ═══════════════════════════════════════════════════
-  const emptyItemForm = (divId) => ({ division: divId || 'medicines', name: "", company: "", pRate: "", mrp: "", gst: "5", cess: "", discount: "", stock: "", unit: "", pack: "", minimum: "5", expiryDate: "", drugGroup: "", hsn: "", barcode: "", supplier: "", location: "", description: "", scheduleH: false, rxRequired: false, taxType: "taxable", itemCategory: "" });
+  const emptyItemForm = (divId) => ({ division: divId || 'medicines', name: "", code: "", company: "", pRate: "", sRate: "", mrp: "", gst: "5", cess: "", discount: "", stock: "", unit: "", pack: "", minimum: "5", maximum: "", expiryDate: "", drugGroup: "", hsn: "", barcode: "", supplier: "", location: "", message: "", description: "", scheduleH: false, rxRequired: false, tbProduct: false, breakSaleNotAllowed: false, discountNotAllowed: false, noMemberPoint: false, barcodeNotRequire: false, statusOff: false, taxType: "taxable", itemCategory: "" });
 
   const openItemForm = (divId, item = null) => { setItemDivision(divId); setEditingItem(item); setItemForm(item ? { ...item } : emptyItemForm(divId)); setShowItemForm(true); };
 
   const handleSaveItem = async () => {
     if (!itemForm.name) { showToast("Item name is required", "error"); return; }
     const toUpper = (v) => typeof v === "string" ? v.toUpperCase() : v;
-    const parsed = { ...itemForm, name: toUpper(itemForm.name), company: toUpper(itemForm.company), drugGroup: toUpper(itemForm.drugGroup), unit: toUpper(itemForm.unit), pack: toUpper(itemForm.pack), supplier: toUpper(itemForm.supplier), location: toUpper(itemForm.location), hsn: toUpper(itemForm.hsn), barcode: toUpper(itemForm.barcode), itemCategory: toUpper(itemForm.itemCategory), division: itemForm.division || itemDivision || 'medicines', price: num(itemForm.mrp) || num(itemForm.pRate), pRate: num(itemForm.pRate), mrp: num(itemForm.mrp), gst: num(itemForm.gst), cess: num(itemForm.cess), discount: num(itemForm.discount), stock: int(itemForm.stock), minimum: int(itemForm.minimum) };
+    const parsed = {
+      ...itemForm,
+      name: toUpper(itemForm.name),
+      code: toUpper(itemForm.code),
+      company: toUpper(itemForm.company),
+      drugGroup: toUpper(itemForm.drugGroup),
+      unit: toUpper(itemForm.unit),
+      pack: toUpper(itemForm.pack),
+      supplier: toUpper(itemForm.supplier),
+      location: toUpper(itemForm.location),
+      hsn: toUpper(itemForm.hsn),
+      barcode: toUpper(itemForm.barcode),
+      itemCategory: toUpper(itemForm.itemCategory),
+      message: itemForm.message || "",
+      division: itemForm.division || itemDivision || 'medicines',
+      price: num(itemForm.sRate) || num(itemForm.mrp) || num(itemForm.pRate),
+      pRate: num(itemForm.pRate),
+      sRate: num(itemForm.sRate),
+      mrp: num(itemForm.mrp),
+      gst: num(itemForm.gst),
+      cess: num(itemForm.cess),
+      discount: num(itemForm.discount),
+      stock: int(itemForm.stock),
+      minimum: int(itemForm.minimum),
+      maximum: itemForm.maximum ? int(itemForm.maximum) : "",
+      scheduleH: !!itemForm.scheduleH,
+      rxRequired: !!itemForm.rxRequired,
+      tbProduct: !!itemForm.tbProduct,
+      breakSaleNotAllowed: !!itemForm.breakSaleNotAllowed,
+      discountNotAllowed: !!itemForm.discountNotAllowed,
+      noMemberPoint: !!itemForm.noMemberPoint,
+      barcodeNotRequire: !!itemForm.barcodeNotRequire,
+      statusOff: !!itemForm.statusOff
+    };
 
     // Save to Database via API — full payload with all fields
     try {

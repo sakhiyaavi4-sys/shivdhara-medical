@@ -1972,37 +1972,184 @@ const pending = [];
                   </div>
                   {/* Item Form */}
                   {showItemForm && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                        <h3 style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "var(--color-text-dark)" }}>{editingItem ? "Edit" : "Add"} Item 📦</h3>
-                        <button onClick={() => { setShowItemForm(false); setEditingItem(null); }} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={18} /></button>
+                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "18px" }}>📦</span>
+                          <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>
+                            {editingItem ? `Edit Item: ${editingItem.name}` : "Add New Item"}
+                          </h3>
+                          {editingItem?.code && (
+                            <span style={{ fontSize: "11px", fontWeight: "700", background: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: "4px" }}>
+                              Code: {editingItem.code}
+                            </span>
+                          )}
+                          {itemForm.statusOff && (
+                            <span style={{ fontSize: "11px", fontWeight: "700", background: "#fee2e2", color: "#991b1b", padding: "2px 8px", borderRadius: "4px" }}>
+                              Status: Inactive
+                            </span>
+                          )}
+                        </div>
+                        <button onClick={() => { setShowItemForm(false); setEditingItem(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}>
+                          <X size={18} />
+                        </button>
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: "10px", marginBottom: "12px" }}>
+
+                      {/* Main Fields Grid */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: "10px", marginBottom: "14px" }}>
                         {[
-                          { k: "name", l: "Item Name *", t: "text" }, { k: "company", l: "Company", t: "text" }, { k: "drugGroup", l: "Drug Group", t: "text" },
-                          { k: "pRate", l: "Purchase Rate (PTR)", t: "number" }, { k: "mrp", l: "MRP", t: "number" },
-                          { k: "cess", l: "Cess %", t: "number" }, { k: "discount", l: "Discount %", t: "number" },
-                          { k: "stock", l: "Stock", t: "number" }, { k: "unit", l: "Unit", t: "text" }, { k: "pack", l: "Pack Size", t: "text" },
+                          { k: "name", l: "Item Name *", t: "text" },
+                          { k: "code", l: "Item Code", t: "text" },
+                          { k: "company", l: "Company", t: "text" },
+                          { k: "drugGroup", l: "Drug Group", t: "text" },
+                          { k: "pRate", l: "Purchase Rate (PTR)", t: "number" },
+                          { k: "sRate", l: "Selling Rate (S.Rate)", t: "number" },
+                          { k: "mrp", l: "MRP", t: "number" },
+                          { k: "cess", l: "Cess %", t: "number" },
+                          { k: "discount", l: "Discount %", t: "number" },
+                          { k: "stock", l: "Stock", t: "number" },
+                          { k: "unit", l: "Unit", t: "text" },
+                          { k: "pack", l: "Pack Size", t: "text" },
                           { k: "minimum", l: "Min Stock Alert", t: "number" },
+                          { k: "maximum", l: "Max Stock Limit", t: "number" },
                           { k: "expiryDate", l: "Expiry Date (MM/YY)", t: "text" },
                           { k: "hsn", l: "HSN Code", t: "text" },
-                          { k: "barcode", l: "Barcode", t: "text" }, { k: "supplier", l: "Supplier", t: "text" },
+                          { k: "barcode", l: "Barcode", t: "text" },
+                          { k: "supplier", l: "Supplier", t: "text" },
                           { k: "location", l: "Location", t: "text" },
                           { k: "gst", l: "GST %", t: "number" },
+                          { k: "message", l: "Billing Alert Message", t: "text" },
                         ].map(f => (
-                          <div key={f.k}><label style={lbl}>{f.l}</label><input type={f.t} value={itemForm[f.k] || ""} onChange={e => { let v = e.target.value; if (f.k === "expiryDate") { v = v.replace(/[^0-9/]/g, ""); if (v.length === 2 && !v.includes("/") && (itemForm[f.k] || "").length !== 3) v = v + "/"; if (v.length > 5) return; setItemForm({ ...itemForm, [f.k]: v }); return; } setItemForm({ ...itemForm, [f.k]: f.t === "text" ? v.toUpperCase() : v }); }} style={{ ...inp, textTransform: f.k === "expiryDate" ? "none" : f.t === "text" ? "uppercase" : "none" }} /></div>
+                          <div key={f.k} style={{ gridColumn: f.k === "name" ? "span 2" : undefined }}>
+                            <label style={lbl}>{f.l}</label>
+                            <input
+                              type={f.t}
+                              value={itemForm[f.k] ?? ""}
+                              onChange={e => {
+                                let v = e.target.value;
+                                if (f.k === "expiryDate") {
+                                  v = v.replace(/[^0-9/]/g, "");
+                                  if (v.length === 2 && !v.includes("/") && (itemForm[f.k] || "").length !== 3) v = v + "/";
+                                  if (v.length > 5) return;
+                                  setItemForm({ ...itemForm, [f.k]: v });
+                                  return;
+                                }
+                                setItemForm({ ...itemForm, [f.k]: f.t === "text" ? v.toUpperCase() : v });
+                              }}
+                              style={{
+                                ...inp,
+                                textTransform: f.k === "expiryDate" ? "none" : f.t === "text" ? "uppercase" : "none",
+                                fontWeight: f.k === "name" ? "700" : undefined
+                              }}
+                            />
+                          </div>
                         ))}
                         <div><label style={lbl}>Category</label><select value={itemForm.division || itemDivision || "medicines"} onChange={e => setItemForm({ ...itemForm, division: e.target.value })} style={inp}>{DIVISIONS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}</select></div>
                         <div><label style={lbl}>Tax Type</label><select value={itemForm.taxType || "taxable"} onChange={e => setItemForm({ ...itemForm, taxType: e.target.value })} style={inp}><option value="taxable">Taxable</option><option value="exempt">Exempt</option></select></div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", justifyContent: "center" }}>
-                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer" }}><input type="checkbox" checked={!!itemForm.scheduleH} onChange={e => setItemForm({ ...itemForm, scheduleH: e.target.checked })} /><span style={{ fontWeight: "600" }}>Schedule H Drug</span></label>
-                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer" }}><input type="checkbox" checked={!!itemForm.rxRequired} onChange={e => setItemForm({ ...itemForm, rxRequired: e.target.checked })} /><span style={{ fontWeight: "600" }}>Rx Required</span></label>
-                        </div>
-                        <div style={{ gridColumn: "1/-1" }}><label style={lbl}>Description</label><textarea value={itemForm.description || ""} onChange={e => setItemForm({ ...itemForm, description: e.target.value })} style={{ ...inp, height: "55px", resize: "vertical" }} placeholder="Notes..." /></div>
                       </div>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button onClick={handleSaveItem} style={{ ...btn("var(--color-primary)") }}><CheckCircle size={13} />{editingItem ? "Update" : "Save"}</button>
-                        <button onClick={() => { setShowItemForm(false); setEditingItem(null); }} style={{ ...btn("var(--color-border)", "var(--color-text-dark)") }}><X size={13} />Cancel</button>
+
+                      {/* ─── PHARMA REGULATORY & BILLING OPTIONS (Matching Legacy Image 6) ─── */}
+                      <div style={{ background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", padding: "12px 14px", marginBottom: "14px" }}>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#475569", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          Pharma Regulatory & Billing Controls
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "14px" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                            <input type="checkbox" checked={!!itemForm.scheduleH} onChange={e => setItemForm({ ...itemForm, scheduleH: e.target.checked })} />
+                            <span style={{ fontWeight: "600", color: "#334155" }}>Schedule H Drug</span>
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                            <input type="checkbox" checked={!!itemForm.rxRequired} onChange={e => setItemForm({ ...itemForm, rxRequired: e.target.checked })} />
+                            <span style={{ fontWeight: "600", color: "#334155" }}>Without Rx Not Sale</span>
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                            <input type="checkbox" checked={!!itemForm.tbProduct} onChange={e => setItemForm({ ...itemForm, tbProduct: e.target.checked })} />
+                            <span style={{ fontWeight: "700", color: itemForm.tbProduct ? "#991b1b" : "#dc2626", background: itemForm.tbProduct ? "#fee2e2" : "transparent", padding: "1px 5px", borderRadius: "3px" }}>
+                              TB Product
+                            </span>
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                            <input type="checkbox" checked={!!itemForm.breakSaleNotAllowed} onChange={e => setItemForm({ ...itemForm, breakSaleNotAllowed: e.target.checked })} />
+                            <span style={{ fontWeight: "600", color: "#334155" }}>Break Sale Not Allowed</span>
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                            <input type="checkbox" checked={!!itemForm.discountNotAllowed} onChange={e => setItemForm({ ...itemForm, discountNotAllowed: e.target.checked })} />
+                            <span style={{ fontWeight: "600", color: "#334155" }}>Discount Not Allowed</span>
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                            <input type="checkbox" checked={!!itemForm.noMemberPoint} onChange={e => setItemForm({ ...itemForm, noMemberPoint: e.target.checked })} />
+                            <span style={{ fontWeight: "600", color: "#334155" }}>No Count in Member Point</span>
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                            <input type="checkbox" checked={!!itemForm.barcodeNotRequire} onChange={e => setItemForm({ ...itemForm, barcodeNotRequire: e.target.checked })} />
+                            <span style={{ fontWeight: "600", color: "#334155" }}>Barcode Not Require</span>
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                            <input type="checkbox" checked={!!itemForm.statusOff} onChange={e => setItemForm({ ...itemForm, statusOff: e.target.checked })} />
+                            <span style={{ fontWeight: "700", color: itemForm.statusOff ? "#dc2626" : "#16a34a" }}>
+                              {itemForm.statusOff ? "Item Status: OFF (Inactive)" : "Item Status: ON (Active)"}
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: "14px" }}>
+                        <label style={lbl}>Description / Notes</label>
+                        <textarea value={itemForm.description || ""} onChange={e => setItemForm({ ...itemForm, description: e.target.value })} style={{ ...inp, height: "48px", resize: "vertical" }} placeholder="Additional notes, storage requirements, dosage form..." />
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!items || items.length === 0) return;
+                              const curIdx = editingItem ? items.findIndex(i => i.id === editingItem.id) : 0;
+                              let prevIdx = curIdx - 1;
+                              if (prevIdx < 0) prevIdx = items.length - 1;
+                              openItemForm(items[prevIdx].division || "", items[prevIdx]);
+                            }}
+                            style={{ ...btn("#475569"), fontSize: "11px", padding: "6px 10px" }}
+                            title="Previous Medicine"
+                          >
+                            <ChevronLeft size={13} /> Prev
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!items || items.length === 0) return;
+                              const curIdx = editingItem ? items.findIndex(i => i.id === editingItem.id) : 0;
+                              let nextIdx = curIdx + 1;
+                              if (nextIdx >= items.length) nextIdx = 0;
+                              openItemForm(items[nextIdx].division || "", items[nextIdx]);
+                            }}
+                            style={{ ...btn("#475569"), fontSize: "11px", padding: "6px 10px" }}
+                            title="Next Medicine"
+                          >
+                            Next <ChevronRight size={13} />
+                          </button>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button onClick={() => { setShowItemForm(false); setEditingItem(null); }} style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px" }}>
+                            <X size={13} /> Cancel
+                          </button>
+                          {!editingItem && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await handleSaveItem();
+                                openItemForm(itemForm.division || "medicines");
+                              }}
+                              style={{ ...btn("#0284c7"), fontSize: "12px", fontWeight: "700" }}
+                            >
+                              ⚡ Save & Continue
+                            </button>
+                          )}
+                          <button onClick={handleSaveItem} style={{ ...btn("var(--color-primary)"), fontSize: "12px", fontWeight: "800" }}>
+                            <CheckCircle size={13} /> {editingItem ? "Update Item" : "Save Item"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
