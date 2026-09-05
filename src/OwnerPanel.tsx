@@ -1170,6 +1170,115 @@ export default function OwnerPanel() {
   const [drugGroupSortBy, setDrugGroupSortBy] = useState("name");
   const [selectedGroupForItemsModal, setSelectedGroupForItemsModal] = useState(null);
 
+  // ─── KIT MASTER STATES ───
+  const defaultKitForm = {
+    id: "",
+    srNo: 1,
+    code: "KIT001",
+    refDate: today ? today() : "05/09/2026",
+    doctor: "",
+    kitName: "",
+    remindDays: 0,
+    add1: "",
+    remark: "",
+    viewLocation: false,
+    add2: "",
+    contact: "",
+    disc: 0,
+    items: []
+  };
+
+  const [kits, setKits] = useState(() => {
+    try {
+      const stored = localStorage.getItem("store_kits");
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    return [
+      {
+        id: "kit-101",
+        srNo: 1,
+        code: "KIT001",
+        refDate: "05/09/2026",
+        doctor: "DR. PATEL (MD MEDICINE)",
+        kitName: "FEVER & VIRAL 5-DAY TREATMENT KIT",
+        remindDays: 5,
+        add1: "A-102, SHREEJI HEIGHTS",
+        add2: "NEAR MEDICAL CAMPUS, SURAT",
+        contact: "9876543210",
+        remark: "Take tablets after food with warm water. Complete full course.",
+        viewLocation: true,
+        disc: 5,
+        items: [
+          { id: "ki-1", itemId: "1", itemName: "PARACETAMOL 650MG", morning: 1, noon: 0, evening: 1, night: 1, days: 5, total: 15, sRate: 3.5, location: "RACK-A1" },
+          { id: "ki-2", itemId: "2", itemName: "CETIRIZINE 10MG", morning: 0, noon: 0, evening: 0, night: 1, days: 5, total: 5, sRate: 4.0, location: "RACK-B2" },
+          { id: "ki-3", itemId: "3", itemName: "AZITHROMYCIN 500MG", morning: 1, noon: 0, evening: 0, night: 0, days: 3, total: 3, sRate: 22.0, location: "RACK-C1" },
+          { id: "ki-4", itemId: "4", itemName: "PANTOPRAZOLE 40MG", morning: 1, noon: 0, evening: 0, night: 0, days: 5, total: 5, sRate: 9.5, location: "RACK-A3" }
+        ]
+      },
+      {
+        id: "kit-102",
+        srNo: 2,
+        code: "KIT002",
+        refDate: "05/09/2026",
+        doctor: "DR. SHAH (ORTHOPEDIC)",
+        kitName: "POST SURGERY JOINT PAIN RECOVERY KIT",
+        remindDays: 10,
+        add1: "B-404, RADHE COMPLEX",
+        add2: "RING ROAD, SURAT",
+        contact: "9825123456",
+        remark: "Take pain medication with antacid. Strictly avoid heavy lifting.",
+        viewLocation: false,
+        disc: 10,
+        items: [
+          { id: "ki-5", itemId: "5", itemName: "AMOXYCLAV 625MG", morning: 1, noon: 0, evening: 1, night: 0, days: 7, total: 14, sRate: 18.0, location: "RACK-C2" },
+          { id: "ki-6", itemId: "6", itemName: "ACECLOFENAC + PARACETAMOL", morning: 1, noon: 0, evening: 1, night: 0, days: 5, total: 10, sRate: 7.5, location: "RACK-A2" },
+          { id: "ki-7", itemId: "7", itemName: "RABEPRAZOLE DSR", morning: 1, noon: 0, evening: 0, night: 0, days: 7, total: 7, sRate: 14.0, location: "RACK-A4" }
+        ]
+      }
+    ];
+  });
+
+  const [kitForm, setKitForm] = useState(() => {
+    try {
+      const stored = localStorage.getItem("store_kits");
+      if (stored) {
+        const arr = JSON.parse(stored);
+        if (arr && arr.length > 0) return { ...arr[0] };
+      }
+    } catch (_) {}
+    return {
+      id: "kit-101",
+      srNo: 1,
+      code: "KIT001",
+      refDate: "05/09/2026",
+      doctor: "DR. PATEL (MD MEDICINE)",
+      kitName: "FEVER & VIRAL 5-DAY TREATMENT KIT",
+      remindDays: 5,
+      add1: "A-102, SHREEJI HEIGHTS",
+      add2: "NEAR MEDICAL CAMPUS, SURAT",
+      contact: "9876543210",
+      remark: "Take tablets after food with warm water. Complete full course.",
+      viewLocation: true,
+      disc: 5,
+      items: [
+        { id: "ki-1", itemId: "1", itemName: "PARACETAMOL 650MG", morning: 1, noon: 0, evening: 1, night: 1, days: 5, total: 15, sRate: 3.5, location: "RACK-A1" },
+        { id: "ki-2", itemId: "2", itemName: "CETIRIZINE 10MG", morning: 0, noon: 0, evening: 0, night: 1, days: 5, total: 5, sRate: 4.0, location: "RACK-B2" },
+        { id: "ki-3", itemId: "3", itemName: "AZITHROMYCIN 500MG", morning: 1, noon: 0, evening: 0, night: 0, days: 3, total: 3, sRate: 22.0, location: "RACK-C1" },
+        { id: "ki-4", itemId: "4", itemName: "PANTOPRAZOLE 40MG", morning: 1, noon: 0, evening: 0, night: 0, days: 5, total: 5, sRate: 9.5, location: "RACK-A3" }
+      ]
+    };
+  });
+
+  const [editingKit, setEditingKit] = useState(null);
+  const [kitViewMode, setKitViewMode] = useState("editor"); // "editor" | "list"
+  const [kitSearch, setKitSearch] = useState("");
+  const [kitSelectedRowIndex, setKitSelectedRowIndex] = useState(null);
+  const [kitItemSearchText, setKitItemSearchText] = useState("");
+  const [kitItemDropdown, setKitItemDropdown] = useState(false);
+  const [kitItemHighlight, setKitItemHighlight] = useState(0);
+  const [kitQuickDosage, setKitQuickDosage] = useState("1-0-1");
+  const [kitQuickDays, setKitQuickDays] = useState(5);
+
 
 
 
@@ -1314,7 +1423,7 @@ export default function OwnerPanel() {
                 {label:"Supplier Master", action:()=>{setActiveSection("masters");setOwnerSubTab("suppliers");setActiveMenu(null);}},
                 {label:"Drug Group Master", action:()=>{setActiveSection("masters");setOwnerSubTab("drug_groups");setActiveMenu(null);}},
                 {label:"Item Master", action:()=>{setActiveSection("inventory");setActiveMenu(null);}},
-                {label:"Kit Master", action:()=>{setShowWipModal("Kit Master");}},
+                {label:"Kit Master", action:()=>{setActiveSection("masters");setOwnerSubTab("kits");setKitViewMode("editor");setActiveMenu(null);}},
                 {label:"Doctor Master", action:()=>{setActiveSection("masters");setOwnerSubTab("doctors");setActiveMenu(null);}},
                 {label:"Patient Master", action:()=>{setActiveSection("masters");setOwnerSubTab("customers");setActiveMenu(null);}},
                 {label:"Contract Employee Master", action:()=>{setShowWipModal("Contract Employee Master");}},
@@ -3775,7 +3884,7 @@ const pending = [];
         {isOwner && activeSection === "masters" && (
           <>
             <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
-              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "👥 Customers" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
+              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "👥 Customers" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
             </div>
@@ -7664,7 +7773,1138 @@ const pending = [];
               );
             })()}
 
-{/* Doctors */}
+{/* ═════════════════════════════════════════════════════════════
+                KIT MASTER (Matching Legacy Screenshot & Inventory Light Theme)
+            ═════════════════════════════════════════════════════════════ */}
+            {ownerSubTab === "kits" && (() => {
+              // Calculate Totals
+              const totalItemsCount = (kitForm.items || []).length;
+              const totalUnitsCount = (kitForm.items || []).reduce((acc, it) => acc + (Number(it.total) || 0), 0);
+              const grossAmount = (kitForm.items || []).reduce((acc, it) => acc + ((Number(it.total) || 0) * (Number(it.sRate) || 0)), 0);
+              const discountPercent = Number(kitForm.disc) || 0;
+              const discountValue = (grossAmount * discountPercent) / 100;
+              const netAmount = Math.max(0, grossAmount - discountValue);
+
+              // Filtered kits for List View or Quick Jump
+              const qk = (kitSearch || "").trim().toLowerCase();
+              const filteredKits = (kits || []).filter(k => {
+                if (!qk) return true;
+                return (
+                  (k.kitName || "").toLowerCase().includes(qk) ||
+                  (k.code || "").toLowerCase().includes(qk) ||
+                  (k.doctor || "").toLowerCase().includes(qk) ||
+                  (k.contact || "").includes(qk) ||
+                  (k.remark || "").toLowerCase().includes(qk) ||
+                  String(k.srNo || "").includes(qk)
+                );
+              });
+
+              // Autocomplete for inventory items
+              const qItem = (kitItemSearchText || "").trim().toLowerCase();
+              const matchingInventoryItems = qItem ? (items || []).filter(i =>
+                (i.name || "").toLowerCase().includes(qItem) ||
+                (i.barcode || "").includes(qItem) ||
+                (i.company || "").toLowerCase().includes(qItem)
+              ).slice(0, 8) : [];
+
+              // Handlers
+              const handleNewKit = () => {
+                const nextSr = kits.length > 0 ? Math.max(...kits.map(k => Number(k.srNo || 0))) + 1 : 1;
+                const nextCode = "KIT" + String(nextSr).padStart(3, "0");
+                const todayStr = new Date().toLocaleDateString("en-GB");
+                setEditingKit(null);
+                setKitForm({
+                  ...defaultKitForm,
+                  id: uid(),
+                  srNo: nextSr,
+                  code: nextCode,
+                  refDate: todayStr,
+                  items: []
+                });
+                setKitSelectedRowIndex(null);
+                setKitViewMode("editor");
+                showToast("New Kit form ready");
+              };
+
+              const handleSaveKit = () => {
+                if (!kitForm.kitName || !kitForm.kitName.trim()) {
+                  showToast("Kit Name is required!", "error");
+                  return;
+                }
+                if (!kitForm.items || kitForm.items.length === 0) {
+                  showToast("Please add at least one medicine to the Kit!", "error");
+                  return;
+                }
+
+                const kitId = kitForm.id || uid();
+                const savedData = {
+                  ...kitForm,
+                  id: kitId,
+                  kitName: kitForm.kitName.trim().toUpperCase(),
+                  code: (kitForm.code || "KIT" + String(kitForm.srNo || 1).padStart(3, "0")).trim().toUpperCase(),
+                  doctor: (kitForm.doctor || "").trim().toUpperCase(),
+                  add1: (kitForm.add1 || "").trim().toUpperCase(),
+                  add2: (kitForm.add2 || "").trim().toUpperCase(),
+                  remark: (kitForm.remark || "").trim(),
+                  disc: Number(kitForm.disc) || 0,
+                  remindDays: Number(kitForm.remindDays) || 0,
+                  updatedAt: new Date().toISOString()
+                };
+
+                const existingIndex = kits.findIndex(k => k.id === kitId);
+                let nextKits;
+                if (existingIndex >= 0) {
+                  nextKits = kits.map(k => k.id === kitId ? savedData : k);
+                } else {
+                  nextKits = [...kits, savedData];
+                }
+
+                setKits(nextKits);
+                setKitForm(savedData);
+                try {
+                  localStorage.setItem("store_kits", JSON.stringify(nextKits));
+                } catch (_) {}
+
+                showToast(`Kit "${savedData.kitName}" saved successfully!`);
+              };
+
+              const handleDeleteKit = (kitToDelete = kitForm) => {
+                if (!kitToDelete || !kitToDelete.id) return;
+                showConfirm(`Are you sure you want to delete Kit "${kitToDelete.kitName || kitToDelete.code}"?`, () => {
+                  const updated = kits.filter(k => k.id !== kitToDelete.id);
+                  setKits(updated);
+                  try {
+                    localStorage.setItem("store_kits", JSON.stringify(updated));
+                  } catch (_) {}
+                  showToast("Kit deleted");
+                  if (updated.length > 0) {
+                    setKitForm({ ...updated[0] });
+                  } else {
+                    handleNewKit();
+                  }
+                });
+              };
+
+              const handleNavigateKit = (direction) => {
+                if (kits.length === 0) return;
+                const currentId = kitForm.id;
+                const curIdx = kits.findIndex(k => k.id === currentId);
+                let targetIdx = 0;
+                if (direction === "prev") {
+                  targetIdx = curIdx > 0 ? curIdx - 1 : kits.length - 1;
+                } else {
+                  targetIdx = curIdx < kits.length - 1 ? curIdx + 1 : 0;
+                }
+                setKitForm({ ...kits[targetIdx] });
+                setKitSelectedRowIndex(null);
+                setKitViewMode("editor");
+              };
+
+              const handleAddMedicineToKit = (inventoryItem) => {
+                if (!inventoryItem) return;
+                let m = 1, n = 0, e = 1, ni = 0;
+                if (kitQuickDosage === "1-0-0") { m = 1; n = 0; e = 0; ni = 0; }
+                else if (kitQuickDosage === "1-1-1") { m = 1; n = 1; e = 1; ni = 0; }
+                else if (kitQuickDosage === "1-0-1") { m = 1; n = 0; e = 1; ni = 0; }
+                else if (kitQuickDosage === "0-0-1") { m = 0; n = 0; e = 0; ni = 1; }
+                else if (kitQuickDosage === "0.5-0-0.5") { m = 0.5; n = 0; e = 0.5; ni = 0; }
+
+                const d = Number(kitQuickDays) || 5;
+                const totalQty = Math.round((m + n + e + ni) * d);
+                const rate = Number(inventoryItem.sRate || inventoryItem.price || inventoryItem.mrp || 0);
+
+                const newItemRow = {
+                  id: uid(),
+                  itemId: inventoryItem.id,
+                  itemName: inventoryItem.name,
+                  morning: m,
+                  noon: n,
+                  evening: e,
+                  night: ni,
+                  days: d,
+                  total: totalQty,
+                  sRate: rate,
+                  location: inventoryItem.location || ""
+                };
+
+                const updatedItems = [...(kitForm.items || []), newItemRow];
+                setKitForm({ ...kitForm, items: updatedItems });
+                setKitItemSearchText("");
+                setKitItemDropdown(false);
+                setKitSelectedRowIndex(updatedItems.length - 1);
+                showToast(`Added ${inventoryItem.name} to Kit`);
+              };
+
+              const handleRemoveSelectedItem = () => {
+                if (!kitForm.items || kitForm.items.length === 0) return;
+                const idxToRemove = kitSelectedRowIndex !== null ? kitSelectedRowIndex : kitForm.items.length - 1;
+                const updatedItems = kitForm.items.filter((_, idx) => idx !== idxToRemove);
+                setKitForm({ ...kitForm, items: updatedItems });
+                setKitSelectedRowIndex(null);
+                showToast("Item removed from Kit");
+              };
+
+              const handleUpdateRow = (idx, field, value) => {
+                const updatedItems = [...kitForm.items];
+                const row = { ...updatedItems[idx], [field]: value };
+
+                // Auto calculate Total when dosage or days change
+                if (["morning", "noon", "evening", "night", "days"].includes(field)) {
+                  const m = Number(field === "morning" ? value : row.morning) || 0;
+                  const n = Number(field === "noon" ? value : row.noon) || 0;
+                  const e = Number(field === "evening" ? value : row.evening) || 0;
+                  const ni = Number(field === "night" ? value : row.night) || 0;
+                  const d = Number(field === "days" ? value : row.days) || 0;
+                  row.total = Math.round((m + n + e + ni) * d);
+                }
+
+                updatedItems[idx] = row;
+                setKitForm({ ...kitForm, items: updatedItems });
+              };
+
+              const handlePrintKit = () => {
+                const printWindow = window.open("", "_blank");
+                if (!printWindow) {
+                  showToast("Please allow popups to print Kit prescription", "error");
+                  return;
+                }
+
+                const itemsHTML = (kitForm.items || []).map((it, idx) => `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 8px; text-align: center;">${idx + 1}</td>
+                    <td style="padding: 8px; font-weight: bold; text-align: left;">${it.itemName}</td>
+                    <td style="padding: 8px; text-align: center; color: #1e40af;">${it.morning || 0}</td>
+                    <td style="padding: 8px; text-align: center; color: #1e40af;">${it.noon || 0}</td>
+                    <td style="padding: 8px; text-align: center; color: #1e40af;">${it.evening || 0}</td>
+                    <td style="padding: 8px; text-align: center; color: #1e40af;">${it.night || 0}</td>
+                    <td style="padding: 8px; text-align: center; font-weight: 600;">${it.days || 1} Days</td>
+                    <td style="padding: 8px; text-align: center; font-weight: bold; background: #f8fafc;">${it.total || 0}</td>
+                    <td style="padding: 8px; text-align: right;">₹${Number(it.sRate || 0).toFixed(2)}</td>
+                    <td style="padding: 8px; text-align: right; font-weight: bold;">₹${((Number(it.total) || 0) * (Number(it.sRate) || 0)).toFixed(2)}</td>
+                    ${kitForm.viewLocation ? `<td style="padding: 8px; text-align: center; font-size: 11px;">${it.location || "-"}</td>` : ""}
+                  </tr>
+                `).join("");
+
+                printWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <title>Kit Prescription - ${kitForm.kitName || "SHIV DHARA"}</title>
+                    <style>
+                      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 25px; color: #0f172a; }
+                      .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 15px; }
+                      .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12px; margin-bottom: 18px; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+                      table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+                      th { background: #0f172a; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; }
+                      .totals-box { width: 280px; margin-left: auto; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; background: #f8fafc; }
+                      .footer { margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
+                      @media print { body { padding: 0; } button { display: none; } }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      <h2 style="margin: 0; font-size: 20px; color: #0f172a;">SHIV DHARA MEDICAL STORE</h2>
+                      <p style="margin: 2px 0; font-size: 12px; color: #475569;">Complete Healthcare & Pharmacy Solutions | GST Registered</p>
+                      <p style="margin: 0; font-size: 11px; font-weight: 700; color: #2563eb;">PRESCRIPTION & TREATMENT KIT DOSAGE REGISTER</p>
+                    </div>
+
+                    <div class="meta-grid">
+                      <div><strong>Kit Code:</strong> ${kitForm.code || "-"} | <strong>Sr No:</strong> ${kitForm.srNo || "1"}</div>
+                      <div><strong>Ref Date:</strong> ${kitForm.refDate || "-"}</div>
+                      <div><strong>Kit Name:</strong> ${kitForm.kitName || "-"}</div>
+                      <div><strong>Consulting Doctor:</strong> ${kitForm.doctor || "N/A"}</div>
+                      <div><strong>Patient / Contact:</strong> ${kitForm.contact || "N/A"}</div>
+                      <div><strong>Reminder Follow-up:</strong> ${kitForm.remindDays ? `After ${kitForm.remindDays} Days` : "Not Set"}</div>
+                      ${kitForm.add1 ? `<div style="grid-column: span 2;"><strong>Address:</strong> ${kitForm.add1} ${kitForm.add2 || ""}</div>` : ""}
+                      ${kitForm.remark ? `<div style="grid-column: span 2; color: #b45309;"><strong>Special Instructions:</strong> ${kitForm.remark}</div>` : ""}
+                    </div>
+
+                    <table>
+                      <thead>
+                        <tr>
+                          <th style="width: 30px;">#</th>
+                          <th>Medicine / Item Name</th>
+                          <th>Morning</th>
+                          <th>Noon</th>
+                          <th>Evening</th>
+                          <th>Night</th>
+                          <th>Days</th>
+                          <th>Total Qty</th>
+                          <th>S.Rate</th>
+                          <th>Amount</th>
+                          ${kitForm.viewLocation ? `<th>Location</th>` : ""}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${itemsHTML}
+                      </tbody>
+                    </table>
+
+                    <div class="totals-box">
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>Total Items:</span>
+                        <strong>${totalItemsCount} Medicines</strong>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>Total Course Qty:</span>
+                        <strong>${totalUnitsCount} Units</strong>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>Gross Amount:</span>
+                        <span>₹${grossAmount.toFixed(2)}</span>
+                      </div>
+                      ${discountPercent > 0 ? `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #16a34a;">
+                          <span>Kit Discount (${discountPercent}%):</span>
+                          <span>-₹${discountValue.toFixed(2)}</span>
+                        </div>
+                      ` : ""}
+                      <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; border-top: 1px solid #cbd5e1; padding-top: 6px; color: #0f172a;">
+                        <span>Net Kit Amount:</span>
+                        <span>₹${netAmount.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <div class="footer">
+                      <div>
+                        <p style="margin: 0;">* Take medicines strictly as directed by the registered medical practitioner.</p>
+                        <p style="margin: 2px 0;">Generated on ${new Date().toLocaleString()}</p>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="height: 35px;"></div>
+                        <p style="margin: 0; font-weight: bold; border-top: 1px solid #64748b; padding-top: 4px;">Authorized Pharmacist Signature</p>
+                      </div>
+                    </div>
+                  </body>
+                  </html>
+                `);
+                printWindow.document.close();
+                setTimeout(() => printWindow.print(), 300);
+              };
+
+              const handleBillKitInSales = () => {
+                if (!kitForm.items || kitForm.items.length === 0) {
+                  showToast("Kit has no items to bill", "error");
+                  return;
+                }
+
+                // Transfer items to POS salesItems
+                const mappedSalesItems = kitForm.items.map(ki => {
+                  const invMatch = (items || []).find(i => String(i.id) === String(ki.itemId) || i.name.toUpperCase() === ki.itemName.toUpperCase()) || {};
+                  return {
+                    id: uid(),
+                    itemId: invMatch.id || ki.itemId || uid(),
+                    name: ki.itemName,
+                    batch: invMatch.batchNumber || "STANDARD",
+                    expiry: invMatch.expiryDate || "",
+                    qty: Number(ki.total) || 1,
+                    mrp: Number(ki.sRate || invMatch.mrp || invMatch.price || 0),
+                    rate: Number(ki.sRate || invMatch.price || invMatch.mrp || 0),
+                    unit: invMatch.unit || "TAB",
+                    gst: Number(invMatch.gst) || 5,
+                    discount: Number(kitForm.disc) || 0,
+                    amount: ((Number(ki.total) || 1) * Number(ki.sRate || invMatch.price || invMatch.mrp || 0)),
+                    availableStock: Number(invMatch.stock) || 100
+                  };
+                });
+
+                if (setSalesItems) setSalesItems(mappedSalesItems);
+                if (setSalesForm) {
+                  setSalesForm(prev => ({
+                    ...prev,
+                    customerName: kitForm.contact ? `Kit: ${kitForm.kitName} (${kitForm.contact})` : `Kit: ${kitForm.kitName}`,
+                    doctorName: kitForm.doctor || prev.doctorName || "",
+                    remarks: `Dispensed from Kit: ${kitForm.code} - ${kitForm.kitName}. ${kitForm.remark || ""}`
+                  }));
+                }
+                setActiveSection("sales_pos");
+                showToast(`Transferred ${mappedSalesItems.length} Kit medicines into Sales POS!`);
+              };
+
+              return (
+                <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
+                  {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "26px" }}>🧰</span>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Kit Master</h2>
+                      <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>Prescription Treatment Kits, Disease Combos & Multi-Dose Schedules</p>
+                    </div>
+
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => setKitViewMode(kitViewMode === "editor" ? "list" : "editor")}
+                        style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <FileText size={13} /> {kitViewMode === "editor" ? "View Kit Directory (List)" : "Back to Kit Editor"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleNewKit}
+                        style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Plus size={13} /> New Kit
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ═══════════════════════════════════════════════════════════
+                      VIEW MODE 1: KIT DIRECTORY LIST VIEW
+                  ═══════════════════════════════════════════════════════════ */}
+                  {kitViewMode === "list" && (
+                    <div style={{ animation: "fadeIn 0.15s ease-out" }}>
+                      {/* Search Bar */}
+                      <div style={{ background: "white", borderRadius: "12px", padding: "14px 16px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", display: "flex", gap: "10px", alignItems: "center" }}>
+                        <div style={{ flex: 1, position: "relative" }}>
+                          <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                          <input
+                            placeholder="Search Kit Name, Code, Doctor or Patient Contact... + Enter"
+                            value={kitSearch}
+                            onChange={e => setKitSearch(e.target.value)}
+                            style={{ ...inp, paddingLeft: "30px", width: "100%", height: "36px" }}
+                          />
+                        </div>
+                        {kitSearch && (
+                          <button onClick={() => setKitSearch("")} style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "11px" }}>Clear</button>
+                        )}
+                      </div>
+
+                      {/* Stat Cards */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", marginBottom: "16px" }}>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Total Kits</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a", marginTop: "4px" }}>{kits.length}</div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Total Medicines Mapped</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#2563eb", marginTop: "4px" }}>
+                            {kits.reduce((acc, k) => acc + (k.items || []).length, 0)} Items
+                          </div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Follow-up Reminders</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#16a34a", marginTop: "4px" }}>
+                            {kits.filter(k => (Number(k.remindDays) || 0) > 0).length} Kits
+                          </div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Active Doctors Linked</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#7c3aed", marginTop: "4px" }}>
+                            {[...new Set(kits.map(k => k.doctor).filter(Boolean))].length} Doctors
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Kits Directory Table */}
+                      <div style={{ background: "white", borderRadius: "12px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                        <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                          <span style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b" }}>
+                            Kit Master Directory ({filteredKits.length})
+                          </span>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>
+                            Click any Kit to open editor, dosage schedule or bill directly
+                          </span>
+                        </div>
+
+                        {filteredKits.length === 0 ? (
+                          <div style={{ padding: "50px 20px", textAlign: "center", color: "#64748b" }}>
+                            <div style={{ fontSize: "36px", opacity: 0.5, marginBottom: "8px" }}>🧰</div>
+                            <p style={{ margin: 0, fontWeight: "700", fontSize: "14px" }}>No treatment kits found</p>
+                            <p style={{ margin: "4px 0 12px", fontSize: "12px" }}>Create your first prescription treatment kit using the button below.</p>
+                            <button onClick={handleNewKit} style={{ ...btn("var(--color-primary)"), margin: "0 auto", fontSize: "12px" }}>
+                              <Plus size={13} /> Create First Kit
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                              <thead>
+                                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontSize: "11px", textTransform: "uppercase" }}>
+                                  <th style={{ padding: "10px 8px", width: "40px", textAlign: "center" }}>Sr.</th>
+                                  <th style={{ padding: "10px 8px", width: "80px", textAlign: "center" }}>Code</th>
+                                  <th style={{ padding: "10px 14px", textAlign: "left" }}>Kit Name</th>
+                                  <th style={{ padding: "10px 12px", textAlign: "left" }}>Doctor</th>
+                                  <th style={{ padding: "10px 12px", textAlign: "left" }}>Contact / Address</th>
+                                  <th style={{ padding: "10px 8px", width: "90px", textAlign: "center" }}>Medicines</th>
+                                  <th style={{ padding: "10px 8px", width: "80px", textAlign: "center" }}>Remind</th>
+                                  <th style={{ padding: "10px 12px", width: "100px", textAlign: "right" }}>Kit Value</th>
+                                  <th style={{ padding: "10px 12px", width: "180px", textAlign: "center" }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filteredKits.map((k, idx) => {
+                                  const kitGross = (k.items || []).reduce((acc, it) => acc + ((Number(it.total) || 0) * (Number(it.sRate) || 0)), 0);
+                                  const kitDisc = (kitGross * (Number(k.disc) || 0)) / 100;
+                                  const kitNet = Math.max(0, kitGross - kitDisc);
+
+                                  return (
+                                    <tr
+                                      key={k.id || idx}
+                                      style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.1s" }}
+                                      onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    >
+                                      <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>{k.srNo || idx + 1}</td>
+                                      <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "800", color: "#2563eb", fontFamily: "monospace" }}>{k.code || "KIT"}</td>
+                                      <td
+                                        onClick={() => { setKitForm({ ...k }); setKitViewMode("editor"); }}
+                                        style={{ padding: "8px 14px", fontWeight: "800", color: "#1e3a8a", cursor: "pointer" }}
+                                        title="Click to edit kit"
+                                      >
+                                        {k.kitName}
+                                      </td>
+                                      <td style={{ padding: "8px 12px", color: "#475569" }}>{k.doctor || "-"}</td>
+                                      <td style={{ padding: "8px 12px", color: "#64748b", fontSize: "11px" }}>
+                                        {k.contact ? <span>📞 {k.contact}</span> : null}
+                                        {k.add1 ? <div style={{ color: "#94a3b8" }}>{k.add1}</div> : null}
+                                      </td>
+                                      <td style={{ padding: "8px 8px", textAlign: "center" }}>
+                                        <span style={{ background: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
+                                          {(k.items || []).length} items
+                                        </span>
+                                      </td>
+                                      <td style={{ padding: "8px 8px", textAlign: "center", fontSize: "11px", color: (Number(k.remindDays) || 0) > 0 ? "#16a34a" : "#94a3b8", fontWeight: "700" }}>
+                                        {(Number(k.remindDays) || 0) > 0 ? `${k.remindDays} Days` : "-"}
+                                      </td>
+                                      <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: "800", color: "#0f172a" }}>
+                                        ₹{kitNet.toFixed(2)}
+                                      </td>
+                                      <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                                        <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => { setKitForm({ ...k }); setKitViewMode("editor"); }}
+                                            style={{ ...btn("#2563eb"), padding: "4px 8px", fontSize: "11px" }}
+                                            title="Edit Kit"
+                                          >
+                                            <Edit2 size={11} /> Edit
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => { setKitForm({ ...k }); setTimeout(handlePrintKit, 100); }}
+                                            style={{ ...btn("#334155"), padding: "4px 8px", fontSize: "11px" }}
+                                            title="Print Kit Prescription"
+                                          >
+                                            <Printer size={11} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => { setKitForm({ ...k }); setTimeout(handleBillKitInSales, 100); }}
+                                            style={{ ...btn("#16a34a"), padding: "4px 8px", fontSize: "11px" }}
+                                            title="Bill in Sales POS"
+                                          >
+                                            <ShoppingCart size={11} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteKit(k)}
+                                            style={{ ...btn("#dc2626"), padding: "4px 8px", fontSize: "11px" }}
+                                            title="Delete Kit"
+                                          >
+                                            <Trash2 size={11} />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ═══════════════════════════════════════════════════════════
+                      VIEW MODE 2: MAIN KIT MASTER FORM & ITEM GRID (Image 1)
+                  ═══════════════════════════════════════════════════════════ */}
+                  {kitViewMode === "editor" && (
+                    <div style={{ background: "white", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                      
+                      {/* Top Bar with Kit Title & Navigation */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", gap: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "18px" }}>📦</span>
+                          <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
+                            {kitForm.kitName ? kitForm.kitName : "New Kit Specification"}
+                          </h3>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: "4px", fontFamily: "monospace" }}>
+                            Code: {kitForm.code || "KIT001"}
+                          </span>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: "4px" }}>
+                            Sr.No: {kitForm.srNo || 1}
+                          </span>
+                        </div>
+
+                        {/* Search to Jump */}
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          <div style={{ position: "relative", width: "200px" }}>
+                            <Search size={12} style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                            <input
+                              placeholder="Jump to Kit..."
+                              value={kitSearch}
+                              onChange={e => setKitSearch(e.target.value)}
+                              style={{ ...inp, paddingLeft: "26px", height: "30px", fontSize: "11px" }}
+                            />
+                            {kitSearch && filteredKits.length > 0 && (
+                              <div style={{ position: "absolute", top: "100%", right: 0, width: "240px", background: "white", border: "1px solid #cbd5e1", borderRadius: "6px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 60, marginTop: "2px", overflow: "hidden" }}>
+                                {filteredKits.slice(0, 6).map(k => (
+                                  <div
+                                    key={k.id}
+                                    onClick={() => { setKitForm({ ...k }); setKitSearch(""); }}
+                                    style={{ padding: "6px 10px", fontSize: "11px", cursor: "pointer", borderBottom: "1px solid #f1f5f9" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "white"}
+                                  >
+                                    <div style={{ fontWeight: "700", color: "#1e293b" }}>{k.kitName}</div>
+                                    <div style={{ fontSize: "10px", color: "#64748b" }}>Code: {k.code} | {k.doctor || "General"}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ─── HEADER FIELDS GRID (Matching Image 1 Exact Fields) ─── */}
+                      <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "16px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "80px 110px 130px 1fr", gap: "10px", marginBottom: "10px" }}>
+                          {/* Row 1: Sr.No | Code | Ref Date | Doctor */}
+                          <div>
+                            <label style={lbl}>Sr.No.</label>
+                            <input
+                              type="number"
+                              value={kitForm.srNo || 1}
+                              onChange={e => setKitForm({ ...kitForm, srNo: Number(e.target.value) || 1 })}
+                              style={{ ...inp, background: "#ffffff", fontWeight: "700" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={lbl}>Code</label>
+                            <input
+                              type="text"
+                              value={kitForm.code || ""}
+                              onChange={e => setKitForm({ ...kitForm, code: e.target.value.toUpperCase() })}
+                              style={{ ...inp, background: "#ffffff", textTransform: "uppercase", fontWeight: "700", color: "#1e40af" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={lbl}>Ref Date</label>
+                            <input
+                              type="text"
+                              value={kitForm.refDate || ""}
+                              onChange={e => setKitForm({ ...kitForm, refDate: e.target.value })}
+                              placeholder="DD/MM/YYYY"
+                              style={{ ...inp, background: "#ffffff" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={lbl}>Doctor</label>
+                            <div style={{ display: "flex", gap: "6px" }}>
+                              <input
+                                type="text"
+                                list="doctor-suggestions"
+                                value={kitForm.doctor || ""}
+                                onChange={e => setKitForm({ ...kitForm, doctor: e.target.value.toUpperCase() })}
+                                placeholder="Consulting Doctor Name / Hospital"
+                                style={{ ...inp, background: "#ffffff", textTransform: "uppercase", flex: 1 }}
+                              />
+                              <datalist id="doctor-suggestions">
+                                {(doctors || []).map(d => (
+                                  <option key={d.id} value={d.name}>{d.specialization ? `${d.name} (${d.specialization})` : d.name}</option>
+                                ))}
+                              </datalist>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Row 2: Kit Name | Remind After Days */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 180px", gap: "10px", marginBottom: "10px" }}>
+                          <div>
+                            <label style={lbl}>Kit Name *</label>
+                            <input
+                              type="text"
+                              value={kitForm.kitName || ""}
+                              onChange={e => setKitForm({ ...kitForm, kitName: e.target.value.toUpperCase() })}
+                              placeholder="e.g. FEVER & COLD 5-DAY TREATMENT KIT"
+                              style={{ ...inp, background: "#ffffff", fontWeight: "700", textTransform: "uppercase" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={lbl}>Remind After Days</label>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <input
+                                type="number"
+                                min="0"
+                                value={kitForm.remindDays ?? 0}
+                                onChange={e => setKitForm({ ...kitForm, remindDays: Number(e.target.value) || 0 })}
+                                style={{ ...inp, background: "#ffffff", textAlign: "center", fontWeight: "700" }}
+                              />
+                              <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>Days</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Row 3: Add 1 | Remark | View Location Checkbox */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 130px", gap: "10px", marginBottom: "10px" }}>
+                          <div>
+                            <label style={lbl}>Address Line 1</label>
+                            <input
+                              type="text"
+                              value={kitForm.add1 || ""}
+                              onChange={e => setKitForm({ ...kitForm, add1: e.target.value.toUpperCase() })}
+                              placeholder="Patient Address Line 1"
+                              style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={lbl}>Remark / Doctor Instructions</label>
+                            <input
+                              type="text"
+                              value={kitForm.remark || ""}
+                              onChange={e => setKitForm({ ...kitForm, remark: e.target.value })}
+                              placeholder="Instructions (e.g. after food, avoid cold water)"
+                              style={{ ...inp, background: "#ffffff" }}
+                            />
+                          </div>
+                          <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: "8px" }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                              <input
+                                type="checkbox"
+                                checked={!!kitForm.viewLocation}
+                                onChange={e => setKitForm({ ...kitForm, viewLocation: e.target.checked })}
+                              />
+                              <span style={{ fontWeight: "700", color: "#334155" }}>View Location</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Row 4: Add 2 | Contact | Disc % */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 180px 130px", gap: "10px" }}>
+                          <div>
+                            <label style={lbl}>Address Line 2</label>
+                            <input
+                              type="text"
+                              value={kitForm.add2 || ""}
+                              onChange={e => setKitForm({ ...kitForm, add2: e.target.value.toUpperCase() })}
+                              placeholder="Patient City / Area"
+                              style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={lbl}>Contact No.</label>
+                            <input
+                              type="text"
+                              value={kitForm.contact || ""}
+                              onChange={e => setKitForm({ ...kitForm, contact: e.target.value })}
+                              placeholder="Mobile No."
+                              style={{ ...inp, background: "#ffffff" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={lbl}>Discount %</label>
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={kitForm.disc ?? 0}
+                                onChange={e => setKitForm({ ...kitForm, disc: Number(e.target.value) || 0 })}
+                                style={{ ...inp, background: "#ffffff", textAlign: "center", fontWeight: "700" }}
+                              />
+                              <span style={{ fontSize: "12px", fontWeight: "700", color: "#64748b" }}>%</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ─── ADD MEDICINE QUICK BAR ─── */}
+                      <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "10px 14px", marginBottom: "14px", display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                        <div style={{ position: "relative", flex: "1 1 260px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: "#475569", display: "block", marginBottom: "4px" }}>
+                            Search Medicine to Add:
+                          </span>
+                          <div style={{ position: "relative" }}>
+                            <Search size={13} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                            <input
+                              placeholder="Type Medicine Name or Barcode..."
+                              value={kitItemSearchText}
+                              onChange={e => {
+                                setKitItemSearchText(e.target.value);
+                                setKitItemDropdown(true);
+                              }}
+                              onFocus={() => setKitItemDropdown(true)}
+                              style={{ ...inp, paddingLeft: "30px", height: "34px", width: "100%" }}
+                            />
+                          </div>
+
+                          {/* Inventory Item Autocomplete Dropdown */}
+                          {kitItemDropdown && matchingInventoryItems.length > 0 && (
+                            <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", zIndex: 70, marginTop: "4px", overflow: "hidden", maxHeight: "250px", overflowY: "auto" }}>
+                              {matchingInventoryItems.map(invItem => (
+                                <div
+                                  key={invItem.id}
+                                  onClick={() => handleAddMedicineToKit(invItem)}
+                                  style={{ padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                  onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                  onMouseLeave={e => e.currentTarget.style.background = "white"}
+                                >
+                                  <div>
+                                    <div style={{ fontWeight: "700", fontSize: "12px", color: "#1e293b" }}>{invItem.name}</div>
+                                    <div style={{ fontSize: "10px", color: "#64748b" }}>
+                                      {invItem.company || "General"} | Stock: {invItem.stock || 0} {invItem.unit || ""} {invItem.location ? `| Loc: ${invItem.location}` : ""}
+                                    </div>
+                                  </div>
+                                  <div style={{ textAlign: "right" }}>
+                                    <div style={{ fontWeight: "800", color: "#2563eb", fontSize: "12px" }}>₹{Number(invItem.price || invItem.mrp || 0).toFixed(2)}</div>
+                                    <span style={{ fontSize: "9px", background: "#dcfce7", color: "#166534", padding: "1px 5px", borderRadius: "3px", fontWeight: "700" }}>+ Add to Kit</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Quick Dosage Preset */}
+                        <div style={{ width: "110px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: "#475569", display: "block", marginBottom: "4px" }}>Schedule:</span>
+                          <select
+                            value={kitQuickDosage}
+                            onChange={e => setKitQuickDosage(e.target.value)}
+                            style={{ ...inp, height: "34px", padding: "4px 8px" }}
+                          >
+                            <option value="1-0-1">1-0-1 (BD)</option>
+                            <option value="1-1-1">1-1-1 (TDS)</option>
+                            <option value="1-0-0">1-0-0 (OD Morn)</option>
+                            <option value="0-0-1">0-0-1 (OD Night)</option>
+                            <option value="0.5-0-0.5">0.5-0-0.5 (Half)</option>
+                          </select>
+                        </div>
+
+                        {/* Quick Days */}
+                        <div style={{ width: "80px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: "#475569", display: "block", marginBottom: "4px" }}>Days:</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={kitQuickDays}
+                            onChange={e => setKitQuickDays(Number(e.target.value) || 1)}
+                            style={{ ...inp, height: "34px", textAlign: "center", fontWeight: "700" }}
+                          />
+                        </div>
+
+                        {/* Direct Add Blank Row Button */}
+                        <div style={{ alignSelf: "flex-end" }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newEmptyRow = {
+                                id: uid(),
+                                itemId: "",
+                                itemName: "NEW MEDICINE",
+                                morning: 1,
+                                noon: 0,
+                                evening: 1,
+                                night: 0,
+                                days: 5,
+                                total: 10,
+                                sRate: 10,
+                                location: ""
+                              };
+                              setKitForm({ ...kitForm, items: [...(kitForm.items || []), newEmptyRow] });
+                              setKitSelectedRowIndex((kitForm.items || []).length);
+                            }}
+                            style={{ ...btn("#0284c7"), height: "34px", padding: "0 12px", fontSize: "11px", fontWeight: "700" }}
+                          >
+                            <Plus size={12} /> Add Blank Row
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* ─── MEDICINE ITEMS GRID (Matching Legacy Columns Exactly) ─── */}
+                      <div style={{ border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", marginBottom: "14px" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                          <thead>
+                            <tr style={{ background: "#0f172a", color: "#ffffff", fontSize: "11px", textTransform: "uppercase" }}>
+                              <th style={{ padding: "8px 6px", width: "30px", textAlign: "center" }}>#</th>
+                              <th style={{ padding: "8px 10px", textAlign: "left" }}>Item Name</th>
+                              <th style={{ padding: "8px 4px", width: "65px", textAlign: "center" }}>Morning</th>
+                              <th style={{ padding: "8px 4px", width: "65px", textAlign: "center" }}>Noon</th>
+                              <th style={{ padding: "8px 4px", width: "65px", textAlign: "center" }}>Evening</th>
+                              <th style={{ padding: "8px 4px", width: "65px", textAlign: "center" }}>Night</th>
+                              <th style={{ padding: "8px 6px", width: "65px", textAlign: "center" }}>Days</th>
+                              <th style={{ padding: "8px 6px", width: "70px", textAlign: "center" }}>Total</th>
+                              <th style={{ padding: "8px 6px", width: "80px", textAlign: "right" }}>Srate</th>
+                              <th style={{ padding: "8px 8px", width: "90px", textAlign: "right" }}>Amount</th>
+                              {kitForm.viewLocation && (
+                                <th style={{ padding: "8px 6px", width: "85px", textAlign: "center" }}>Location</th>
+                              )}
+                              <th style={{ padding: "8px 6px", width: "40px", textAlign: "center" }}>Del</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(!kitForm.items || kitForm.items.length === 0) ? (
+                              <tr>
+                                <td colSpan={kitForm.viewLocation ? 12 : 11} style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}>
+                                  No medicines added to this Kit yet. Use the search bar above to add medicines.
+                                </td>
+                              </tr>
+                            ) : (
+                              kitForm.items.map((it, idx) => {
+                                const rowSelected = kitSelectedRowIndex === idx;
+                                const rowAmount = (Number(it.total) || 0) * (Number(it.sRate) || 0);
+
+                                return (
+                                  <tr
+                                    key={it.id || idx}
+                                    onClick={() => setKitSelectedRowIndex(idx)}
+                                    style={{
+                                      background: rowSelected ? "#eff6ff" : (idx % 2 === 0 ? "#ffffff" : "#f8fafc"),
+                                      borderBottom: "1px solid #e2e8f0",
+                                      cursor: "pointer"
+                                    }}
+                                  >
+                                    <td style={{ padding: "6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>
+                                      {idx + 1}
+                                    </td>
+                                    <td style={{ padding: "4px 8px" }}>
+                                      <input
+                                        type="text"
+                                        value={it.itemName || ""}
+                                        onChange={e => handleUpdateRow(idx, "itemName", e.target.value.toUpperCase())}
+                                        style={{ ...inp, padding: "4px 6px", fontSize: "12px", fontWeight: "700", textTransform: "uppercase", width: "100%" }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: "4px 4px", textAlign: "center" }}>
+                                      <input
+                                        type="number"
+                                        step="0.5"
+                                        min="0"
+                                        value={it.morning ?? 0}
+                                        onChange={e => handleUpdateRow(idx, "morning", Number(e.target.value) || 0)}
+                                        style={{ ...inp, padding: "4px 2px", fontSize: "12px", textAlign: "center", width: "100%", color: "#1e40af", fontWeight: "700" }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: "4px 4px", textAlign: "center" }}>
+                                      <input
+                                        type="number"
+                                        step="0.5"
+                                        min="0"
+                                        value={it.noon ?? 0}
+                                        onChange={e => handleUpdateRow(idx, "noon", Number(e.target.value) || 0)}
+                                        style={{ ...inp, padding: "4px 2px", fontSize: "12px", textAlign: "center", width: "100%", color: "#1e40af", fontWeight: "700" }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: "4px 4px", textAlign: "center" }}>
+                                      <input
+                                        type="number"
+                                        step="0.5"
+                                        min="0"
+                                        value={it.evening ?? 0}
+                                        onChange={e => handleUpdateRow(idx, "evening", Number(e.target.value) || 0)}
+                                        style={{ ...inp, padding: "4px 2px", fontSize: "12px", textAlign: "center", width: "100%", color: "#1e40af", fontWeight: "700" }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: "4px 4px", textAlign: "center" }}>
+                                      <input
+                                        type="number"
+                                        step="0.5"
+                                        min="0"
+                                        value={it.night ?? 0}
+                                        onChange={e => handleUpdateRow(idx, "night", Number(e.target.value) || 0)}
+                                        style={{ ...inp, padding: "4px 2px", fontSize: "12px", textAlign: "center", width: "100%", color: "#1e40af", fontWeight: "700" }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: "4px 4px", textAlign: "center" }}>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={it.days ?? 1}
+                                        onChange={e => handleUpdateRow(idx, "days", Number(e.target.value) || 1)}
+                                        style={{ ...inp, padding: "4px 2px", fontSize: "12px", textAlign: "center", width: "100%", fontWeight: "600" }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: "4px 4px", textAlign: "center" }}>
+                                      <input
+                                        type="number"
+                                        value={it.total ?? 0}
+                                        onChange={e => handleUpdateRow(idx, "total", Number(e.target.value) || 0)}
+                                        style={{ ...inp, padding: "4px 2px", fontSize: "12px", textAlign: "center", width: "100%", fontWeight: "800", background: "#f1f5f9" }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: "4px 4px", textAlign: "right" }}>
+                                      <input
+                                        type="number"
+                                        step="0.1"
+                                        value={it.sRate ?? 0}
+                                        onChange={e => handleUpdateRow(idx, "sRate", Number(e.target.value) || 0)}
+                                        style={{ ...inp, padding: "4px 4px", fontSize: "12px", textAlign: "right", width: "100%", fontWeight: "600" }}
+                                      />
+                                    </td>
+                                    <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "800", color: "#0f172a" }}>
+                                      ₹{rowAmount.toFixed(2)}
+                                    </td>
+                                    {kitForm.viewLocation && (
+                                      <td style={{ padding: "4px 4px", textAlign: "center" }}>
+                                        <input
+                                          type="text"
+                                          value={it.location || ""}
+                                          onChange={e => handleUpdateRow(idx, "location", e.target.value.toUpperCase())}
+                                          placeholder="Rack"
+                                          style={{ ...inp, padding: "4px 4px", fontSize: "11px", textAlign: "center", width: "100%", textTransform: "uppercase" }}
+                                        />
+                                      </td>
+                                    )}
+                                    <td style={{ padding: "4px 6px", textAlign: "center" }}>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const updated = kitForm.items.filter((_, i) => i !== idx);
+                                          setKitForm({ ...kitForm, items: updated });
+                                          setKitSelectedRowIndex(null);
+                                        }}
+                                        style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", padding: "2px" }}
+                                        title="Delete Row"
+                                      >
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* ─── SUMMARY TOTALS BAR ─── */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "12px 16px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "18px", flexWrap: "wrap", gap: "12px" }}>
+                        <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#475569" }}>
+                          <span>Medicines: <strong style={{ color: "#0f172a" }}>{totalItemsCount}</strong></span>
+                          <span>Total Units: <strong style={{ color: "#2563eb" }}>{totalUnitsCount}</strong></span>
+                          <span>Gross: <strong style={{ color: "#0f172a" }}>₹{grossAmount.toFixed(2)}</strong></span>
+                          {discountPercent > 0 && (
+                            <span style={{ color: "#16a34a" }}>
+                              Disc ({discountPercent}%): <strong>-₹{discountValue.toFixed(2)}</strong>
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: "700", color: "#475569" }}>Net Kit Amount:</span>
+                          <span style={{ fontSize: "18px", fontWeight: "900", color: "#0f172a" }}>₹{netAmount.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {/* ─── EXACT LEGACY BOTTOM ACTION TOOLBAR ─── */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                        {/* Left Group: New, Save, Print, Remove Item, Delete, List */}
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={handleNewKit}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 12px", fontWeight: "700" }}
+                            title="New Blank Kit"
+                          >
+                            New
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveKit}
+                            style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 14px", fontWeight: "800" }}
+                            title="Save Kit"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handlePrintKit}
+                            style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 12px" }}
+                            title="Print Prescription & Dosage Chart"
+                          >
+                            Print
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemoveSelectedItem}
+                            disabled={!kitForm.items || kitForm.items.length === 0}
+                            style={{ ...btn("#64748b"), fontSize: "12px", padding: "7px 12px", opacity: (!kitForm.items || kitForm.items.length === 0) ? 0.6 : 1 }}
+                            title="Remove selected row"
+                          >
+                            Remove Item
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteKit(kitForm)}
+                            style={{ ...btn("#dc2626"), fontSize: "12px", padding: "7px 12px" }}
+                            title="Delete this Kit"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setKitViewMode("list")}
+                            style={{ ...btn("#0284c7"), fontSize: "12px", padding: "7px 12px", fontWeight: "700" }}
+                            title="View all kits in directory"
+                          >
+                            List
+                          </button>
+                        </div>
+
+                        {/* Right Group: <, >, Search, Bill Kit, Close */}
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateKit("prev")}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 10px" }}
+                            title="Previous Kit"
+                          >
+                            <ChevronLeft size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateKit("next")}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 10px" }}
+                            title="Next Kit"
+                          >
+                            <ChevronRight size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setKitViewMode("list")}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 12px" }}
+                            title="Search directory"
+                          >
+                            Search
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleBillKitInSales}
+                            style={{ ...btn("#16a34a"), fontSize: "12px", padding: "7px 14px", fontWeight: "800" }}
+                            title="Bill all kit medicines in Sales POS"
+                          >
+                            ⚡ Bill This Kit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOwnerSubTab("accounts")}
+                            style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px", padding: "7px 14px" }}
+                            title="Close Kit Master"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Doctors */}
             {ownerSubTab === "doctors" && (
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
