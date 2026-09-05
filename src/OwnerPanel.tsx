@@ -935,6 +935,107 @@ export default function OwnerPanel() {
 
     // ── Purchase Bill Delete & Renumbering States ──
   const [showPurchaseBillDelete, setShowPurchaseBillDelete] = useState(false);
+
+  // ═════════════════════════════════════════════════════════════
+  // ACCOUNT MASTER STATES (Theme matching Inventory / Image 2)
+  // ═════════════════════════════════════════════════════════════
+  const defaultAccountForm = {
+    id: "",
+    srNo: 1,
+    name: "",
+    group: "Sundry Creditors",
+    opBal: 0,
+    balType: "Cr",
+    address: "",
+    area: "",
+    city: "",
+    contact: "",
+    mobile: "",
+    email: "",
+    dlNo: "",
+    gstTin: "",
+    panNo: "",
+    state: "24-Gujarat",
+    aadharNo: "",
+    regType: "Regular (GSTIN)",
+    invType: "RD (within state - SGST/UGST)",
+    message: "",
+    remarks: "",
+    // Billing Details (F6)
+    importFormat: "-SELECT-",
+    linkBank: "",
+    bankCharges: "",
+    bankChargesPct: "",
+    invoiceType: "Retail",
+    pMode: "Credit",
+    creditLimit: "",
+    creditDays: "",
+    discountPct: "",
+    depreciation: "",
+    marginPct: "",
+    addPctCc: "",
+    fbt: "",
+    interestPct: "",
+    tdsPct: "",
+    // Other Details (F7)
+    transport: "",
+    distanceKm: "",
+    salesman: "",
+    route: "",
+    priceCategory: "Standard",
+    // Checkboxes
+    askBeforeSave: false,
+    taxNotCalculate: false,
+    salesBillPrint0: false,
+    statusOff: false,
+    adtTaxCalc: false,
+    saleByLp: false,
+    saleByPrateTax: false,
+    saleByPrate: false
+  };
+
+  const [accounts, setAccounts] = useState(() => {
+    try {
+      const stored = localStorage.getItem("store_accounts");
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    // Seed from suppliers if accounts is empty
+    return (suppliers || []).map((s, idx) => ({
+      ...defaultAccountForm,
+      id: s.id || uid(),
+      srNo: idx + 1,
+      name: s.name || "",
+      group: "Sundry Creditors",
+      opBal: s.openingBalance || s.opBal || 0,
+      balType: "Cr",
+      address: s.address || "",
+      city: s.city || "",
+      mobile: s.mobile || "",
+      email: s.email || "",
+      dlNo: s.dlNo || "",
+      gstTin: s.gstTin || "",
+      panNo: s.panNo || "",
+      state: s.state || "24-Gujarat",
+      creditLimit: s.creditLimit || "",
+      creditDays: s.creditDays || ""
+    }));
+  });
+
+  const [accountForm, setAccountForm] = useState(defaultAccountForm);
+  const [showAccountForm, setShowAccountForm] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [accountSearch, setAccountSearch] = useState("");
+  const [accountSearchDropdown, setAccountSearchDropdown] = useState(false);
+  const [accountSearchHighlight, setAccountSearchHighlight] = useState(0);
+  const [accountGroupFilter, setAccountGroupFilter] = useState("All");
+  const [accountSortBy, setAccountSortBy] = useState("name");
+  const [accountActiveOnly, setAccountActiveOnly] = useState(false);
+  const [accountF6F7Tab, setAccountF6F7Tab] = useState("billing"); // "billing" | "other"
+  const [showEnvelopeModal, setShowEnvelopeModal] = useState(false);
+  const [envelopeAccount, setEnvelopeAccount] = useState(null);
+  const [showAccountLedger, setShowAccountLedger] = useState(false);
+  const [ledgerAcc, setLedgerAcc] = useState(null);
+
   const [pbdActiveTab, setPbdActiveTab] = useState<"delete" | "renumber">("delete");
   const [pbdFromDate, setPbdFromDate] = useState(() => {
     const d = new Date();
@@ -1071,7 +1172,7 @@ export default function OwnerPanel() {
                 {label:"Purchase Delete", action:()=>{setShowPurchaseBillDelete(true);setActiveMenu(null);}},
               ]},
               {id:"master", label:"Master", items:[
-                {label:"Account Master", action:()=>{setActiveSection("masters");setOwnerSubTab("suppliers");setActiveMenu(null);}},
+                {label:"Account Master", action:()=>{setActiveSection("masters");setOwnerSubTab("accounts");setActiveMenu(null);}},
                 {label:"Company Master", action:()=>{setActiveSection("masters");setActiveMenu(null);}},
                 {label:"Supplier Master", action:()=>{setActiveSection("masters");setOwnerSubTab("suppliers");setActiveMenu(null);}},
                 {label:"Drug Group Master", action:()=>{setActiveSection("inventory");setActiveMenu(null);}},
@@ -3390,13 +3491,1096 @@ const pending = [];
         {isOwner && activeSection === "masters" && (
           <>
             <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
-              {[{ id: "suppliers", label: "🏭 Suppliers" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "👥 Customers" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
+              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "👥 Customers" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
             </div>
 
             {/* BUNDLE OFFERS */}
-            {ownerSubTab === "offers" && (
+            
+            {/* ═════════════════════════════════════════════════════════════
+                ACCOUNT MASTER (Matching Inventory Page Layout / Image 2)
+            ═════════════════════════════════════════════════════════════ */}
+            {(ownerSubTab === "accounts" || !ownerSubTab) && (() => {
+              // Filtering & Sorting
+              const q = (accountSearch || "").trim().toLowerCase();
+              let filtered = (accounts || []).filter(acc => {
+                if (accountActiveOnly && acc.statusOff) return false;
+                if (accountGroupFilter !== "All" && acc.group !== accountGroupFilter) return false;
+                if (!q) return true;
+                return (
+                  (acc.name || "").toLowerCase().includes(q) ||
+                  (acc.mobile || "").includes(q) ||
+                  (acc.gstTin || "").toLowerCase().includes(q) ||
+                  (acc.city || "").toLowerCase().includes(q) ||
+                  String(acc.srNo || "").includes(q)
+                );
+              });
+
+              if (accountSortBy === "name") {
+                filtered = [...filtered].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+              } else if (accountSortBy === "bal_desc") {
+                filtered = [...filtered].sort((a, b) => Number(b.opBal || 0) - Number(a.opBal || 0));
+              } else if (accountSortBy === "bal_asc") {
+                filtered = [...filtered].sort((a, b) => Number(a.opBal || 0) - Number(b.opBal || 0));
+              } else if (accountSortBy === "sr_desc") {
+                filtered = [...filtered].sort((a, b) => Number(b.srNo || 0) - Number(a.srNo || 0));
+              }
+
+              // Search dropdown list (max 12 results)
+              const searchDropdownResults = q ? (accounts || []).filter(acc =>
+                (acc.name || "").toLowerCase().includes(q) ||
+                (acc.mobile || "").includes(q) ||
+                (acc.gstTin || "").toLowerCase().includes(q)
+              ).slice(0, 12) : [];
+
+              // Open Form Handler
+              const handleOpenForm = (acc = null) => {
+                if (acc) {
+                  setEditingAccount(acc);
+                  setAccountForm({ ...defaultAccountForm, ...acc });
+                } else {
+                  setEditingAccount(null);
+                  const nextSr = accounts.length > 0 ? Math.max(...accounts.map(a => Number(a.srNo || 0))) + 1 : 1;
+                  setAccountForm({ ...defaultAccountForm, id: uid(), srNo: nextSr });
+                }
+                setShowAccountForm(true);
+              };
+
+              // Save Account Handler
+              const handleSaveAccount = () => {
+                if (!accountForm.name || !accountForm.name.trim()) {
+                  showToast("Account Name is required!", "error");
+                  return;
+                }
+
+                const accId = accountForm.id || uid();
+                const accData = {
+                  ...accountForm,
+                  id: accId,
+                  name: accountForm.name.trim().toUpperCase(),
+                  srNo: Number(accountForm.srNo) || (accounts.length + 1),
+                  opBal: Number(accountForm.opBal) || 0,
+                  updatedAt: new Date().toISOString()
+                };
+
+                let updatedList;
+                if (editingAccount) {
+                  updatedList = accounts.map(a => a.id === editingAccount.id ? accData : a);
+                } else {
+                  updatedList = [...accounts, accData];
+                }
+
+                setAccounts(updatedList);
+                try {
+                  localStorage.setItem("store_accounts", JSON.stringify(updatedList));
+                } catch (_) {}
+
+                // Sync with suppliers if group is Sundry Creditors
+                if (accData.group === "Sundry Creditors" || accData.group === "Suppliers") {
+                  const existingSupp = (suppliers || []).find(s => s.id === accData.id || s.name?.toUpperCase() === accData.name);
+                  const suppEntry = {
+                    id: existingSupp?.id || accData.id,
+                    name: accData.name,
+                    mobile: accData.mobile,
+                    email: accData.email,
+                    city: accData.city,
+                    state: accData.state,
+                    address: accData.address,
+                    gstTin: accData.gstTin,
+                    dlNo: accData.dlNo,
+                    panNo: accData.panNo,
+                    creditLimit: accData.creditLimit,
+                    creditDays: accData.creditDays,
+                    openingBalance: accData.opBal,
+                    updatedAt: new Date().toISOString()
+                  };
+                  if (existingSupp) {
+                    saveSuppliers((suppliers || []).map(s => s.id === existingSupp.id ? suppEntry : s));
+                  } else {
+                    saveSuppliers([...(suppliers || []), suppEntry]);
+                  }
+                }
+
+                showToast(editingAccount ? "Account updated successfully!" : "Account created successfully!");
+                setShowAccountForm(false);
+                setEditingAccount(null);
+              };
+
+              // Delete Account Handler
+              const handleDeleteAccount = (accId) => {
+                const target = accounts.find(a => a.id === accId);
+                showConfirm(`Are you sure you want to delete account "${target?.name || ''}"?`, () => {
+                  const nextList = accounts.filter(a => a.id !== accId);
+                  setAccounts(nextList);
+                  try {
+                    localStorage.setItem("store_accounts", JSON.stringify(nextList));
+                  } catch (_) {}
+                  // Also remove from suppliers if matching
+                  if (target?.group === "Sundry Creditors") {
+                    saveSuppliers((suppliers || []).filter(s => s.id !== accId && s.name !== target.name));
+                  }
+                  if (editingAccount?.id === accId) {
+                    setShowAccountForm(false);
+                    setEditingAccount(null);
+                  }
+                  showToast("Account deleted successfully!");
+                });
+              };
+
+              // Record Navigation (< Prev & Next >)
+              const handleNavigate = (direction) => {
+                if (accounts.length === 0) return;
+                const currentIdx = editingAccount ? accounts.findIndex(a => a.id === editingAccount.id) : 0;
+                let nextIdx = direction === "prev" ? currentIdx - 1 : currentIdx + 1;
+                if (nextIdx < 0) nextIdx = accounts.length - 1;
+                if (nextIdx >= accounts.length) nextIdx = 0;
+                const target = accounts[nextIdx];
+                setEditingAccount(target);
+                setAccountForm({ ...defaultAccountForm, ...target });
+              };
+
+              // GST Parse & Auto-fill
+              const handleGSTAutoFill = () => {
+                const gst = (accountForm.gstTin || "").trim().toUpperCase();
+                if (!gst || gst.length < 2) {
+                  showToast("Please enter a valid 15-character GSTIN first", "error");
+                  return;
+                }
+
+                const stateCode = gst.substring(0, 2);
+                const stateMap = {
+                  "01": "01-Jammu & Kashmir", "02": "02-Himachal Pradesh", "03": "03-Punjab",
+                  "04": "04-Chandigarh", "05": "05-Uttarakhand", "06": "06-Haryana",
+                  "07": "07-Delhi", "08": "08-Rajasthan", "09": "09-Uttar Pradesh",
+                  "10": "10-Bihar", "19": "19-West Bengal", "23": "23-Madhya Pradesh",
+                  "24": "24-Gujarat", "27": "27-Maharashtra", "29": "29-Karnataka",
+                  "32": "32-Kerala", "33": "33-Tamil Nadu", "36": "36-Telangana", "37": "37-Andhra Pradesh"
+                };
+
+                const detectedState = stateMap[stateCode] || `${stateCode}-Other`;
+                const isLocal = stateCode === "24";
+                const pan = gst.length >= 12 ? gst.substring(2, 12) : accountForm.panNo;
+
+                setAccountForm(prev => ({
+                  ...prev,
+                  gstTin: gst,
+                  state: detectedState,
+                  panNo: pan || prev.panNo,
+                  regType: "Regular (GSTIN)",
+                  invType: isLocal ? "RD (within state - SGST/UGST)" : "Inter-state (IGST)"
+                }));
+
+                showToast(`State: ${detectedState}, PAN: ${pan || 'Auto'} verified!`);
+              };
+
+              // Print Accounts Directory
+              const handlePrintList = () => {
+                const printWindow = window.open("", "_blank");
+                if (!printWindow) return;
+                const rows = filtered.map((a, i) => `
+                  <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 6px; text-align: center;">${i + 1}</td>
+                    <td style="padding: 6px; text-align: center;">${a.srNo || '-'}</td>
+                    <td style="padding: 6px; font-weight: bold;">${a.name}</td>
+                    <td style="padding: 6px;">${a.group || '-'}</td>
+                    <td style="padding: 6px;">${a.city || '-'}</td>
+                    <td style="padding: 6px;">${a.mobile || '-'}</td>
+                    <td style="padding: 6px;">${a.gstTin || '-'}</td>
+                    <td style="padding: 6px; text-align: right;">₹${Number(a.opBal || 0).toFixed(2)} ${a.balType || 'Cr'}</td>
+                  </tr>
+                `).join("");
+
+                printWindow.document.write(`
+                  <html>
+                    <head>
+                      <title>Accounts Directory - Shiv Dhara Medical Store</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; color: #111; }
+                        h2, h4 { margin: 0 0 6px 0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th { background: #0f172a; color: white; padding: 8px 6px; text-align: left; }
+                      </style>
+                    </head>
+                    <body>
+                      <h2>Shiv Dhara Medical Store</h2>
+                      <h4>Accounts Directory Master Register (Total: ${filtered.length})</h4>
+                      <p style="font-size: 11px; color: #555;">Generated: ${new Date().toLocaleString()}</p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style="width: 35px; text-align: center;">#</th>
+                            <th style="width: 45px; text-align: center;">Sr No</th>
+                            <th>Account Name</th>
+                            <th>Group</th>
+                            <th>City</th>
+                            <th>Mobile</th>
+                            <th>GSTIN</th>
+                            <th style="text-align: right;">Opening Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                      </table>
+                    </body>
+                  </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => printWindow.print(), 300);
+              };
+
+              return (
+                <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
+                  {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "26px" }}>🏛️</span>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Account Master</h2>
+                      <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>Party Ledgers, Suppliers, Customers & Financial Accounts</p>
+                    </div>
+
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center" }}>
+                      <button
+                        onClick={handlePrintList}
+                        style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Printer size={13} /> Print List
+                      </button>
+                      <button
+                        onClick={() => handleOpenForm(null)}
+                        style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Plus size={13} /> Add Account
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ─── SEARCH & FILTER BAR (Inventory Style / Image 2) ─── */}
+                  <div style={{ background: "white", borderRadius: "12px", padding: "14px 16px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                    <div style={{ flex: 1, minWidth: "220px", position: "relative" }}>
+                      <Search size={13} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                      <input
+                        placeholder="Search Account Name, Mobile or GSTIN... + Enter"
+                        value={accountSearch}
+                        onChange={e => {
+                          setAccountSearch(e.target.value);
+                          setAccountSearchDropdown(true);
+                          setAccountSearchHighlight(0);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setAccountSearchHighlight(prev => Math.min(prev + 1, searchDropdownResults.length - 1));
+                          } else if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setAccountSearchHighlight(prev => Math.max(prev - 1, 0));
+                          } else if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (searchDropdownResults.length > 0 && accountSearchDropdown) {
+                              handleOpenForm(searchDropdownResults[accountSearchHighlight]);
+                              setAccountSearchDropdown(false);
+                              setAccountSearch("");
+                            } else if (q && filtered.length > 0) {
+                              handleOpenForm(filtered[0]);
+                              setAccountSearchDropdown(false);
+                              setAccountSearch("");
+                            } else if (q) {
+                              showToast("No account found matching: " + accountSearch, "error");
+                            }
+                          }
+                        }}
+                        onFocus={() => setAccountSearchDropdown(true)}
+                        onBlur={() => setTimeout(() => setAccountSearchDropdown(false), 200)}
+                        style={{ ...inp, paddingLeft: "30px", width: "100%", height: "36px" }}
+                      />
+
+                      {/* Search Dropdown Popup */}
+                      {accountSearchDropdown && searchDropdownResults.length > 0 && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden", maxHeight: "280px", overflowY: "auto" }}>
+                          {searchDropdownResults.map((acc, idx) => (
+                            <div
+                              key={acc.id}
+                              onClick={() => {
+                                handleOpenForm(acc);
+                                setAccountSearchDropdown(false);
+                                setAccountSearch("");
+                              }}
+                              onMouseEnter={() => setAccountSearchHighlight(idx)}
+                              style={{
+                                padding: "8px 12px",
+                                cursor: "pointer",
+                                background: idx === accountSearchHighlight ? "#f1f5f9" : "white",
+                                borderBottom: "1px solid #f1f5f9",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center"
+                              }}
+                            >
+                              <div>
+                                <div style={{ fontSize: "12px", fontWeight: "700", color: "#1e293b" }}>{acc.name}</div>
+                                <div style={{ fontSize: "10px", color: "#64748b" }}>
+                                  {acc.group} {acc.city ? `· ${acc.city}` : ""} {acc.mobile ? `· 📱 ${acc.mobile}` : ""}
+                                </div>
+                              </div>
+                              <span style={{ fontSize: "11px", fontWeight: "700", color: acc.balType === "Dr" ? "#dc2626" : "#16a34a" }}>
+                                ₹{Number(acc.opBal || 0).toFixed(2)} {acc.balType}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <select
+                      value={accountGroupFilter}
+                      onChange={e => setAccountGroupFilter(e.target.value)}
+                      style={{ ...inp, width: "auto", height: "36px" }}
+                    >
+                      <option value="All">All Groups</option>
+                      <option value="Sundry Creditors">Sundry Creditors (Suppliers)</option>
+                      <option value="Sundry Debtors">Sundry Debtors (Customers)</option>
+                      <option value="Bank Accounts">Bank Accounts</option>
+                      <option value="Cash Accounts">Cash Accounts</option>
+                      <option value="Direct Expenses">Direct Expenses</option>
+                      <option value="Indirect Expenses">Indirect Expenses</option>
+                      <option value="Duties & Taxes">Duties & Taxes</option>
+                      <option value="Capital Account">Capital Account</option>
+                    </select>
+
+                    <select
+                      value={accountSortBy}
+                      onChange={e => setAccountSortBy(e.target.value)}
+                      style={{ ...inp, width: "auto", height: "36px" }}
+                    >
+                      <option value="name">Name A-Z</option>
+                      <option value="bal_desc">Balance ↓</option>
+                      <option value="bal_asc">Balance ↑</option>
+                      <option value="sr_desc">Sr No ↓</option>
+                    </select>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "600", color: "#475569", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={accountActiveOnly}
+                        onChange={e => setAccountActiveOnly(e.target.checked)}
+                      />
+                      Active Only
+                    </label>
+                  </div>
+
+                  {/* ─── ADD / EDIT ACCOUNT CARD (Theme: Add Item in Image 2 + All Legacy Fields) ─── */}
+                  {showAccountForm && (
+                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                      {/* Card Title & Close */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "18px" }}>🏛️</span>
+                          <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
+                            {editingAccount ? `Edit Account: ${editingAccount.name}` : "Add New Account"}
+                          </h3>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: "4px" }}>
+                            Sr. No: {accountForm.srNo || "Auto"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => { setShowAccountForm(false); setEditingAccount(null); }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                      {/* Form Grid (Clean Modern Layout matching Image 2) */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: "12px", marginBottom: "16px" }}>
+                        {/* Sr.No (Legacy Highlighted Style) */}
+                        <div>
+                          <label style={lbl}>Sr. No.</label>
+                          <input
+                            type="number"
+                            value={accountForm.srNo || ""}
+                            onChange={e => setAccountForm({ ...accountForm, srNo: e.target.value })}
+                            placeholder="Auto"
+                            style={{ ...inp, background: "#fce7f3", border: "1px solid #f472b6", fontWeight: "800", color: "#831843" }}
+                          />
+                        </div>
+
+                        {/* Account Group */}
+                        <div>
+                          <label style={lbl}>Account Group *</label>
+                          <select
+                            value={accountForm.group || "Sundry Creditors"}
+                            onChange={e => setAccountForm({ ...accountForm, group: e.target.value })}
+                            style={{ ...inp, fontWeight: "600" }}
+                          >
+                            <option value="Sundry Creditors">Sundry Creditors (Suppliers)</option>
+                            <option value="Sundry Debtors">Sundry Debtors (Customers)</option>
+                            <option value="Bank Accounts">Bank Accounts</option>
+                            <option value="Cash Accounts">Cash Accounts</option>
+                            <option value="Direct Expenses">Direct Expenses</option>
+                            <option value="Indirect Expenses">Indirect Expenses</option>
+                            <option value="Duties & Taxes">Duties & Taxes</option>
+                            <option value="Capital Account">Capital Account</option>
+                          </select>
+                        </div>
+
+                        {/* Opening Balance & Type */}
+                        <div>
+                          <label style={lbl}>Opening Balance & Type</label>
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <input
+                              type="number"
+                              value={accountForm.opBal || ""}
+                              onChange={e => setAccountForm({ ...accountForm, opBal: e.target.value })}
+                              placeholder="0.00"
+                              style={{ ...inp, flex: 1, fontWeight: "700" }}
+                            />
+                            <select
+                              value={accountForm.balType || "Cr"}
+                              onChange={e => setAccountForm({ ...accountForm, balType: e.target.value })}
+                              style={{ ...inp, width: "65px", fontWeight: "800", color: accountForm.balType === "Dr" ? "#dc2626" : "#16a34a" }}
+                            >
+                              <option value="Cr">Cr</option>
+                              <option value="Dr">Dr</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Account Name */}
+                        <div style={{ gridColumn: "span 2" }}>
+                          <label style={lbl}>Account Name *</label>
+                          <input
+                            value={accountForm.name || ""}
+                            onChange={e => setAccountForm({ ...accountForm, name: e.target.value.toUpperCase() })}
+                            placeholder="e.g. ZYDUS HEALTHCARE LTD or SHREE GANESH PHARMA"
+                            style={{ ...inp, textTransform: "uppercase", fontWeight: "700" }}
+                          />
+                        </div>
+
+                        {/* Area */}
+                        <div>
+                          <label style={lbl}>Area</label>
+                          <input
+                            value={accountForm.area || ""}
+                            onChange={e => setAccountForm({ ...accountForm, area: e.target.value.toUpperCase() })}
+                            placeholder="e.g. RING ROAD"
+                            style={{ ...inp, textTransform: "uppercase" }}
+                          />
+                        </div>
+
+                        {/* City */}
+                        <div>
+                          <label style={lbl}>City</label>
+                          <input
+                            value={accountForm.city || ""}
+                            onChange={e => setAccountForm({ ...accountForm, city: e.target.value.toUpperCase() })}
+                            placeholder="e.g. SURAT"
+                            style={{ ...inp, textTransform: "uppercase" }}
+                          />
+                        </div>
+
+                        {/* Contact Person */}
+                        <div>
+                          <label style={lbl}>Contact Person</label>
+                          <input
+                            value={accountForm.contact || ""}
+                            onChange={e => setAccountForm({ ...accountForm, contact: e.target.value.toUpperCase() })}
+                            placeholder="Manager / Owner Name"
+                            style={{ ...inp, textTransform: "uppercase" }}
+                          />
+                        </div>
+
+                        {/* Mobile */}
+                        <div>
+                          <label style={lbl}>Mobile Number</label>
+                          <input
+                            value={accountForm.mobile || ""}
+                            onChange={e => setAccountForm({ ...accountForm, mobile: e.target.value.replace(/[^0-9]/g, "") })}
+                            placeholder="10-digit mobile"
+                            maxLength={10}
+                            style={{ ...inp, fontWeight: "600" }}
+                          />
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                          <label style={lbl}>Email Address</label>
+                          <input
+                            type="email"
+                            value={accountForm.email || ""}
+                            onChange={e => setAccountForm({ ...accountForm, email: e.target.value })}
+                            placeholder="account@pharma.com"
+                            style={inp}
+                          />
+                        </div>
+
+                        {/* Drug License No (D.L.No) */}
+                        <div>
+                          <label style={lbl}>D.L. No. (Drug License)</label>
+                          <input
+                            value={accountForm.dlNo || ""}
+                            onChange={e => setAccountForm({ ...accountForm, dlNo: e.target.value.toUpperCase() })}
+                            placeholder="e.g. 20B/21B-GJ-10029"
+                            style={{ ...inp, textTransform: "uppercase" }}
+                          />
+                        </div>
+
+                        {/* GSTIN */}
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <label style={lbl}>GSTIN / Tin</label>
+                            <button
+                              type="button"
+                              onClick={handleGSTAutoFill}
+                              style={{ background: "none", border: "none", color: "#2563eb", fontSize: "10px", fontWeight: "700", cursor: "pointer", padding: 0 }}
+                            >
+                              ⚡ Auto-Fill
+                            </button>
+                          </div>
+                          <input
+                            value={accountForm.gstTin || ""}
+                            onChange={e => setAccountForm({ ...accountForm, gstTin: e.target.value.toUpperCase() })}
+                            placeholder="15-digit GSTIN"
+                            maxLength={15}
+                            style={{ ...inp, textTransform: "uppercase", fontWeight: "700" }}
+                          />
+                        </div>
+
+                        {/* PAN No */}
+                        <div>
+                          <label style={lbl}>PAN No</label>
+                          <input
+                            value={accountForm.panNo || ""}
+                            onChange={e => setAccountForm({ ...accountForm, panNo: e.target.value.toUpperCase() })}
+                            placeholder="10-digit PAN"
+                            maxLength={10}
+                            style={{ ...inp, textTransform: "uppercase" }}
+                          />
+                        </div>
+
+                        {/* State */}
+                        <div>
+                          <label style={lbl}>State</label>
+                          <select
+                            value={accountForm.state || "24-Gujarat"}
+                            onChange={e => setAccountForm({ ...accountForm, state: e.target.value })}
+                            style={inp}
+                          >
+                            <option value="24-Gujarat">24-Gujarat</option>
+                            <option value="27-Maharashtra">27-Maharashtra</option>
+                            <option value="08-Rajasthan">08-Rajasthan</option>
+                            <option value="23-Madhya Pradesh">23-Madhya Pradesh</option>
+                            <option value="07-Delhi">07-Delhi</option>
+                            <option value="09-Uttar Pradesh">09-Uttar Pradesh</option>
+                            <option value="29-Karnataka">29-Karnataka</option>
+                            <option value="Other">Other State</option>
+                          </select>
+                        </div>
+
+                        {/* Aadhar No */}
+                        <div>
+                          <label style={lbl}>Aadhar No</label>
+                          <input
+                            value={accountForm.aadharNo || ""}
+                            onChange={e => setAccountForm({ ...accountForm, aadharNo: e.target.value.replace(/[^0-9]/g, "") })}
+                            placeholder="12-digit Aadhar"
+                            maxLength={12}
+                            style={inp}
+                          />
+                        </div>
+
+                        {/* Registration Type */}
+                        <div>
+                          <label style={lbl}>Registration Type</label>
+                          <select
+                            value={accountForm.regType || "Regular (GSTIN)"}
+                            onChange={e => setAccountForm({ ...accountForm, regType: e.target.value })}
+                            style={inp}
+                          >
+                            <option value="Regular (GSTIN)">Regular (GSTIN)</option>
+                            <option value="Composition">Composition</option>
+                            <option value="Unregistered">Unregistered</option>
+                            <option value="Consumer">Consumer</option>
+                          </select>
+                        </div>
+
+                        {/* Invoice Type */}
+                        <div>
+                          <label style={lbl}>Inv. Type</label>
+                          <select
+                            value={accountForm.invType || "RD (within state - SGST/UGST)"}
+                            onChange={e => setAccountForm({ ...accountForm, invType: e.target.value })}
+                            style={inp}
+                          >
+                            <option value="RD (within state - SGST/UGST)">RD (within state - SGST/UGST)</option>
+                            <option value="Inter-state (IGST)">Inter-state (IGST)</option>
+                            <option value="Export">Export</option>
+                          </select>
+                        </div>
+
+                        {/* Full Address */}
+                        <div style={{ gridColumn: "span 2" }}>
+                          <label style={lbl}>Address</label>
+                          <textarea
+                            value={accountForm.address || ""}
+                            onChange={e => setAccountForm({ ...accountForm, address: e.target.value.toUpperCase() })}
+                            placeholder="Complete shop/office address..."
+                            style={{ ...inp, height: "48px", resize: "vertical", textTransform: "uppercase" }}
+                          />
+                        </div>
+
+                        {/* Message on Bill */}
+                        <div>
+                          <label style={lbl}>Billing Alert Message</label>
+                          <input
+                            value={accountForm.message || ""}
+                            onChange={e => setAccountForm({ ...accountForm, message: e.target.value })}
+                            placeholder="Popup message when billing..."
+                            style={inp}
+                          />
+                        </div>
+
+                        {/* Remarks */}
+                        <div>
+                          <label style={lbl}>Remarks / Internal Notes</label>
+                          <input
+                            value={accountForm.remarks || ""}
+                            onChange={e => setAccountForm({ ...accountForm, remarks: e.target.value })}
+                            placeholder="Internal notes..."
+                            style={inp}
+                          />
+                        </div>
+                      </div>
+
+                      {/* ─── F6 / F7 SUB-TAB CONTAINER (Legacy Features) ─── */}
+                      <div style={{ background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", padding: "16px", marginBottom: "16px" }}>
+                        <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px", marginBottom: "12px" }}>
+                          <button
+                            type="button"
+                            onClick={() => setAccountF6F7Tab("billing")}
+                            style={{
+                              padding: "6px 14px",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontWeight: "800",
+                              fontSize: "12px",
+                              background: accountF6F7Tab === "billing" ? "#1e293b" : "transparent",
+                              color: accountF6F7Tab === "billing" ? "#ffffff" : "#64748b"
+                            }}
+                          >
+                            Billing Detail - F6
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAccountF6F7Tab("other")}
+                            style={{
+                              padding: "6px 14px",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontWeight: "800",
+                              fontSize: "12px",
+                              background: accountF6F7Tab === "other" ? "#1e293b" : "transparent",
+                              color: accountF6F7Tab === "other" ? "#ffffff" : "#64748b"
+                            }}
+                          >
+                            Other Detail - F7
+                          </button>
+                        </div>
+
+                        {accountF6F7Tab === "billing" ? (
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                            <div>
+                              <label style={lbl}>Import Format</label>
+                              <select value={accountForm.importFormat || "-SELECT-"} onChange={e => setAccountForm({ ...accountForm, importFormat: e.target.value })} style={inp}>
+                                <option value="-SELECT-">-SELECT-</option>
+                                <option value="Format A">Format A</option>
+                                <option value="Format B">Format B</option>
+                                <option value="CSV/Excel">CSV / Excel Direct</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label style={lbl}>Link Bank A/c</label>
+                              <input value={accountForm.linkBank || ""} onChange={e => setAccountForm({ ...accountForm, linkBank: e.target.value.toUpperCase() })} placeholder="Linked bank name" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Bank Charges (in %)</label>
+                              <input type="number" value={accountForm.bankChargesPct || ""} onChange={e => setAccountForm({ ...accountForm, bankChargesPct: e.target.value })} placeholder="0.00" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Invoice Type</label>
+                              <select value={accountForm.invoiceType || "Retail"} onChange={e => setAccountForm({ ...accountForm, invoiceType: e.target.value })} style={inp}>
+                                <option value="Retail">Retail</option>
+                                <option value="Tax Invoice">Tax Invoice</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label style={lbl}>Payment Mode</label>
+                              <select value={accountForm.pMode || "Credit"} onChange={e => setAccountForm({ ...accountForm, pMode: e.target.value })} style={inp}>
+                                <option value="Credit">Credit</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="UPI/Digital">UPI / Digital</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label style={lbl}>Credit Limit (₹)</label>
+                              <input type="number" value={accountForm.creditLimit || ""} onChange={e => setAccountForm({ ...accountForm, creditLimit: e.target.value })} placeholder="e.g. 50000" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Credit Days</label>
+                              <input type="number" value={accountForm.creditDays || ""} onChange={e => setAccountForm({ ...accountForm, creditDays: e.target.value })} placeholder="e.g. 21" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Discount in %</label>
+                              <input type="number" value={accountForm.discountPct || ""} onChange={e => setAccountForm({ ...accountForm, discountPct: e.target.value })} placeholder="0.00" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Depreciation</label>
+                              <input type="number" value={accountForm.depreciation || ""} onChange={e => setAccountForm({ ...accountForm, depreciation: e.target.value })} placeholder="0.00" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Margin% On PTR</label>
+                              <input type="number" value={accountForm.marginPct || ""} onChange={e => setAccountForm({ ...accountForm, marginPct: e.target.value })} placeholder="0.00" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Add % For C.C.</label>
+                              <input type="number" value={accountForm.addPctCc || ""} onChange={e => setAccountForm({ ...accountForm, addPctCc: e.target.value })} placeholder="0.00" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Interest %</label>
+                              <input type="number" value={accountForm.interestPct || ""} onChange={e => setAccountForm({ ...accountForm, interestPct: e.target.value })} placeholder="0.00" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>TDS %</label>
+                              <input type="number" value={accountForm.tdsPct || ""} onChange={e => setAccountForm({ ...accountForm, tdsPct: e.target.value })} placeholder="0.00" style={inp} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                            <div>
+                              <label style={lbl}>Transport / Courier</label>
+                              <input value={accountForm.transport || ""} onChange={e => setAccountForm({ ...accountForm, transport: e.target.value.toUpperCase() })} placeholder="e.g. MARUTI ROADWAYS" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Distance (KM)</label>
+                              <input type="number" value={accountForm.distanceKm || ""} onChange={e => setAccountForm({ ...accountForm, distanceKm: e.target.value })} placeholder="e.g. 25" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Salesman / Agent</label>
+                              <input value={accountForm.salesman || ""} onChange={e => setAccountForm({ ...accountForm, salesman: e.target.value.toUpperCase() })} placeholder="Rep Name" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Route / Beat</label>
+                              <input value={accountForm.route || ""} onChange={e => setAccountForm({ ...accountForm, route: e.target.value.toUpperCase() })} placeholder="City Center Beat" style={inp} />
+                            </div>
+                            <div>
+                              <label style={lbl}>Price List Category</label>
+                              <select value={accountForm.priceCategory || "Standard"} onChange={e => setAccountForm({ ...accountForm, priceCategory: e.target.value })} style={inp}>
+                                <option value="Standard">Standard</option>
+                                <option value="Wholesale">Wholesale</option>
+                                <option value="Retail">Retail</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ─── LEGACY BEHAVIOR CHECKBOXES ─── */}
+                      <div style={{ background: "#ffffff", borderRadius: "8px", border: "1px dashed #cbd5e1", padding: "12px", marginBottom: "18px" }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+                          {[
+                            { k: "askBeforeSave", l: "Ask Before Save" },
+                            { k: "statusOff", l: "Status Off (Inactive)" },
+                            { k: "taxNotCalculate", l: "TAX Not Calculate" },
+                            { k: "adtTaxCalc", l: "Adt Tax Calculate (Purchase)" },
+                            { k: "salesBillPrint0", l: "Sales Bill Print 0" },
+                            { k: "saleByLp", l: "Sale By LP" },
+                            { k: "saleByPrateTax", l: "Sale By P.Rate + Tax" },
+                            { k: "saleByPrate", l: "Sale By P.Rate" }
+                          ].map(cb => (
+                            <label key={cb.k} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none" }}>
+                              <input
+                                type="checkbox"
+                                checked={!!accountForm[cb.k]}
+                                onChange={e => setAccountForm({ ...accountForm, [cb.k]: e.target.checked })}
+                              />
+                              <span style={{ fontWeight: cb.k === "statusOff" && accountForm.statusOff ? "800" : "600", color: cb.k === "statusOff" && accountForm.statusOff ? "#dc2626" : "#334155" }}>
+                                {cb.l}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* ─── FORM ACTION BUTTONS ─── */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigate("prev")}
+                            style={{ ...btn("#475569"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Previous Record"
+                          >
+                            <ChevronLeft size={14} /> Prev
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigate("next")}
+                            style={{ ...btn("#475569"), padding: "7px 12px", fontSize: "12px" }}
+                            title="Next Record"
+                          >
+                            Next <ChevronRight size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEnvelopeAccount(accountForm);
+                              setShowEnvelopeModal(true);
+                            }}
+                            style={{ ...btn("#0284c7"), padding: "7px 12px", fontSize: "12px" }}
+                          >
+                            ✉️ Envelop
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleGSTAutoFill}
+                            style={{ ...btn("#7c3aed"), padding: "7px 12px", fontSize: "12px" }}
+                          >
+                            GST Update
+                          </button>
+                          {editingAccount && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAccount(editingAccount.id)}
+                              style={{ ...btn("#dc2626"), padding: "7px 12px", fontSize: "12px" }}
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={() => { setShowAccountForm(false); setEditingAccount(null); }}
+                            style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), padding: "7px 14px", fontSize: "12px" }}
+                          >
+                            <X size={13} /> Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveAccount}
+                            style={{ ...btn("var(--color-primary)"), padding: "7px 18px", fontSize: "12px", fontWeight: "800" }}
+                          >
+                            <CheckCircle size={14} /> {editingAccount ? "Update Account" : "Save Account"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── ACCOUNTS DIRECTORY TABLE / EMPTY SEARCH-TO-EDIT (Inventory Style / Image 2) ─── */}
+                  <div style={{ background: "white", borderRadius: "12px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b" }}>
+                        Registered Accounts ({filtered.length})
+                      </span>
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>
+                        Click any account to edit details or press Enter in search bar
+                      </span>
+                    </div>
+
+                    {filtered.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
+                        <div style={{ fontSize: "40px", opacity: 0.6 }}>🏛️</div>
+                        <p style={{ marginTop: "12px", fontWeight: "700", fontSize: "15px", color: "#334155" }}>
+                          No accounts found matching your criteria
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#64748b" }}>
+                          Add a new account or change your search query.
+                        </p>
+                        <button
+                          onClick={() => handleOpenForm(null)}
+                          style={{ ...btn("var(--color-primary)"), margin: "14px auto 0", fontSize: "12px" }}
+                        >
+                          <Plus size={13} /> Add New Account
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                          <thead>
+                            <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "45px" }}>Sr No</th>
+                              <th style={{ padding: "10px 12px", textAlign: "left" }}>Account Name</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "150px" }}>Group</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>City</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "110px" }}>Mobile</th>
+                              <th style={{ padding: "10px 10px", textAlign: "left", width: "140px" }}>GSTIN</th>
+                              <th style={{ padding: "10px 12px", textAlign: "right", width: "120px" }}>Op. Balance</th>
+                              <th style={{ padding: "10px 8px", textAlign: "center", width: "80px" }}>Status</th>
+                              <th style={{ padding: "10px 12px", textAlign: "center", width: "160px" }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filtered.map((acc, idx) => {
+                              const isInactive = !!acc.statusOff;
+                              return (
+                                <tr
+                                  key={acc.id}
+                                  style={{
+                                    borderBottom: "1px solid #f1f5f9",
+                                    background: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                    transition: "background 0.15s ease"
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
+                                  onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#ffffff" : "#f8fafc"}
+                                >
+                                  <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>
+                                    {acc.srNo || idx + 1}
+                                  </td>
+                                  <td
+                                    onClick={() => handleOpenForm(acc)}
+                                    style={{ padding: "8px 12px", fontWeight: "800", color: "#1e3a8a", cursor: "pointer" }}
+                                    title="Click to edit account"
+                                  >
+                                    {acc.name}
+                                    {acc.contact && <span style={{ display: "block", fontSize: "10px", fontWeight: "400", color: "#64748b" }}>Attn: {acc.contact}</span>}
+                                  </td>
+                                  <td style={{ padding: "8px 10px", color: "#334155" }}>
+                                    <span style={{ background: acc.group === "Sundry Creditors" ? "#e0e7ff" : acc.group === "Sundry Debtors" ? "#dcfce7" : "#f1f5f9", color: acc.group === "Sundry Creditors" ? "#3730a3" : acc.group === "Sundry Debtors" ? "#166534" : "#475569", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "700" }}>
+                                      {acc.group || "Sundry Creditors"}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "8px 10px", color: "#475569" }}>{acc.city || "-"}</td>
+                                  <td style={{ padding: "8px 10px", color: "#475569", fontWeight: "600" }}>{acc.mobile || "-"}</td>
+                                  <td style={{ padding: "8px 10px", fontFamily: "monospace", fontSize: "11px", color: "#334155" }}>
+                                    {acc.gstTin || "-"}
+                                  </td>
+                                  <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: "700", color: acc.balType === "Dr" ? "#dc2626" : "#16a34a" }}>
+                                    ₹{Number(acc.opBal || 0).toFixed(2)} {acc.balType || "Cr"}
+                                  </td>
+                                  <td style={{ padding: "8px 6px", textAlign: "center" }}>
+                                    <span style={{ background: isInactive ? "#fee2e2" : "#dcfce7", color: isInactive ? "#991b1b" : "#166534", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "700" }}>
+                                      {isInactive ? "Off" : "Active"}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                                    <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                                      <button
+                                        onClick={() => handleOpenForm(acc)}
+                                        style={{ ...btn("#2563eb"), padding: "4px 8px", fontSize: "11px" }}
+                                        title="Edit Account"
+                                      >
+                                        <Edit2 size={11} /> Edit
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setEnvelopeAccount(acc);
+                                          setShowEnvelopeModal(true);
+                                        }}
+                                        style={{ ...btn("#0284c7"), padding: "4px 6px", fontSize: "11px" }}
+                                        title="Print Envelope"
+                                      >
+                                        ✉️
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteAccount(acc.id)}
+                                        style={{ ...btn("#dc2626"), padding: "4px 6px", fontSize: "11px" }}
+                                        title="Delete Account"
+                                      >
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ─── ENVELOPE MODAL ─── */}
+                  {showEnvelopeModal && envelopeAccount && (
+                    <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+                      <div style={{ background: "white", borderRadius: "12px", width: "100%", maxWidth: "560px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+                        <div style={{ padding: "14px 20px", background: "#1e293b", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: "700", fontSize: "14px" }}>✉️ Print Envelope Preview</span>
+                          <button onClick={() => setShowEnvelopeModal(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}><X size={16} /></button>
+                        </div>
+                        <div style={{ padding: "30px", border: "2px dashed #cbd5e1", margin: "20px", borderRadius: "8px", background: "#fdfefe" }}>
+                          {/* Sender */}
+                          <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "30px" }}>
+                            <div style={{ fontWeight: "800", color: "#0f172a", fontSize: "13px" }}>SHIV DHARA MEDICAL STORE</div>
+                            <div>Ring Road, Surat, Gujarat</div>
+                            <div>Phone: 9879105901</div>
+                          </div>
+
+                          {/* Receiver */}
+                          <div style={{ marginLeft: "120px", fontSize: "13px", color: "#0f172a", lineHeight: "1.6" }}>
+                            <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: "700" }}>To:</div>
+                            <div style={{ fontWeight: "800", fontSize: "15px", color: "#1e3a8a" }}>{envelopeAccount.name}</div>
+                            {envelopeAccount.contact && <div>Attn: {envelopeAccount.contact}</div>}
+                            <div>{envelopeAccount.address || "Address"}</div>
+                            <div>{envelopeAccount.area ? `${envelopeAccount.area}, ` : ""}{envelopeAccount.city || ""} {envelopeAccount.state ? `(${envelopeAccount.state})` : ""}</div>
+                            {envelopeAccount.mobile && <div style={{ fontWeight: "700", marginTop: "4px" }}>Mobile: {envelopeAccount.mobile}</div>}
+                            {envelopeAccount.dlNo && <div style={{ fontSize: "11px", color: "#64748b" }}>D.L. No: {envelopeAccount.dlNo}</div>}
+                          </div>
+                        </div>
+                        <div style={{ padding: "12px 20px", background: "#f8fafc", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                          <button onClick={() => setShowEnvelopeModal(false)} style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px" }}>Close</button>
+                          <button
+                            onClick={() => {
+                              const pw = window.open("", "_blank");
+                              if (!pw) return;
+                              pw.document.write(`
+                                <html>
+                                  <head>
+                                    <title>Envelope - ${envelopeAccount.name}</title>
+                                    <style>
+                                      body { font-family: Arial, sans-serif; padding: 40px; margin: 0; }
+                                      .sender { font-size: 11px; color: #444; }
+                                      .receiver { margin-top: 50px; margin-left: 180px; font-size: 15px; line-height: 1.6; }
+                                    </style>
+                                  </head>
+                                  <body>
+                                    <div class="sender">
+                                      <strong>SHIV DHARA MEDICAL STORE</strong><br/>
+                                      Ring Road, Surat, Gujarat<br/>
+                                      Phone: 9879105901
+                                    </div>
+                                    <div class="receiver">
+                                      To,<br/>
+                                      <strong style="font-size: 17px;">${envelopeAccount.name}</strong><br/>
+                                      ${envelopeAccount.contact ? `Attn: ${envelopeAccount.contact}<br/>` : ''}
+                                      ${envelopeAccount.address || ''}<br/>
+                                      ${envelopeAccount.area ? `${envelopeAccount.area}, ` : ''}${envelopeAccount.city || ''} ${envelopeAccount.state ? `(${envelopeAccount.state})` : ''}<br/>
+                                      ${envelopeAccount.mobile ? `<strong>Mobile: ${envelopeAccount.mobile}</strong><br/>` : ''}
+                                      ${envelopeAccount.dlNo ? `<span style="font-size: 11px;">D.L. No: ${envelopeAccount.dlNo}</span>` : ''}
+                                    </div>
+                                  </body>
+                                </html>
+                              `);
+                              pw.document.close();
+                              pw.focus();
+                              setTimeout(() => pw.print(), 300);
+                            }}
+                            style={{ ...btn("#0284c7"), fontSize: "12px" }}
+                          >
+                            <Printer size={13} /> Print Envelope
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+{ownerSubTab === "offers" && (
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                   <h2 style={{ margin: 0, fontSize: "17px", fontWeight: "800" }}>🎁 Bundle Offers</h2>
