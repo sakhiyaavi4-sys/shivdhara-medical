@@ -1437,6 +1437,139 @@ export default function OwnerPanel() {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [customPatientMsg, setCustomPatientMsg] = useState("");
 
+  // ─── CONTRACT EMPLOYEE MASTER STATES (Matching Legacy Screenshot) ───
+  const defaultContractCompanies = [
+    "RELIANCE INDUSTRIES LTD (HAZIRA)",
+    "LARSEN & TOUBRO (L&T HAZIRA)",
+    "AM/NS INDIA (ESSAR STEEL)",
+    "GUJARAT GAS CO. LTD",
+    "ONGC HAZIRA PLANT",
+    "ONLINE ORDER A/C",
+    "PENDING PAYMENT A/C"
+  ];
+
+  const defaultContractEmployeeForm = {
+    id: "",
+    srNo: 1,
+    code: "EMP001",
+    name: "",
+    contractCompany: "RELIANCE INDUSTRIES LTD (HAZIRA)",
+    department: "",
+    designation: "",
+    mobile: "",
+    email: "",
+    creditLimit: 25000,
+    remarks: "",
+    dependents: [
+      { id: "dep-1", relation: "Self", name: "", age: 35, gender: "Male" }
+    ]
+  };
+
+  const [contractEmployees, setContractEmployees] = useState(() => {
+    try {
+      const stored = localStorage.getItem("store_contract_employees");
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    return [
+      {
+        id: "ce-101",
+        srNo: 1,
+        code: "EMP001",
+        name: "RAKESH M. SHARMA",
+        contractCompany: "RELIANCE INDUSTRIES LTD (HAZIRA)",
+        department: "OPERATIONS & MAINTENANCE",
+        designation: "SENIOR ENGINEER",
+        mobile: "9825112233",
+        email: "rakesh.sharma@reliance.com",
+        creditLimit: 25000,
+        remarks: "Approved for 100% cashless corporate medicine supply.",
+        dependents: [
+          { id: "dep-1", relation: "Self", name: "RAKESH M. SHARMA", age: 38, gender: "Male" },
+          { id: "dep-2", relation: "Wife", name: "PRIYABEN SHARMA", age: 35, gender: "Female" },
+          { id: "dep-3", relation: "Son", name: "AARAV SHARMA", age: 10, gender: "Male" },
+          { id: "dep-4", relation: "Mother", name: "KANTABEN SHARMA", age: 65, gender: "Female" }
+        ]
+      },
+      {
+        id: "ce-102",
+        srNo: 2,
+        code: "EMP002",
+        name: "PRAKASHBHAI G. DESAI",
+        contractCompany: "LARSEN & TOUBRO (L&T HAZIRA)",
+        department: "HEAVY ENGINEERING",
+        designation: "SUPERVISOR",
+        mobile: "9879012345",
+        email: "prakash.desai@larsentoubro.com",
+        creditLimit: 20000,
+        remarks: "Monthly credit limit approved by HR department.",
+        dependents: [
+          { id: "dep-5", relation: "Self", name: "PRAKASHBHAI G. DESAI", age: 44, gender: "Male" },
+          { id: "dep-6", relation: "Wife", name: "GEETABEN DESAI", age: 41, gender: "Female" },
+          { id: "dep-7", relation: "Daughter", name: "RIDDHI DESAI", age: 16, gender: "Female" },
+          { id: "dep-8", relation: "Father", name: "GOVINDBHAI DESAI", age: 72, gender: "Male" }
+        ]
+      },
+      {
+        id: "ce-103",
+        srNo: 3,
+        code: "EMP003",
+        name: "MANISH K. CHAUHAN",
+        contractCompany: "AM/NS INDIA (ESSAR STEEL)",
+        department: "QUALITY ASSURANCE",
+        designation: "MANAGER",
+        mobile: "9898054321",
+        email: "manish.chauhan@amns.in",
+        creditLimit: 30000,
+        remarks: "Regular corporate account. All bills attached with prescription.",
+        dependents: [
+          { id: "dep-9", relation: "Self", name: "MANISH K. CHAUHAN", age: 42, gender: "Male" },
+          { id: "dep-10", relation: "Wife", name: "MEENABEN CHAUHAN", age: 39, gender: "Female" },
+          { id: "dep-11", relation: "Son", name: "DHRUV CHAUHAN", age: 14, gender: "Male" }
+        ]
+      }
+    ];
+  });
+
+  const [contractEmployeeForm, setContractEmployeeForm] = useState(() => {
+    try {
+      const stored = localStorage.getItem("store_contract_employees");
+      if (stored) {
+        const arr = JSON.parse(stored);
+        if (arr && arr.length > 0) return { ...arr[0] };
+      }
+    } catch (_) {}
+    return {
+      id: "ce-101",
+      srNo: 1,
+      code: "EMP001",
+      name: "RAKESH M. SHARMA",
+      contractCompany: "RELIANCE INDUSTRIES LTD (HAZIRA)",
+      department: "OPERATIONS & MAINTENANCE",
+      designation: "SENIOR ENGINEER",
+      mobile: "9825112233",
+      email: "rakesh.sharma@reliance.com",
+      creditLimit: 25000,
+      remarks: "Approved for 100% cashless corporate medicine supply.",
+      dependents: [
+        { id: "dep-1", relation: "Self", name: "RAKESH M. SHARMA", age: 38, gender: "Male" },
+        { id: "dep-2", relation: "Wife", name: "PRIYABEN SHARMA", age: 35, gender: "Female" },
+        { id: "dep-3", relation: "Son", name: "AARAV SHARMA", age: 10, gender: "Male" },
+        { id: "dep-4", relation: "Mother", name: "KANTABEN SHARMA", age: 65, gender: "Female" }
+      ]
+    };
+  });
+
+  const [editingContractEmpId, setEditingContractEmpId] = useState(null);
+  const [contractEmpViewMode, setContractEmpViewMode] = useState("editor"); // "editor" | "list"
+  const [contractEmpSearch, setContractEmpSearch] = useState("");
+  const [contractEmpCompanyFilter, setContractEmpCompanyFilter] = useState("All");
+  const [showTransferCompanyModal, setShowTransferCompanyModal] = useState(false);
+  const [targetTransferCompany, setTargetTransferCompany] = useState("");
+  const [newDepRelation, setNewDepRelation] = useState("Self");
+  const [newDepName, setNewDepName] = useState("");
+  const [newDepAge, setNewDepAge] = useState(30);
+  const [newDepGender, setNewDepGender] = useState("Male");
+
 
 
 
@@ -1584,7 +1717,7 @@ export default function OwnerPanel() {
                 {label:"Kit Master", action:()=>{setActiveSection("masters");setOwnerSubTab("kits");setKitViewMode("editor");setActiveMenu(null);}},
                 {label:"Doctor Master", action:()=>{setActiveSection("masters");setOwnerSubTab("doctors");setActiveMenu(null);}},
                 {label:"Patient Master", action:()=>{setActiveSection("masters");setOwnerSubTab("customers");setActiveMenu(null);}},
-                {label:"Contract Employee Master", action:()=>{setShowWipModal("Contract Employee Master");}},
+                {label:"Contract Employee Master", action:()=>{setActiveSection("masters");setOwnerSubTab("contract_employees");setContractEmpViewMode("editor");setActiveMenu(null);}},
                 {label:"Other Masters", action:()=>{setActiveSection("masters");setActiveMenu(null);}},
                 {label:"Account Group", action:()=>{setShowWipModal("Account Group");}},
                 {label:"Generic Group Item List", action:()=>{setShowWipModal("Generic Group Item List");}},
@@ -4042,7 +4175,7 @@ const pending = [];
         {isOwner && activeSection === "masters" && (
           <>
             <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
-              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
+              {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "contract_employees", label: "👷 Contract Employee Master" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
             </div>
@@ -11139,6 +11272,960 @@ const pending = [];
                             style={{ ...btn("#16a34a"), fontSize: "12px", padding: "6px 18px", fontWeight: "700" }}
                           >
                             Open WhatsApp & Send 🚀
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* ═════════════════════════════════════════════════════════════
+                CONTRACT EMPLOYEE MASTER (Matching Legacy Screenshot & Light Theme)
+            ═════════════════════════════════════════════════════════════ */}
+            {ownerSubTab === "contract_employees" && (() => {
+              // Ensure consistent data
+              const allEmployees = (contractEmployees || []).map((e, idx) => ({
+                ...defaultContractEmployeeForm,
+                ...e,
+                srNo: e.srNo || idx + 1,
+                code: e.code || ("EMP" + String(idx + 1).padStart(3, "0")),
+                contractCompany: e.contractCompany || "RELIANCE INDUSTRIES LTD (HAZIRA)",
+                dependents: e.dependents || []
+              }));
+
+              // Filtering for directory list
+              const qe = (contractEmpSearch || "").trim().toLowerCase();
+              const filteredEmployees = allEmployees.filter(emp => {
+                if (contractEmpCompanyFilter !== "All" && emp.contractCompany !== contractEmpCompanyFilter) return false;
+                if (!qe) return true;
+                const matchesDep = (emp.dependents || []).some(d => (d.name || "").toLowerCase().includes(qe) || (d.relation || "").toLowerCase().includes(qe));
+                return (
+                  (emp.name || "").toLowerCase().includes(qe) ||
+                  (emp.code || "").toLowerCase().includes(qe) ||
+                  (emp.contractCompany || "").toLowerCase().includes(qe) ||
+                  (emp.department || "").toLowerCase().includes(qe) ||
+                  (emp.designation || "").toLowerCase().includes(qe) ||
+                  (emp.mobile || "").includes(qe) ||
+                  matchesDep ||
+                  String(emp.srNo || "").includes(qe)
+                );
+              });
+
+              // Available companies
+              const companyOptions = [...new Set([
+                ...defaultContractCompanies,
+                ...(accounts || []).filter(a => a.group === "Corporate A/c" || a.group === "Sundry Debtors").map(a => a.name)
+              ])];
+
+              // Relations list matching exact legacy screenshot
+              const RELATION_CHOICES = [
+                "Self", "Wife", "Daughter", "Son", "Father", "Mother", "Husband", "Else", "Sister", "Brother"
+              ];
+
+              // Handlers
+              const handleNewEmployee = () => {
+                const nextSr = allEmployees.length > 0 ? Math.max(...allEmployees.map(e => Number(e.srNo || 0))) + 1 : 1;
+                const nextCode = "EMP" + String(nextSr).padStart(3, "0");
+                setEditingContractEmpId(null);
+                setContractEmployeeForm({
+                  ...defaultContractEmployeeForm,
+                  id: uid(),
+                  srNo: nextSr,
+                  code: nextCode,
+                  dependents: [
+                    { id: uid(), relation: "Self", name: "", age: 30, gender: "Male" }
+                  ]
+                });
+                setContractEmpViewMode("editor");
+                showToast("New Contract Employee form ready");
+              };
+
+              const handleOpenEmployeeForEdit = (emp) => {
+                setEditingContractEmpId(emp.id);
+                setContractEmployeeForm({
+                  ...defaultContractEmployeeForm,
+                  ...emp
+                });
+                setContractEmpViewMode("editor");
+              };
+
+              const handleSaveEmployeeRecord = () => {
+                if (!contractEmployeeForm.name || !contractEmployeeForm.name.trim()) {
+                  showToast("Employee Name is required!", "error");
+                  return;
+                }
+                if (!contractEmployeeForm.contractCompany) {
+                  showToast("Contract Company is required!", "error");
+                  return;
+                }
+
+                const empId = editingContractEmpId || contractEmployeeForm.id || uid();
+                const recordData = {
+                  ...contractEmployeeForm,
+                  id: empId,
+                  name: contractEmployeeForm.name.trim().toUpperCase(),
+                  code: (contractEmployeeForm.code || "EMP" + String(contractEmployeeForm.srNo || 1).padStart(3, "0")).trim().toUpperCase(),
+                  contractCompany: contractEmployeeForm.contractCompany.trim().toUpperCase(),
+                  department: (contractEmployeeForm.department || "").trim().toUpperCase(),
+                  designation: (contractEmployeeForm.designation || "").trim().toUpperCase(),
+                  mobile: (contractEmployeeForm.mobile || "").trim(),
+                  email: (contractEmployeeForm.email || "").trim(),
+                  creditLimit: Number(contractEmployeeForm.creditLimit) || 20000,
+                  remarks: (contractEmployeeForm.remarks || "").trim(),
+                  srNo: Number(contractEmployeeForm.srNo) || (allEmployees.length + 1),
+                  dependents: contractEmployeeForm.dependents || [],
+                  updatedAt: new Date().toISOString()
+                };
+
+                let updatedList;
+                const existingIndex = allEmployees.findIndex(e => e.id === empId);
+                if (existingIndex >= 0) {
+                  updatedList = allEmployees.map(e => e.id === empId ? recordData : e);
+                } else {
+                  updatedList = [...allEmployees, recordData];
+                }
+
+                setContractEmployees(updatedList);
+                setContractEmployeeForm(recordData);
+                setEditingContractEmpId(empId);
+                try {
+                  localStorage.setItem("store_contract_employees", JSON.stringify(updatedList));
+                } catch (_) {}
+
+                showToast(editingContractEmpId ? `Employee "${recordData.name}" updated!` : `Employee "${recordData.name}" saved successfully!`);
+              };
+
+              const handleDeleteEmployeeRecord = (empToDelete = contractEmployeeForm) => {
+                if (!empToDelete || !empToDelete.id) return;
+                showConfirm(`Are you sure you want to delete Employee "${empToDelete.name || empToDelete.code}"?`, () => {
+                  const remaining = allEmployees.filter(e => e.id !== empToDelete.id);
+                  setContractEmployees(remaining);
+                  try {
+                    localStorage.setItem("store_contract_employees", JSON.stringify(remaining));
+                  } catch (_) {}
+                  showToast("Contract Employee deleted");
+                  if (remaining.length > 0) {
+                    setContractEmployeeForm({ ...remaining[0] });
+                    setEditingContractEmpId(remaining[0].id);
+                  } else {
+                    handleNewEmployee();
+                  }
+                });
+              };
+
+              const handleNavigateEmployee = (direction) => {
+                if (allEmployees.length === 0) return;
+                const currentId = editingContractEmpId || contractEmployeeForm.id;
+                const curIdx = allEmployees.findIndex(e => e.id === currentId);
+                let targetIdx = 0;
+                if (direction === "prev") {
+                  targetIdx = curIdx > 0 ? curIdx - 1 : allEmployees.length - 1;
+                } else {
+                  targetIdx = curIdx < allEmployees.length - 1 ? curIdx + 1 : 0;
+                }
+                handleOpenEmployeeForEdit(allEmployees[targetIdx]);
+              };
+
+              const handleAddDependent = (rel = newDepRelation) => {
+                const depName = (newDepName || (rel === "Self" ? contractEmployeeForm.name : "")).trim().toUpperCase();
+                if (!depName) {
+                  showToast("Please enter beneficiary dependent name", "error");
+                  return;
+                }
+
+                const newDep = {
+                  id: uid(),
+                  relation: rel,
+                  name: depName,
+                  age: Number(newDepAge) || 25,
+                  gender: newDepGender || (["Wife", "Mother", "Sister", "Daughter"].includes(rel) ? "Female" : "Male")
+                };
+
+                const updatedDeps = [...(contractEmployeeForm.dependents || []), newDep];
+                setContractEmployeeForm({ ...contractEmployeeForm, dependents: updatedDeps });
+                setNewDepName("");
+                showToast(`Added ${rel}: ${depName}`);
+              };
+
+              const handleRemoveDependent = (depId) => {
+                const updatedDeps = (contractEmployeeForm.dependents || []).filter(d => d.id !== depId);
+                setContractEmployeeForm({ ...contractEmployeeForm, dependents: updatedDeps });
+              };
+
+              const handleExecuteCompanyTransfer = () => {
+                if (!targetTransferCompany || targetTransferCompany === contractEmployeeForm.contractCompany) {
+                  showToast("Please select a different target company to transfer", "error");
+                  return;
+                }
+
+                const prevCompany = contractEmployeeForm.contractCompany;
+                const updatedForm = { ...contractEmployeeForm, contractCompany: targetTransferCompany };
+                setContractEmployeeForm(updatedForm);
+
+                if (editingContractEmpId) {
+                  const updatedList = allEmployees.map(e => e.id === editingContractEmpId ? { ...e, contractCompany: targetTransferCompany } : e);
+                  setContractEmployees(updatedList);
+                  try {
+                    localStorage.setItem("store_contract_employees", JSON.stringify(updatedList));
+                  } catch (_) {}
+                }
+
+                setShowTransferCompanyModal(false);
+                showToast(`Transferred employee from "${prevCompany}" to "${targetTransferCompany}"!`);
+              };
+
+              const handleBillContractEmployeeInPOS = () => {
+                if (setSalesForm) {
+                  setSalesForm(prev => ({
+                    ...prev,
+                    customerName: `${contractEmployeeForm.name} (${contractEmployeeForm.code})`,
+                    phone: contractEmployeeForm.mobile || "",
+                    remarks: `[Contract Supply: ${contractEmployeeForm.contractCompany}] Emp: ${contractEmployeeForm.name} (${contractEmployeeForm.code})`
+                  }));
+                }
+                setActiveSection("sales_pos");
+                showToast(`Employee "${contractEmployeeForm.name}" loaded for Corporate Contract Billing!`);
+              };
+
+              const handlePrintEmployeeCard = () => {
+                const printWindow = window.open("", "_blank");
+                if (!printWindow) {
+                  showToast("Please allow popups to print Employee Benefit Card", "error");
+                  return;
+                }
+
+                const depsHTML = (contractEmployeeForm.dependents || []).map((d, idx) => `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px; text-align: center;">${idx + 1}</td>
+                    <td style="padding: 6px; font-weight: bold; color: #1e40af;">${d.relation}</td>
+                    <td style="padding: 6px; font-weight: bold;">${d.name}</td>
+                    <td style="padding: 6px; text-align: center;">${d.gender}</td>
+                    <td style="padding: 6px; text-align: center;">${d.age} Yrs</td>
+                    <td style="padding: 6px; text-align: center; color: #16a34a; font-weight: bold;">Eligible</td>
+                  </tr>
+                `).join("");
+
+                printWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <title>Contract Employee Benefit Card - ${contractEmployeeForm.name}</title>
+                    <style>
+                      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 25px; color: #0f172a; }
+                      .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; }
+                      .card-box { border: 2px solid #0284c7; border-radius: 10px; padding: 16px; background: #f8fafc; margin-bottom: 20px; }
+                      .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 12px; }
+                      table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px; }
+                      th { background: #0f172a; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; text-align: left; }
+                      @media print { body { padding: 0; } }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      <h2 style="margin: 0; font-size: 20px; color: #0f172a;">SHIV DHARA MEDICAL STORE</h2>
+                      <p style="margin: 2px 0; font-size: 12px; color: #475569;">Authorized Corporate Pharmacy & Cashless Healthcare Services</p>
+                      <p style="margin: 0; font-size: 11px; font-weight: 700; color: #0284c7;">CORPORATE CONTRACT MEDICAL BENEFIT CARD</p>
+                    </div>
+
+                    <div class="card-box">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">
+                        <div>
+                          <span style="font-size: 16px; font-weight: 800; color: #0f172a;">${contractEmployeeForm.name}</span>
+                          <span style="margin-left: 8px; font-size: 11px; background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Badge Code: ${contractEmployeeForm.code || "-"}</span>
+                        </div>
+                        <div style="background: #0284c7; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                          ${contractEmployeeForm.contractCompany}
+                        </div>
+                      </div>
+
+                      <div class="grid">
+                        <div><strong>Contract Company:</strong> ${contractEmployeeForm.contractCompany}</div>
+                        <div><strong>Department:</strong> ${contractEmployeeForm.department || "General"}</div>
+                        <div><strong>Designation:</strong> ${contractEmployeeForm.designation || "Staff"}</div>
+                        <div><strong>Registered Mobile:</strong> ${contractEmployeeForm.mobile || "N/A"}</div>
+                        <div><strong>Email:</strong> ${contractEmployeeForm.email || "N/A"}</div>
+                        <div><strong>Monthly Credit Limit:</strong> ₹${Number(contractEmployeeForm.creditLimit || 0).toLocaleString()}</div>
+                        ${contractEmployeeForm.remarks ? `<div style="grid-column: span 2; color: #b45309;"><strong>Benefit Rules / Remarks:</strong> ${contractEmployeeForm.remarks}</div>` : ""}
+                      </div>
+
+                      <h4 style="margin: 15px 0 6px; font-size: 12px; text-transform: uppercase; color: #0284c7;">Authorized Family Beneficiaries Covered:</h4>
+                      <table>
+                        <thead>
+                          <tr><th style="width: 30px; text-align: center;">#</th><th>Relation</th><th>Beneficiary Name</th><th style="text-align: center;">Gender</th><th style="text-align: center;">Age</th><th style="text-align: center;">Status</th></tr>
+                        </thead>
+                        <tbody>
+                          ${depsHTML || '<tr><td colspan="6" style="padding: 12px; text-align: center; color: #64748b;">No dependents registered under this contract employee.</td></tr>'}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div style="margin-top: 30px; display: flex; justify-content: space-between; font-size: 11px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+                      <div>Generated on ${new Date().toLocaleString()}</div>
+                      <div style="font-weight: bold; text-align: right;">Shiv Dhara Medical Store | Corporate Desk</div>
+                    </div>
+                  </body>
+                  </html>
+                `);
+                printWindow.document.close();
+                setTimeout(() => printWindow.print(), 300);
+              };
+
+              return (
+                <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
+                  {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "26px" }}>👷</span>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>Contract Employee Master</h2>
+                      <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>Corporate Company Tie-ups, Employee Beneficiaries & Credit Billing Limits</p>
+                    </div>
+
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => setContractEmpViewMode(contractEmpViewMode === "editor" ? "list" : "editor")}
+                        style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <FileText size={13} /> {contractEmpViewMode === "editor" ? "View Employee Directory (List)" : "Back to Employee Form"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleNewEmployee}
+                        style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 14px" }}
+                      >
+                        <Plus size={13} /> Add Contract Employee
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ═══════════════════════════════════════════════════════════
+                      VIEW MODE 1: CONTRACT EMPLOYEES DIRECTORY (LIST VIEW)
+                  ═══════════════════════════════════════════════════════════ */}
+                  {contractEmpViewMode === "list" && (
+                    <div style={{ animation: "fadeIn 0.15s ease-out" }}>
+                      {/* Search & Company Filter */}
+                      <div style={{ background: "white", borderRadius: "12px", padding: "14px 16px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                        <div style={{ flex: 1, minWidth: "240px", position: "relative" }}>
+                          <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                          <input
+                            placeholder="Search Employee Name, Code, Company, Department, Mobile or Dependent... + Enter"
+                            value={contractEmpSearch}
+                            onChange={e => setContractEmpSearch(e.target.value)}
+                            style={{ ...inp, paddingLeft: "30px", width: "100%", height: "36px" }}
+                          />
+                        </div>
+
+                        {/* Company Filter Dropdown */}
+                        <div style={{ minWidth: "200px" }}>
+                          <select
+                            value={contractEmpCompanyFilter}
+                            onChange={e => setContractEmpCompanyFilter(e.target.value)}
+                            style={{ ...inp, height: "36px", fontWeight: "700" }}
+                          >
+                            <option value="All">All Contract Companies</option>
+                            {companyOptions.map(c => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {contractEmpSearch && (
+                          <button onClick={() => setContractEmpSearch("")} style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "11px" }}>Clear</button>
+                        )}
+                      </div>
+
+                      {/* Stat Cards */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", marginBottom: "16px" }}>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Total Contract Employees</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a", marginTop: "4px" }}>{allEmployees.length}</div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Contract Companies</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#0284c7", marginTop: "4px" }}>
+                            {[...new Set(allEmployees.map(e => e.contractCompany))].length} Companies
+                          </div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Family Beneficiaries</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#16a34a", marginTop: "4px" }}>
+                            {allEmployees.reduce((acc, e) => acc + (e.dependents || []).length, 0)} Persons
+                          </div>
+                        </div>
+                        <div style={{ background: "white", padding: "14px", borderRadius: "10px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)" }}>
+                          <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>Corporate Credit Allotted</div>
+                          <div style={{ fontSize: "20px", fontWeight: "800", color: "#7c3aed", marginTop: "4px" }}>
+                            ₹{allEmployees.reduce((acc, e) => acc + (Number(e.creditLimit) || 0), 0).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Directory Table */}
+                      <div style={{ background: "white", borderRadius: "12px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", overflow: "hidden" }}>
+                        <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                          <span style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b" }}>
+                            Contract Employees Directory ({filteredEmployees.length})
+                          </span>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>
+                            Click any Employee to open family dependents, company mapping or bill in POS
+                          </span>
+                        </div>
+
+                        {filteredEmployees.length === 0 ? (
+                          <div style={{ padding: "50px 20px", textAlign: "center", color: "#64748b" }}>
+                            <div style={{ fontSize: "36px", opacity: 0.5, marginBottom: "8px" }}>👷</div>
+                            <p style={{ margin: 0, fontWeight: "700", fontSize: "14px" }}>No contract employees found</p>
+                            <p style={{ margin: "4px 0 12px", fontSize: "12px" }}>Enroll your first contract employee using the button below.</p>
+                            <button onClick={handleNewEmployee} style={{ ...btn("var(--color-primary)"), margin: "0 auto", fontSize: "12px" }}>
+                              <Plus size={13} /> Add First Employee
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                              <thead>
+                                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontSize: "11px", textTransform: "uppercase" }}>
+                                  <th style={{ padding: "10px 8px", width: "40px", textAlign: "center" }}>Sr.</th>
+                                  <th style={{ padding: "10px 8px", width: "80px", textAlign: "center" }}>Code</th>
+                                  <th style={{ padding: "10px 14px", textAlign: "left" }}>Employee Name</th>
+                                  <th style={{ padding: "10px 12px", textAlign: "left" }}>Contract Company</th>
+                                  <th style={{ padding: "10px 12px", textAlign: "left" }}>Department & Role</th>
+                                  <th style={{ padding: "10px 10px", textAlign: "center" }}>Beneficiaries</th>
+                                  <th style={{ padding: "10px 12px", textAlign: "right" }}>Credit Limit</th>
+                                  <th style={{ padding: "10px 12px", width: "180px", textAlign: "center" }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filteredEmployees.map((emp, idx) => (
+                                  <tr
+                                    key={emp.id || idx}
+                                    style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.1s" }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                  >
+                                    <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "700", color: "#64748b" }}>{emp.srNo || idx + 1}</td>
+                                    <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "800", color: "#0284c7", fontFamily: "monospace" }}>{emp.code || "EMP"}</td>
+                                    <td
+                                      onClick={() => handleOpenEmployeeForEdit(emp)}
+                                      style={{ padding: "8px 14px", fontWeight: "800", color: "#1e3a8a", cursor: "pointer" }}
+                                      title="Click to edit employee"
+                                    >
+                                      <div>{emp.name}</div>
+                                      {emp.mobile ? <div style={{ fontSize: "10px", color: "#64748b", fontWeight: "normal" }}>📞 {emp.mobile}</div> : null}
+                                    </td>
+                                    <td style={{ padding: "8px 12px" }}>
+                                      <span style={{ background: "#e0f2fe", color: "#0369a1", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700" }}>
+                                        {emp.contractCompany}
+                                      </span>
+                                    </td>
+                                    <td style={{ padding: "8px 12px", color: "#475569", fontSize: "11px" }}>
+                                      <div style={{ fontWeight: "600", color: "#1e293b" }}>{emp.department || "General"}</div>
+                                      <div>{emp.designation || "-"}</div>
+                                    </td>
+                                    <td style={{ padding: "8px 10px", textAlign: "center" }}>
+                                      <span style={{ background: "#dcfce7", color: "#166534", padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
+                                        {(emp.dependents || []).length} Persons
+                                      </span>
+                                    </td>
+                                    <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: "800", color: "#0f172a" }}>
+                                      ₹{Number(emp.creditLimit || 0).toLocaleString()}
+                                    </td>
+                                    <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                                      <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenEmployeeForEdit(emp)}
+                                          style={{ ...btn("#2563eb"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Edit Employee"
+                                        >
+                                          <Edit2 size={11} /> Edit
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { handleOpenEmployeeForEdit(emp); setTargetTransferCompany(emp.contractCompany); setShowTransferCompanyModal(true); }}
+                                          style={{ ...btn("#d97706"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Transfer to Other Company"
+                                        >
+                                          Transfer
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { handleOpenEmployeeForEdit(emp); handleBillContractEmployeeInPOS(); }}
+                                          style={{ ...btn("#0284c7"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Bill in Sales POS"
+                                        >
+                                          <ShoppingCart size={11} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { handleOpenEmployeeForEdit(emp); setTimeout(handlePrintEmployeeCard, 100); }}
+                                          style={{ ...btn("#334155"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Print Card"
+                                        >
+                                          <Printer size={11} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteEmployeeRecord(emp)}
+                                          style={{ ...btn("#dc2626"), padding: "4px 8px", fontSize: "11px" }}
+                                          title="Delete Employee"
+                                        >
+                                          <Trash2 size={11} />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ═══════════════════════════════════════════════════════════
+                      VIEW MODE 2: CONTRACT EMPLOYEE FORM (Matching Legacy Layout)
+                  ═══════════════════════════════════════════════════════════ */}
+                  {contractEmpViewMode === "editor" && (
+                    <div style={{ background: "white", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                      
+                      {/* Top Header Row with Status & Quick Jump */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", gap: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontSize: "18px" }}>👷</span>
+                          <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
+                            {contractEmployeeForm.name ? contractEmployeeForm.name : "New Contract Employee"}
+                          </h3>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: "4px", fontFamily: "monospace" }}>
+                            Code: {contractEmployeeForm.code || "EMP001"}
+                          </span>
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "#e0f2fe", color: "#0369a1", padding: "2px 8px", borderRadius: "4px" }}>
+                            {contractEmployeeForm.contractCompany}
+                          </span>
+                        </div>
+
+                        {/* Top Action: Transfer to Other Company Button (Matching Legacy Screen) */}
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTargetTransferCompany(contractEmployeeForm.contractCompany);
+                              setShowTransferCompanyModal(true);
+                            }}
+                            style={{
+                              background: "#fffbeb",
+                              color: "#b45309",
+                              border: "1px solid #fde68a",
+                              borderRadius: "8px",
+                              padding: "7px 14px",
+                              fontSize: "12px",
+                              fontWeight: "800",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px"
+                            }}
+                            title="Move employee to another contract company"
+                          >
+                            <span>🏢</span> Transfer to Other Company
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Main Split Layout: Left Company & Employee Fields | Right Relation with Emp Beneficiaries */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "16px", marginBottom: "16px" }}>
+                        
+                        {/* ─── LEFT COLUMN: CONTRACT COMPANY & EMPLOYEE DETAILS (Matching Image) ─── */}
+                        <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                          
+                          {/* Contract Company Selection Box (Matching Image List Box) */}
+                          <div style={{ marginBottom: "14px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                              <label style={{ ...lbl, fontWeight: "800", color: "#0f172a" }}>Contract Company : *</label>
+                              <span style={{ fontSize: "10px", color: "#64748b" }}>Select Corporate Client</span>
+                            </div>
+                            <select
+                              value={contractEmployeeForm.contractCompany || ""}
+                              onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, contractCompany: e.target.value })}
+                              style={{ ...inp, background: "#ffffff", fontWeight: "800", color: "#0369a1", fontSize: "13px" }}
+                            >
+                              {companyOptions.map(comp => (
+                                <option key={comp} value={comp}>{comp}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Employee Code & Sr.No */}
+                          <div style={{ display: "grid", gridTemplateColumns: "80px 1fr", gap: "10px", marginBottom: "12px" }}>
+                            <div>
+                              <label style={lbl}>Sr No.</label>
+                              <input
+                                type="number"
+                                value={contractEmployeeForm.srNo || 1}
+                                onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, srNo: Number(e.target.value) || 1 })}
+                                style={{ ...inp, background: "#ffffff", fontWeight: "700" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Employee Code : *</label>
+                              <input
+                                type="text"
+                                value={contractEmployeeForm.code || ""}
+                                onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, code: e.target.value.toUpperCase() })}
+                                placeholder="e.g. EMP001, BADGE-8841"
+                                style={{ ...inp, background: "#ffffff", fontWeight: "800", color: "#0284c7", textTransform: "uppercase" }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Employee Name : */}
+                          <div style={{ marginBottom: "12px" }}>
+                            <label style={{ ...lbl, fontWeight: "800" }}>Employee Name : *</label>
+                            <input
+                              type="text"
+                              value={contractEmployeeForm.name || ""}
+                              onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, name: e.target.value.toUpperCase() })}
+                              placeholder="e.g. RAKESH M. SHARMA"
+                              style={{ ...inp, background: "#ffffff", fontWeight: "800", textTransform: "uppercase", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          {/* Department & Designation */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                            <div>
+                              <label style={lbl}>Department</label>
+                              <input
+                                type="text"
+                                value={contractEmployeeForm.department || ""}
+                                onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, department: e.target.value.toUpperCase() })}
+                                placeholder="e.g. OPERATIONS / PLANT"
+                                style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Designation / Role</label>
+                              <input
+                                type="text"
+                                value={contractEmployeeForm.designation || ""}
+                                onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, designation: e.target.value.toUpperCase() })}
+                                placeholder="e.g. SENIOR ENGINEER"
+                                style={{ ...inp, background: "#ffffff", textTransform: "uppercase" }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Mobile & Monthly Credit Limit */}
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                            <div>
+                              <label style={lbl}>Mobile No.</label>
+                              <input
+                                type="text"
+                                value={contractEmployeeForm.mobile || ""}
+                                onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, mobile: e.target.value })}
+                                placeholder="Primary Phone"
+                                style={{ ...inp, background: "#ffffff" }}
+                              />
+                            </div>
+                            <div>
+                              <label style={lbl}>Monthly Credit Limit (₹)</label>
+                              <input
+                                type="number"
+                                value={contractEmployeeForm.creditLimit ?? 20000}
+                                onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, creditLimit: Number(e.target.value) || 0 })}
+                                style={{ ...inp, background: "#ffffff", fontWeight: "700" }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Remarks / Contract Supply Terms */}
+                          <div>
+                            <label style={lbl}>Remarks / Corporate Authorization Notes</label>
+                            <textarea
+                              value={contractEmployeeForm.remarks || ""}
+                              onChange={e => setContractEmployeeForm({ ...contractEmployeeForm, remarks: e.target.value })}
+                              placeholder="Approved billing conditions, prescription verification rules, HR email authorization..."
+                              style={{ ...inp, background: "#ffffff", height: "55px", resize: "vertical" }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* ─── RIGHT COLUMN: RELATION WITH EMP = (Exact Legacy Screenshot Grid) ─── */}
+                        <div style={{ background: "#ffffff", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1", display: "flex", flexDirection: "column" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                            <label style={{ ...lbl, fontWeight: "800", color: "#0f172a", fontSize: "12px", margin: 0 }}>
+                              Relation with Emp =
+                            </label>
+                            <span style={{ fontSize: "10px", color: "#64748b" }}>Family Beneficiaries</span>
+                          </div>
+
+                          {/* Relation Choice Chips (Matching Legacy: Self, Wife, Daughter, Son, Father, Mother, Husband, Else, Sister, Brother) */}
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "12px" }}>
+                            {RELATION_CHOICES.map(rel => {
+                              const alreadyAdded = (contractEmployeeForm.dependents || []).some(d => d.relation === rel);
+                              return (
+                                <button
+                                  key={rel}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewDepRelation(rel);
+                                    if (rel === "Self") setNewDepName(contractEmployeeForm.name);
+                                    if (["Wife", "Mother", "Sister", "Daughter"].includes(rel)) setNewDepGender("Female");
+                                    else setNewDepGender("Male");
+                                  }}
+                                  style={{
+                                    background: newDepRelation === rel ? "#0284c7" : "#f1f5f9",
+                                    color: newDepRelation === rel ? "#ffffff" : (alreadyAdded ? "#1e40af" : "#334155"),
+                                    border: newDepRelation === rel ? "1px solid #0284c7" : (alreadyAdded ? "1px solid #bfdbfe" : "1px solid #cbd5e1"),
+                                    borderRadius: "4px",
+                                    padding: "3px 9px",
+                                    fontSize: "11px",
+                                    fontWeight: "700",
+                                    cursor: "pointer"
+                                  }}
+                                  title={`Select ${rel}`}
+                                >
+                                  {rel} {alreadyAdded ? "✓" : ""}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Quick Beneficiary Adder Row */}
+                          <div style={{ background: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0", marginBottom: "12px" }}>
+                            <div style={{ fontSize: "11px", fontWeight: "700", color: "#475569", marginBottom: "6px" }}>
+                              Add Beneficiary as <strong>{newDepRelation}</strong>:
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 42px", gap: "6px" }}>
+                              <input
+                                type="text"
+                                value={newDepName}
+                                onChange={e => setNewDepName(e.target.value.toUpperCase())}
+                                placeholder="Beneficiary Full Name"
+                                style={{ ...inp, padding: "4px 8px", fontSize: "11px", textTransform: "uppercase" }}
+                              />
+                              <input
+                                type="number"
+                                min="1"
+                                max="110"
+                                value={newDepAge}
+                                onChange={e => setNewDepAge(Number(e.target.value) || 1)}
+                                placeholder="Age"
+                                style={{ ...inp, padding: "4px 4px", fontSize: "11px", textAlign: "center" }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleAddDependent(newDepRelation)}
+                                style={{ ...btn("#16a34a"), padding: "0", fontSize: "11px", justifyContent: "center" }}
+                                title="Add to List"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Enrolled Beneficiaries List */}
+                          <div style={{ flex: 1, minHeight: "180px", maxHeight: "240px", overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: "6px" }}>
+                            {(!contractEmployeeForm.dependents || contractEmployeeForm.dependents.length === 0) ? (
+                              <div style={{ padding: "30px 10px", textAlign: "center", color: "#94a3b8", fontSize: "11px" }}>
+                                No beneficiaries added yet. Select a relationship above and add family members.
+                              </div>
+                            ) : (
+                              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
+                                <thead>
+                                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#64748b", textTransform: "uppercase" }}>
+                                    <th style={{ padding: "6px", width: "70px", textAlign: "left" }}>Relation</th>
+                                    <th style={{ padding: "6px 8px", textAlign: "left" }}>Name</th>
+                                    <th style={{ padding: "6px", width: "40px", textAlign: "center" }}>Age</th>
+                                    <th style={{ padding: "6px", width: "30px", textAlign: "center" }}>Del</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {contractEmployeeForm.dependents.map(dep => (
+                                    <tr key={dep.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                      <td style={{ padding: "6px" }}>
+                                        <span style={{ background: dep.relation === "Self" ? "#dbeafe" : "#f1f5f9", color: dep.relation === "Self" ? "#1e40af" : "#334155", padding: "1px 6px", borderRadius: "4px", fontWeight: "700" }}>
+                                          {dep.relation}
+                                        </span>
+                                      </td>
+                                      <td style={{ padding: "6px 8px", fontWeight: "700", color: "#0f172a" }}>
+                                        {dep.name || "(Name Pending)"}
+                                      </td>
+                                      <td style={{ padding: "6px", textAlign: "center", color: "#64748b" }}>
+                                        {dep.age || "-"}
+                                      </td>
+                                      <td style={{ padding: "6px", textAlign: "center" }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveDependent(dep.id)}
+                                          style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", padding: "2px" }}
+                                          title="Remove Dependent"
+                                        >
+                                          <Trash2 size={12} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ─── EXACT LEGACY BOTTOM ACTION TOOLBAR (Image Bottom Buttons) ─── */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                        {/* Left Buttons: New | Save | List | Delete */}
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={handleNewEmployee}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 14px", fontWeight: "700" }}
+                            title="New Blank Employee Form"
+                          >
+                            New
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveEmployeeRecord}
+                            style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "7px 16px", fontWeight: "800" }}
+                            title="Save / Update Employee"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setContractEmpViewMode("list")}
+                            style={{ ...btn("#0284c7"), fontSize: "12px", padding: "7px 14px", fontWeight: "700" }}
+                            title="View Employee Directory"
+                          >
+                            List
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteEmployeeRecord(contractEmployeeForm)}
+                            disabled={!editingContractEmpId}
+                            style={{ ...btn("#dc2626"), fontSize: "12px", padding: "7px 14px", opacity: !editingContractEmpId ? 0.5 : 1 }}
+                            title="Delete this Employee"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTargetTransferCompany(contractEmployeeForm.contractCompany);
+                              setShowTransferCompanyModal(true);
+                            }}
+                            style={{ ...btn("#d97706"), fontSize: "12px", padding: "7px 14px", fontWeight: "700" }}
+                            title="Transfer to Other Company"
+                          >
+                            Transfer Company
+                          </button>
+                        </div>
+
+                        {/* Right Buttons: < | > | Print | Bill in POS | Close */}
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateEmployee("prev")}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 10px" }}
+                            title="Previous Employee"
+                          >
+                            <ChevronLeft size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateEmployee("next")}
+                            style={{ ...btn("#475569"), fontSize: "12px", padding: "7px 10px" }}
+                            title="Next Employee"
+                          >
+                            <ChevronRight size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handlePrintEmployeeCard}
+                            style={{ ...btn("#334155"), fontSize: "12px", padding: "7px 14px" }}
+                            title="Print Medical Benefit Card"
+                          >
+                            <Printer size={13} /> Print Card
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleBillContractEmployeeInPOS}
+                            style={{ ...btn("#16a34a"), fontSize: "12px", padding: "7px 14px", fontWeight: "800" }}
+                            title="Bill under Corporate Contract in Sales POS"
+                          >
+                            <ShoppingCart size={13} /> Bill in POS
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setContractEmpViewMode("list")}
+                            style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px", padding: "7px 14px" }}
+                            title="Close Employee Form"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ═══════════════════════════════════════════════════════════
+                      MODAL: TRANSFER TO OTHER COMPANY (Image Special Feature)
+                  ═══════════════════════════════════════════════════════════ */}
+                  {showTransferCompanyModal && (
+                    <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+                      <div style={{ background: "white", borderRadius: "12px", width: "100%", maxWidth: "480px", boxShadow: "0 20px 40px rgba(0,0,0,0.25)", overflow: "hidden", animation: "fadeIn 0.15s ease-out" }}>
+                        <div style={{ padding: "14px 20px", background: "#0f172a", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ fontWeight: "800", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span>🏢</span> Transfer Employee to Other Company
+                          </div>
+                          <button onClick={() => setShowTransferCompanyModal(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}>
+                            <X size={16} />
+                          </button>
+                        </div>
+
+                        <div style={{ padding: "20px" }}>
+                          <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "6px", border: "1px solid #e2e8f0", marginBottom: "14px", fontSize: "12px" }}>
+                            <div>Employee: <strong style={{ color: "#0f172a" }}>{contractEmployeeForm.name} ({contractEmployeeForm.code})</strong></div>
+                            <div style={{ marginTop: "4px" }}>Current Company: <strong style={{ color: "#0284c7" }}>{contractEmployeeForm.contractCompany}</strong></div>
+                          </div>
+
+                          <label style={lbl}>Select New Target Contract Company: *</label>
+                          <select
+                            value={targetTransferCompany}
+                            onChange={e => setTargetTransferCompany(e.target.value)}
+                            style={{ ...inp, height: "38px", fontWeight: "700", marginBottom: "14px", width: "100%" }}
+                          >
+                            <option value="">-- Choose Target Company --</option>
+                            {companyOptions.map(comp => (
+                              <option key={comp} value={comp} disabled={comp === contractEmployeeForm.contractCompany}>
+                                {comp} {comp === contractEmployeeForm.contractCompany ? "(Current)" : ""}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div style={{ fontSize: "11px", color: "#64748b", background: "#fffbeb", padding: "10px", borderRadius: "6px", border: "1px solid #fde68a" }}>
+                            ⚠️ Note: All registered family beneficiaries and active prescription entitlements will be transferred to the new corporate company ledger.
+                          </div>
+                        </div>
+
+                        <div style={{ padding: "12px 20px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={() => setShowTransferCompanyModal(false)}
+                            style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px", padding: "6px 14px" }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleExecuteCompanyTransfer}
+                            style={{ ...btn("#d97706"), fontSize: "12px", padding: "6px 18px", fontWeight: "800" }}
+                          >
+                            Confirm Transfer 🏢
                           </button>
                         </div>
                       </div>
