@@ -2832,32 +2832,70 @@ Rules:
 
   const savePurchaseReturns = (l) => { setPurchaseReturns(l); localStorage.setItem('store_purchase_returns', JSON.stringify(l)); };
 
-  const emptyPrItem = () => ({ itemId: "", itemName: "", batchNo: "", qty: "1", rate: "", gst: "0", amount: 0 });
-
-  const calcPrItemAmt = (pi) => {
-    const rate = num(pi.rate), qty = int(pi.qty), gst = num(pi.gst);
-    const base = rate * qty, gstAmt = base * gst / 100;
-    return base + gstAmt;
-  };
-
-  const handleSavePurchaseReturn = () => {
-    if (!purchaseReturnForm.supplierName) { showToast("Supplier name is required", "error"); return; }
-    const validItems = prItems.filter(pi => pi.itemId && int(pi.qty) > 0);
-    if (!validItems.length) { showToast("Add at least 1 item", "error"); return; }
-    const total = validItems.reduce((s, pi) => s + calcPrItemAmt(pi), 0);
-    const ret = { id: uid(), returnNo: purchaseReturns.length + 1, date: purchaseReturnForm.returnDate || today(), ...purchaseReturnForm, items: validItems, total, createdAt: nowStr() };
-    savePurchaseReturns([...purchaseReturns, ret]);
-    // Reverse stock
+  const handleSavePurchaseReturn = async () => {
+    const partyName = purchaseReturnForm.partyName || purchaseReturnForm.supplierName;
+    if (!partyName) { showToast("Party / Supplier name is required", "error"); return; }
+    const lockCheck = isDateLocked("purchaseReturn", purchaseReturnForm.date || purchaseReturnForm.returnDate || purchaseReturnForm.entryDate || today());
+    if (lockCheck.isLocked) {
+      showToast(`🔒 Cannot save! ${lockCheck.label} is locked from ${lockCheck.from} to ${lockCheck.to} by Supervisor.`, "error");
+      return;
+    }
+    const validItems = (purchaseReturnItems || []).filter(pi => (pi.itemId || pi.itemName) && int(pi.qty) > 0);
+    if (!validItems.length) { showToast("Add at least 1 item with quantity > 0", "error"); return; }
+    const grossTotal = validItems.reduce((s, pi) => s + num(pi.amount || 0), 0);
+    const netTotal = grossTotal - num(purchaseReturnForm.lessDisc) - num(purchaseReturnForm.crNote) - num(purchaseReturnForm.discAfterGst) - num(purchaseReturnForm.lessOther) + num(purchaseReturnForm.otherAdj);
+    const total = num(purchaseReturnForm.netTotal) || netTotal || grossTotal;
+    const ret = {
+      id: purchaseReturnForm.id || uid(),
+      returnNo: purchaseReturnForm.entryNo || (purchaseReturns.length + 1),
+      date: purchaseReturnForm.entryDate || purchaseReturnForm.returnDate || today(),
+      ...purchaseReturnForm,
+      partyName,
+      supplierName: partyName,
+      items: validItems,
+      grossTotal,
+      netTotal,
+      total,
+      createdAt: purchaseReturnForm.createdAt || nowStr()
+    };
+    savePurchaseReturns([ret, ...purchaseReturns.filter(r => r.id !== ret.id)]);
+    // Reverse stock (deduct returned stock from store)
     let newItems = [...items], newBatches = [...batches];
     validItems.forEach(pi => {
-      newItems = newItems.map(i => i.id === pi.itemId ? { ...i, stock: Math.max(0, int(i.stock) - int(pi.qty)) } : i);
-      newBatches = newBatches.map(b => (b.itemId === pi.itemId && b.batchNo === pi.batchNo) ? { ...b, qty: Math.max(0, int(b.qty) - int(pi.qty)) } : b);
+      const q = int(pi.qty) + int(pi.freeQty || 0);
+      if (pi.itemId) {
+        newItems = newItems.map(i => i.id === pi.itemId ? { ...i, stock: Math.max(0, int(i.stock) - q) } : i);
+        newBatches = newBatches.map(b => (String(b.itemId) === String(pi.itemId) && String(b.batchNo).toLowerCase() === String(pi.batchNo).toLowerCase()) ? { ...b, qty: Math.max(0, int(b.qty) - q) } : b);
+      }
     });
-    saveItems(newItems); saveBatches(newBatches);
+    await saveItems(newItems);
+    saveBatches(newBatches);
     setShowPurchaseReturnForm(false);
-    setPrItems([emptyPrItem()]);
-    setPurchaseReturnForm({ supplierId: "", supplierName: "", billRef: "", returnDate: "", reason: "", items: [] });
-    showToast(`✅ Purchase Return #${ret.returnNo} saved! Stock updated.`);
+    setPurchaseReturnItems([emptyPurchaseReturnItem()]);
+    setPurchaseReturnForm(emptyPurchaseReturnForm());
+    showToast(`✅ Purchase Return #${ret.returnNo} saved! Stock deducted.`);
+  };
+
+  const handleDeletePurchaseReturn = async (ret) => {
+    const lockCheck = isDateLocked("purchaseReturn", ret.date || ret.entryDate);
+    if (lockCheck.isLocked) {
+      showToast(`🔒 Cannot delete! ${lockCheck.label} is locked from ${lockCheck.from} to ${lockCheck.to} by Supervisor.`, "error");
+      return;
+    }
+    showConfirm("Delete this Purchase Return / Debit Note? Stock will be restored.", async () => {
+      savePurchaseReturns(purchaseReturns.filter(r => r.id !== ret.id));
+      let newItems = [...items], newBatches = [...batches];
+      (ret.items || []).forEach(pi => {
+        const q = int(pi.qty) + int(pi.freeQty || 0);
+        if (pi.itemId) {
+          newItems = newItems.map(i => i.id === pi.itemId ? { ...i, stock: int(i.stock) + q } : i);
+          newBatches = newBatches.map(b => (String(b.itemId) === String(pi.itemId) && String(b.batchNo).toLowerCase() === String(pi.batchNo).toLowerCase()) ? { ...b, qty: int(b.qty) + q } : b);
+        }
+      });
+      await saveItems(newItems);
+      saveBatches(newBatches);
+      showToast("Purchase Return deleted & stock restored");
+    });
   };
 
   // ═══════════════════════════════════════════════════
@@ -3235,30 +3273,100 @@ ${renderedPages}
   const getGSTR1 = () => getGSTR1Data();
   const getGSTR3B = () => getGSTR3BData();
 
+  // emptyPurchaseReturnForm — blank return form template
+  const emptyPurchaseReturnForm = () => ({
+    entryNo: "",
+    billSeries: "G",
+    entryDate: today(),
+    supplierId: "",
+    supplierName: "",
+    partyName: "",
+    billType: "TAX",
+    refNo: "",
+    refBillNo: "",
+    billDate: today(),
+    detail: "",
+    taxZone: "sgst_ugst",
+    gstOnFree: false,
+    returnMrp: true,
+    calculateGst: true,
+    reason: "Expired",
+    salesMan: "",
+    printCopies: 1,
+    discAfterGst: "0",
+    lessOther: "0",
+    otherAdj: "0",
+    lessDisc: "0",
+    crNote: "0",
+    billMsg: ""
+  });
+
   // emptyPurchaseReturnItem — blank return item template
   const emptyPurchaseReturnItem = () => ({
-    itemId: "", itemName: "", batchNo: "", qty: "1",
-    rate: "", gst: "0", disc: "0", amount: 0, reason: "Expired"
+    itemId: "",
+    itemName: "",
+    unit: "",
+    batchNo: "",
+    expiryDate: "",
+    mrp: "",
+    rate: "",
+    qty: "1",
+    freeQty: "0",
+    disc: "0",
+    discAmt: 0,
+    gst: "5",
+    base: 0,
+    amount: 0,
+    reason: "Expired",
+    location: ""
   });
+
+  const emptyPrItem = emptyPurchaseReturnItem;
+  const calcPrItemAmt = (item: any) => num(item?.amount) || 0;
 
   // openPurchaseReturnForm — open return form with optional bill prefill
   const openPurchaseReturnForm = (bill = null) => {
     if (bill) {
       setPurchaseReturnForm({
+        ...emptyPurchaseReturnForm(),
+        ...bill,
+        id: bill.id || uid(),
+        entryNo: String(bill.entryNo || bill.returnNo || (purchaseReturns.length + 1)),
+        billSeries: bill.billSeries || "G",
+        entryDate: bill.entryDate || bill.date || today(),
         supplierId: bill.supplierId || "",
         supplierName: bill.partyName || bill.supplierName || "",
         partyName: bill.partyName || bill.supplierName || "",
-        returnDate: today(), refBillNo: bill.billNo || bill.entryNo || "",
-        reason: "Expired", remarks: ""
+        refBillNo: bill.billNo || bill.refBillNo || bill.entryNo || "",
+        billDate: bill.billDate ? new Date(bill.billDate).toISOString().split('T')[0] : today(),
+        billType: bill.billType || bill.taxType || "TAX",
+        taxZone: bill.taxZone || "sgst_ugst",
+        reason: bill.reason || "Expired",
+        billMsg: bill.billMsg || bill.remarks || "",
+        isEdit: true
       });
-      setPurchaseReturnItems((bill.items || []).filter(i => i.itemId).map(i => ({
-        ...emptyPurchaseReturnItem(),
-        itemId: i.itemId, itemName: i.itemName || "",
-        batchNo: i.batchNo || "", rate: i.ptr || i.rate || "",
-        gst: i.gst || "0", qty: ""
-      })));
+      const bItems = (bill.items || []).filter(i => i.itemId || i.itemName);
+      setPurchaseReturnItems(bItems.length > 0 ? bItems.map(i => {
+        const found = items.find(it => it.id === i.itemId || it.name === i.itemName);
+        const pi = {
+          ...emptyPurchaseReturnItem(),
+          ...i,
+          unit: i.unit || found?.unit || "",
+          mrp: i.mrp || found?.mrp || found?.price || "",
+          rate: i.rate || i.ptr || found?.pRate || "",
+          gst: i.gst || found?.gst || 5,
+          location: i.location || found?.location || found?.rack || ""
+        };
+        const rate = num(pi.rate), qty = int(pi.qty), gst = num(pi.gst), disc = num(pi.disc);
+        const base = rate * qty, discAmt = base * disc / 100, taxable = base - discAmt;
+        pi.discAmt = discAmt;
+        pi.base = taxable;
+        pi.amount = taxable + taxable * gst / 100;
+        return pi;
+      }) : [emptyPurchaseReturnItem()]);
     } else {
-      setPurchaseReturnForm({ supplierId: "", supplierName: "", partyName: "", returnDate: today(), refBillNo: "", reason: "Expired", remarks: "" });
+      const nextNo = (purchaseReturns.length > 0 ? Math.max(...purchaseReturns.map(b => parseInt(b.entryNo || b.returnNo) || 0)) : 0) + 1;
+      setPurchaseReturnForm({ ...emptyPurchaseReturnForm(), entryNo: String(nextNo) });
       setPurchaseReturnItems([emptyPurchaseReturnItem()]);
     }
     setShowPurchaseReturnForm(true);
@@ -3269,11 +3377,25 @@ ${renderedPages}
     setPurchaseReturnItems(prev => {
       const u = [...prev];
       u[idx] = { ...u[idx], [k]: v };
-      const r = u[idx];
-      const base = (num(r.rate) || 0) * (int(r.qty) || 0);
-      const disc = base * (num(r.disc) || 0) / 100;
-      const tax = (base - disc) * (num(r.gst) || 0) / 100;
-      u[idx].amount = base - disc + tax;
+      if (k === "itemId" && v) {
+        const found = items.find(i => i.id === v);
+        if (found) {
+          u[idx] = {
+            ...u[idx],
+            itemName: found.name,
+            unit: found.unit || u[idx].unit || "",
+            mrp: found.mrp || found.price || "",
+            rate: found.pRate || found.ptr || "",
+            gst: found.gst || 5,
+            location: found.location || found.rack || ""
+          };
+        }
+      }
+      const rate = num(u[idx].rate || u[idx].ptr), qty = int(u[idx].qty), gst = num(u[idx].gst), disc = num(u[idx].disc);
+      const base = rate * qty, discAmt = base * disc / 100, taxable = base - discAmt;
+      u[idx].discAmt = discAmt;
+      u[idx].base = taxable;
+      u[idx].amount = taxable + (u[idx].calculateGst !== false ? taxable * gst / 100 : 0);
       return u;
     });
   };
@@ -3440,7 +3562,7 @@ ${renderedPages}
     // Feature 4: Purchase Return
     purchaseReturns, showPurchaseReturnForm, setShowPurchaseReturnForm,
     purchaseReturnForm, setPurchaseReturnForm, purchaseReturnItems, setPurchaseReturnItems,
-    openPurchaseReturnForm, updatePurchaseReturnItem, handleSavePurchaseReturn, emptyPurchaseReturnItem,
+    openPurchaseReturnForm, updatePurchaseReturnItem, handleSavePurchaseReturn, handleDeletePurchaseReturn, emptyPurchaseReturnItem, emptyPurchaseReturnForm,
     purchaseChallans, savePurchaseChallans, showPurchaseChallanForm, setShowPurchaseChallanForm,
     purchaseChallanForm, setPurchaseChallanForm, purchaseChallanItems, setPurchaseChallanItems,
     prItems, setPrItems, emptyPrItem, calcPrItemAmt,
