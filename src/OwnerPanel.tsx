@@ -2265,7 +2265,7 @@ export default function OwnerPanel() {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         
         {/* ─── MODERN TOP NAVBAR ─── */}
-        <div style={{ background: "white", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", zIndex: 90 }}>
+        <div style={{ background: "white", padding: "4px 12px", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", zIndex: 90 }}>
           
           {/* Legacy Menus Re-added (Full) */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1, paddingLeft: "10px", flexWrap: "nowrap" }}>
@@ -2506,7 +2506,7 @@ export default function OwnerPanel() {
       {/* ─────────────────────────────────── */}
       {/* OWNER CONTENT SECTIONS               */}
       {/* ─────────────────────────────────── */}
-      <div style={{ flex: 1, height: "calc(100vh - 92px)", minHeight: 0, overflowX: "hidden", overflowY: "auto", display: "flex", flexDirection: "column", padding: "8px 16px 60px 16px", width: "100%", boxSizing: "border-box", background: "var(--bg-body)", color: "var(--color-text-dark)" }}>
+      <div style={{ flex: 1, height: "calc(100vh - 84px)", minHeight: 0, overflowX: "hidden", overflowY: "hidden", display: "flex", flexDirection: "column", padding: "4px 10px", width: "100%", boxSizing: "border-box", background: "var(--bg-body)", color: "var(--color-text-dark)" }}>
 
         {isOwner && activeSection === "home" && (
           <>
@@ -4756,7 +4756,7 @@ const pending = [];
         ══════════════════════════════════════════ */}
         {isOwner && activeSection === "masters" && (
           <>
-            <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "5px", padding: "4px", marginBottom: "16px", gap: "4px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "6px", padding: "3px 4px", marginBottom: "6px", gap: "4px", flexWrap: "wrap", flexShrink: 0 }}>
               {[{ id: "accounts", label: "🏛️ Account Master" }, { id: "companies", label: "🏢 Company Master" }, { id: "suppliers", label: "🏭 Suppliers" }, { id: "drug_groups", label: "🧪 Drug Group Master" }, { id: "kits", label: "🧰 Kit Master" }, { id: "doctors", label: "🩺 Doctors" }, { id: "customers", label: "🧑‍⚕️ Patient Master" }, { id: "contract_employees", label: "👷 Contract Employee Master" }, { id: "other_masters", label: "📑 Other Masters" }, { id: "account_groups", label: "📊 Account Groups" }, { id: "generic_group_items", label: "💊 Generic Group Items" }, { id: "offers", label: "🎁 Bundle Offers" }, { id: "expiry_cal", label: "📅 Expiry Calendar" }, { id: "auto_reorder", label: "🔄 Auto Reorder" }, { id: "prescriptions", label: "📋 Prescriptions" }].map(t => (
                 <button key={t.id} onClick={() => setOwnerSubTab(t.id)} style={{ padding: "8px 12px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "11px", background: ownerSubTab === t.id ? "white" : "transparent", color: ownerSubTab === t.id ? "#3b82f6" : "#64748b" }}>{t.label}</button>
               ))}
@@ -5136,7 +5136,7 @@ const pending = [];
 
                   {/* ─── ADD / EDIT ACCOUNT CARD (Theme: Add Item in Image 2 + All Legacy Fields) ─── */}
                   {showAccountForm && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "18px 22px", marginBottom: "16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", maxHeight: "calc(100vh - 200px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                    <div style={{ background: "white", borderRadius: "10px", padding: "12px 16px", marginBottom: "8px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", height: "calc(100vh - 138px)", maxHeight: "calc(100vh - 138px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
                       {/* Card Title & Close */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -5580,7 +5580,7 @@ const pending = [];
                       </div>
 
                       {/* ─── FORM ACTION BUTTONS ─── */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                      <div style={{ position: "sticky", bottom: 0, background: "#ffffff", zIndex: 50, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "8px", paddingBottom: "8px", borderTop: "2px solid #cbd5e1", boxShadow: "0 -4px 12px rgba(0,0,0,0.08)" }}>
                         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                           <button
                             type="button"
@@ -5674,7 +5674,7 @@ const pending = [];
                         </button>
                       </div>
                     ) : (
-                      <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 280px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                      <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                           <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#f8fafc" }}>
                             <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
@@ -6241,7 +6241,7 @@ const pending = [];
 
                   {/* ─── ADD / EDIT COMPANY CARD (Theme: Add Item in Image 2 + Dual Panel Mapping) ─── */}
                   {showCompanyForm && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                    <div style={{ background: "white", borderRadius: "10px", padding: "12px 16px", marginBottom: "8px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", height: "calc(100vh - 138px)", maxHeight: "calc(100vh - 138px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
                       {/* Form Header */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -6583,7 +6583,7 @@ const pending = [];
                       </div>
 
                       {/* ─── FORM ACTION BUTTONS (Matching Legacy Controls & Image 2 Theme) ─── */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                      <div style={{ position: "sticky", bottom: 0, background: "#ffffff", zIndex: 50, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "8px", paddingBottom: "8px", borderTop: "2px solid #cbd5e1", boxShadow: "0 -4px 12px rgba(0,0,0,0.08)" }}>
                         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                           <button
                             type="button"
@@ -6687,7 +6687,7 @@ const pending = [];
                         </button>
                       </div>
                     ) : (
-                      <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 280px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                      <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                           <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#f8fafc" }}>
                             <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
@@ -7286,7 +7286,7 @@ const pending = [];
 
                   {/* ─── ADD / EDIT SUPPLIER CARD (Theme: Add Item in Image 2 + Dual Panel Mapping) ─── */}
                   {showSuppMasterForm && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                    <div style={{ background: "white", borderRadius: "10px", padding: "14px 18px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", height: "calc(100vh - 145px)", maxHeight: "calc(100vh - 145px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
                       {/* Form Header */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -8262,7 +8262,7 @@ const pending = [];
 
                   {/* ─── ADD / EDIT DRUG GROUP CARD (Theme: Add Item in Image 2 + Image 5 Screenshot) ─── */}
                   {showDrugGroupForm && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "24px", marginBottom: "20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out" }}>
+                    <div style={{ background: "white", borderRadius: "10px", padding: "12px 16px", marginBottom: "8px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", height: "calc(100vh - 138px)", maxHeight: "calc(100vh - 138px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
                       {/* Form Header */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -8407,7 +8407,7 @@ const pending = [];
                       )}
 
                       {/* ─── FORM ACTION BUTTONS (Matching Legacy Controls & Image 2 Theme) ─── */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                      <div style={{ position: "sticky", bottom: 0, background: "#ffffff", zIndex: 50, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", paddingTop: "8px", paddingBottom: "8px", borderTop: "2px solid #cbd5e1", boxShadow: "0 -4px 12px rgba(0,0,0,0.08)" }}>
                         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                           <button
                             type="button"
@@ -8493,7 +8493,7 @@ const pending = [];
                         </button>
                       </div>
                     ) : (
-                      <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 280px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                      <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                           <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#f8fafc" }}>
                             <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
@@ -8997,6 +8997,7 @@ const pending = [];
               return (
                 <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
                   {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  {kitViewMode === "list" && (
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "26px" }}>🧰</span>
                     <div>
@@ -9021,6 +9022,7 @@ const pending = [];
                       </button>
                     </div>
                   </div>
+                  )}
 
                   {/* ═══════════════════════════════════════════════════════════
                       VIEW MODE 1: KIT DIRECTORY LIST VIEW
@@ -9090,7 +9092,7 @@ const pending = [];
                             </button>
                           </div>
                         ) : (
-                          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 290px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                               <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#f8fafc" }}>
                                 <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontSize: "11px", textTransform: "uppercase" }}>
@@ -9194,7 +9196,7 @@ const pending = [];
                       VIEW MODE 2: MAIN KIT MASTER FORM & ITEM GRID (Image 1)
                   ═══════════════════════════════════════════════════════════ */}
                   {kitViewMode === "editor" && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "16px 20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", maxHeight: "calc(100vh - 190px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                    <div style={{ background: "white", borderRadius: "10px", padding: "12px 16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", height: "calc(100vh - 138px)", maxHeight: "calc(100vh - 138px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
                       
                       {/* Top Bar with Kit Title & Navigation */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", gap: "10px" }}>
@@ -10040,6 +10042,7 @@ const pending = [];
               return (
                 <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
                   {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  {docViewMode === "list" && (
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "26px" }}>🩺</span>
                     <div>
@@ -10064,6 +10067,7 @@ const pending = [];
                       </button>
                     </div>
                   </div>
+                  )}
 
                   {/* ═══════════════════════════════════════════════════════════
                       VIEW MODE 1: DOCTORS DIRECTORY LIST VIEW
@@ -10141,7 +10145,7 @@ const pending = [];
                             </button>
                           </div>
                         ) : (
-                          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 290px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                               <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#f8fafc" }}>
                                 <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontSize: "11px", textTransform: "uppercase" }}>
@@ -10250,7 +10254,7 @@ const pending = [];
                       VIEW MODE 2: DOCTOR MASTER FORM (Exact Legacy Layout)
                   ═══════════════════════════════════════════════════════════ */}
                   {docViewMode === "editor" && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "16px 20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", maxHeight: "calc(100vh - 190px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                    <div style={{ background: "white", borderRadius: "10px", padding: "12px 16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", height: "calc(100vh - 138px)", maxHeight: "calc(100vh - 138px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
                       
                       {/* Top Header Row with Permanent Doctor Action (Image 1 Pink Banner) */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", gap: "12px" }}>
@@ -11100,6 +11104,7 @@ const pending = [];
               return (
                 <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
                   {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  {patientViewMode === "list" && (
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "26px" }}>🧑‍⚕️</span>
                     <div>
@@ -11124,6 +11129,7 @@ const pending = [];
                       </button>
                     </div>
                   </div>
+                  )}
 
                   {/* ═══════════════════════════════════════════════════════════
                       VIEW MODE 1: PATIENT DIRECTORY LIST VIEW
@@ -11217,7 +11223,7 @@ const pending = [];
                             </button>
                           </div>
                         ) : (
-                          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 280px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                               <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#f8fafc" }}>
                                 <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontSize: "11px", textTransform: "uppercase" }}>
@@ -11337,7 +11343,7 @@ const pending = [];
                       VIEW MODE 2: PATIENT MASTER FORM (Exact Legacy Layout)
                   ═══════════════════════════════════════════════════════════ */}
                   {patientViewMode === "editor" && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "16px 20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", maxHeight: "calc(100vh - 190px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                    <div style={{ background: "white", borderRadius: "10px", padding: "12px 16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", height: "calc(100vh - 138px)", maxHeight: "calc(100vh - 138px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
                       
                       {/* Top Header Row with Status Badges */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", gap: "10px" }}>
@@ -12157,6 +12163,7 @@ const pending = [];
               return (
                 <div style={{ animation: "fadeIn 0.2s ease-in-out" }}>
                   {/* ─── HEADER ROW (Inventory Style / Image 2) ─── */}
+                  {contractEmpViewMode === "list" && (
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "26px" }}>👷</span>
                     <div>
@@ -12181,6 +12188,7 @@ const pending = [];
                       </button>
                     </div>
                   </div>
+                  )}
 
                   {/* ═══════════════════════════════════════════════════════════
                       VIEW MODE 1: CONTRACT EMPLOYEES DIRECTORY (LIST VIEW)
@@ -12265,7 +12273,7 @@ const pending = [];
                             </button>
                           </div>
                         ) : (
-                          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 280px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                               <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#f8fafc" }}>
                                 <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569", fontSize: "11px", textTransform: "uppercase" }}>
@@ -12372,7 +12380,7 @@ const pending = [];
                       VIEW MODE 2: CONTRACT EMPLOYEE FORM (Matching Legacy Layout)
                   ═══════════════════════════════════════════════════════════ */}
                   {contractEmpViewMode === "editor" && (
-                    <div style={{ background: "white", borderRadius: "12px", padding: "16px 20px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", maxHeight: "calc(100vh - 190px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                    <div style={{ background: "white", borderRadius: "10px", padding: "12px 16px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", animation: "fadeIn 0.15s ease-out", height: "calc(100vh - 138px)", maxHeight: "calc(100vh - 138px)", overflowY: "auto", display: "flex", flexDirection: "column" }}>
                       
                       {/* Top Header Row with Status & Quick Jump */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", gap: "10px" }}>
