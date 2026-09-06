@@ -1089,8 +1089,53 @@ export function MedicalStoreProvider({ children }) {
   // ═══════════════════════════════════════════════════
   // PURCHASE BILL
   // ═══════════════════════════════════════════════════
-  const emptyPurchaseForm = () => ({ entryNo: "", partyName: "", supplierId: "", billNo: "", billDate: today(), entryDate: today(), taxType: "exclusive", taxZone: "sgst_ugst", gstInclusive: false, gstOnFree: false, paymentMode: "cash", remarks: "", halfScheme: "0", octOnFree: "0", otherAdj: "0", lessDisc: "0", crNote: "0", tcsValue: "0" });
-  const emptyPurchaseItem = () => ({ itemId: "", itemName: "", batchNo: "", mfgDate: "", expiryDate: "", qty: "1", freeQty: "0", ptr: "", mrp: "", gst: "5", disc: "0", cess: "0", amount: 0 });
+  const emptyPurchaseForm = () => ({
+    entryNo: "",
+    billSeries: "G",
+    partyName: "",
+    supplierId: "",
+    billNo: "",
+    billDate: today(),
+    entryDate: today(),
+    taxType: "exclusive",
+    taxZone: "sgst_ugst",
+    gstInclusive: false,
+    gstOnFree: false,
+    paymentMode: "cash",
+    remarks: "",
+    billMsg: "",
+    schDisc: "0",
+    isOrder: false,
+    addressF4: "",
+    creditNoteF5: "",
+    halfScheme: "0",
+    octOnFree: "0",
+    otherAdj: "0",
+    lessDisc: "0",
+    crNote: "0",
+    tcsValue: "0"
+  });
+  const emptyPurchaseItem = () => ({
+    itemId: "",
+    itemName: "",
+    unit: "",
+    batchNo: "",
+    mfgDate: "",
+    expiryDate: "",
+    qty: "1",
+    freeQty: "0",
+    ptr: "",
+    mrp: "",
+    gst: "5",
+    disc: "0",
+    cess: "0",
+    amount: 0,
+    lastPurchaseRate: "",
+    location: "",
+    company: "",
+    packing: "",
+    stock: 0
+  });
 
   const calcPurchaseItemAmt = (pi) => {
     const ptr = num(pi.ptr), qty = int(pi.qty), gst = num(pi.gst), disc = num(pi.disc), cess = num(pi.cess);
@@ -1101,9 +1146,11 @@ export function MedicalStoreProvider({ children }) {
   const openPurchaseForm = (existingBill = null) => {
     if (existingBill) {
       setPurchaseForm({
+        ...emptyPurchaseForm(),
         ...existingBill,
         id: existingBill.id,
         entryNo: String(existingBill.entryNo || existingBill.id),
+        billSeries: existingBill.billSeries || "G",
         partyName: existingBill.partyName || "",
         supplierId: existingBill.supplierId || "",
         billNo: existingBill.billNo || "",
@@ -1112,10 +1159,28 @@ export function MedicalStoreProvider({ children }) {
         taxType: existingBill.taxType || "exclusive",
         paymentMode: existingBill.paymentMode || "cash",
         taxZone: existingBill.taxZone || "sgst_ugst",
+        schDisc: existingBill.schDisc || "0",
+        isOrder: !!existingBill.isOrder,
+        billMsg: existingBill.billMsg || existingBill.remarks || "",
+        addressF4: existingBill.addressF4 || "",
+        creditNoteF5: existingBill.creditNoteF5 || "",
         isEdit: true
       });
       const bItems = (existingBill.items || []).filter(pi => pi.itemId || pi.itemName);
-      setPurchaseItems(bItems.length > 0 ? bItems.map(pi => ({ ...pi, amount: calcPurchaseItemAmt(pi) })) : [emptyPurchaseItem()]);
+      setPurchaseItems(bItems.length > 0 ? bItems.map(pi => {
+        const found = items.find(i => i.id === pi.itemId || i.name === pi.itemName);
+        return {
+          ...emptyPurchaseItem(),
+          ...pi,
+          unit: pi.unit || found?.unit || "",
+          location: pi.location || found?.location || found?.rack || "",
+          company: pi.company || found?.company || "",
+          packing: pi.packing || found?.packing || "",
+          stock: found?.stock || 0,
+          lastPurchaseRate: pi.lastPurchaseRate || found?.pRate || "",
+          amount: calcPurchaseItemAmt(pi)
+        };
+      }) : [emptyPurchaseItem()]);
       setShowPurchaseForm(true);
     } else {
       const nextEntry = (purchaseBills.length > 0 ? Math.max(...purchaseBills.map(b => parseInt(b.entryNo) || 0)) : 0) + 1;
@@ -1127,9 +1192,28 @@ export function MedicalStoreProvider({ children }) {
 
   const updatePurchaseItem = (idx, field, val) => {
     setPurchaseItems(prev => {
-      const updated = [...prev]; updated[idx] = { ...updated[idx], [field]: val };
-      if (field === "itemId" && val) { const found = items.find(i => i.id === val); if (found) updated[idx] = { ...updated[idx], itemName: found.name, mrp: found.mrp || found.price, ptr: found.pRate || "", gst: found.gst || 5 }; }
-      updated[idx].amount = calcPurchaseItemAmt(updated[idx]); return updated;
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], [field]: val };
+      if (field === "itemId" && val) {
+        const found = items.find(i => i.id === val);
+        if (found) {
+          updated[idx] = {
+            ...updated[idx],
+            itemName: found.name,
+            unit: found.unit || updated[idx].unit || "",
+            mrp: found.mrp || found.price || "",
+            ptr: found.pRate || found.ptr || "",
+            gst: found.gst || 5,
+            location: found.location || found.rack || "",
+            company: found.company || "",
+            packing: found.packing || "",
+            stock: found.stock || 0,
+            lastPurchaseRate: found.pRate || found.lastPurchaseRate || ""
+          };
+        }
+      }
+      updated[idx].amount = calcPurchaseItemAmt(updated[idx]);
+      return updated;
     });
   };
 
