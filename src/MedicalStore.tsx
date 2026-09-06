@@ -31,13 +31,22 @@ function ShivDharaApp() {
     currentUser,
     toast, confirmDialog, setConfirmDialog, printHtml, setPrintHtml,
     showShortcuts, setShowShortcuts, alertCount,
-    authStatus, authInput, setAuthInput,
+    authStatus, setAuthStatus, authInput, setAuthInput,
     showPass, setShowPass,
     handleLogin, handleSetupAccount, handleLogout,
     uiScale, zoomIn, zoomOut, setPresetScale,
   } = useMedicalStore();
 
   const [updaterMsg, setUpdaterMsg] = React.useState<{text:string,percent:number,ready?:boolean}|null>(null);
+
+  React.useEffect(() => {
+    if (authStatus === "loading") {
+      const t = setTimeout(() => {
+        if (setAuthStatus) setAuthStatus("login");
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [authStatus, setAuthStatus]);
 
   React.useEffect(() => {
     // @ts-ignore
@@ -67,6 +76,9 @@ function ShivDharaApp() {
         <div style={{minHeight:"100vh",background:"linear-gradient(135deg, var(--bg-body), #e2e8f0)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:"16px"}}>
           <div style={{width:"48px",height:"48px",border:"4px solid rgba(32,201,151,0.3)",borderTop:"4px solid var(--color-primary)",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
           <div style={{color:"var(--color-text-dark)",fontSize:"14px",fontWeight:"600",opacity:0.9}}>Connecting to server...</div>
+          <button onClick={() => setAuthStatus && setAuthStatus("login")} style={{...btn("var(--color-primary)"), padding: "7px 16px", fontSize: "12px", marginTop: "4px"}}>
+            ⚡ Continue to Portal
+          </button>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       );

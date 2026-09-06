@@ -556,10 +556,21 @@ export function MedicalStoreProvider({ children }) {
   const savePayments = (l) => { setPayments(l); save("store_payments", l); };
   const saveBankEntries = (l) => { setBankEntries(l); save("store_bankEntries", l); };
 
-  const loadAll = async () => {
-    // DB is the single source of truth. We only READ from DB, never push local data back.
-    // All writes (add/edit/delete) go through API calls directly.
+  const safeFetchJson = async (url: string, timeoutMs = 2500) => {
+    try {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(t);
+      if (res.ok) return await res.json();
+      return null;
+    } catch (_) {
+      return null;
+    }
+  };
 
+  const loadAll = async () => {
+    // 1. Immediately read and apply local storage so user is never blocked
     const localItems = (() => { try { return JSON.parse(localStorage.getItem('store_items') || 'null') || []; } catch (_) { return []; } })();
     const localBat = (() => { try { return JSON.parse(localStorage.getItem('store_batches') || 'null') || []; } catch (_) { return []; } })();
     const localPbs = (() => { try { return JSON.parse(localStorage.getItem('store_purchaseBills') || 'null') || []; } catch (_) { return []; } })();
@@ -570,30 +581,47 @@ export function MedicalStoreProvider({ children }) {
     const localAdv = (() => { try { return JSON.parse(localStorage.getItem('store_advance_deposits') || 'null') || []; } catch (_) { return []; } })();
     const localSupps = (() => { try { return JSON.parse(localStorage.getItem('store_suppliers') || 'null') || []; } catch (_) { return []; } })();
 
+    if (localItems.length > 0) setItems(localItems);
+    if (localSupps.length > 0) setSuppliers(localSupps);
+    if (localBat.length > 0) setBatches(localBat);
+    if (localPbs.length > 0) setPurchaseBills(localPbs);
+    if (localSbs.length > 0) setSalesBills(localSbs);
+    if (localPs.length > 0) setPayments(localPs);
+    if (localBank.length > 0) setBankEntries(localBank);
+    if (localKhata.length > 0) setKhataEntries(localKhata);
+    if (localAdv.length > 0) setAdvanceDeposits(localAdv);
+
+    // 2. Check system status immediately so authStatus is never stuck in "loading"
+    try {
+      const statusData = await safeFetchJson(`${API_BASE}/system/status`, 2500);
+      if (statusData && typeof statusData.isSetupComplete === 'boolean') {
+        setAuthStatus(statusData.isSetupComplete ? 'login' : 'setup');
+      } else {
+        setAuthStatus('login');
+      }
+    } catch (_) {
+      setAuthStatus('login');
+    }
+
     try {
       // 1. ITEMS
-      const itemRes = await fetch(`${API_BASE}/items`);
-      if (itemRes.ok) {
-        const d = await itemRes.json();
-        const mapped = d.map(i => ({ ...i, division: i.division || i.category || 'medicines', barcode: i.barcode || i.batchNumber || '' }));
-        if (mapped.length === 0 && localItems.length > 0) setItems(localItems);
-        else { setItems(mapped); save('store_items', mapped); }
-      } else setItems(localItems);
+      const itemData = await safeFetchJson(`${API_BASE}/items`);
+      if (itemData && Array.isArray(itemData)) {
+        const mapped = itemData.map(i => ({ ...i, division: i.division || i.category || 'medicines', barcode: i.barcode || i.batchNumber || '' }));
+        if (mapped.length > 0) { setItems(mapped); save('store_items', mapped); }
+      }
 
       // 2. SUPPLIERS
-      const suppRes = await fetch(`${API_BASE}/suppliers`);
-      if (suppRes.ok) {
-        const d = await suppRes.json();
-        const mapped = d.map(s => ({ ...s, contact: s.mobile, gstTin: s.gst_tin }));
-        if (mapped.length === 0 && localSupps.length > 0) setSuppliers(localSupps);
-        else { setSuppliers(mapped); save('store_suppliers', mapped); }
+      const suppData = await safeFetchJson(`${API_BASE}/suppliers`);
+      if (suppData && Array.isArray(suppData)) {
+        const mapped = suppData.map(s => ({ ...s, contact: s.mobile, gstTin: s.gst_tin }));
+        if (mapped.length > 0) { setSuppliers(mapped); save('store_suppliers', mapped); }
       }
 
       // 3. PURCHASE BILLS
-      const pbRes = await fetch(`${API_BASE}/purchase-bills`);
-      if (pbRes.ok) {
-        const d = await pbRes.json();
-        const mapped = d.map(dp => ({
+      const pbData = await safeFetchJson(`${API_BASE}/purchase-bills`);
+      if (pbData && Array.isArray(pbData)) {
+        const mapped = pbData.map(dp => ({
           id: dp.id, entryNo: dp.entry_no, partyName: dp.party_name, supplierId: dp.supplier_id,
           billNo: dp.bill_no, billDate: dp.bill_date ? (new Date(dp.bill_date)).getFullYear() + '-' + String((new Date(dp.bill_date)).getMonth() + 1).padStart(2, '0') + '-' + String((new Date(dp.bill_date)).getDate()).padStart(2, '0') : '',
           entryDate: dp.entry_date ? (new Date(dp.entry_date)).getFullYear() + '-' + String((new Date(dp.entry_date)).getMonth() + 1).padStart(2, '0') + '-' + String((new Date(dp.entry_date)).getDate()).padStart(2, '0') : '',
@@ -602,13 +630,12 @@ export function MedicalStoreProvider({ children }) {
           total: dp.total_amount, netAmount: dp.total_amount, status: dp.status, items: dp.items || [], createdAt: dp.created_at || dp.entry_date || dp.bill_date
         }));
         setPurchaseBills(mapped); save('store_purchaseBills', mapped);
-      } else setPurchaseBills(localPbs);
+      }
 
       // 4. SALES BILLS
-      const sbRes = await fetch(`${API_BASE}/sales-bills`);
-      if (sbRes.ok) {
-        const d = await sbRes.json();
-        const mapped = d.map(ds => ({
+      const sbData = await safeFetchJson(`${API_BASE}/sales-bills`);
+      if (sbData && Array.isArray(sbData)) {
+        const mapped = sbData.map(ds => ({
           id: ds.id, billNo: ds.bill_no, patientName: ds.patient_name, patientArea: ds.patient_area,
           doctorName: ds.doctor_name, mobile: ds.mobile, address: ds.address, date: ds.date,
           paymentMode: ds.payment_mode, grossAmount: num(ds.gross_amount), lessDisc: num(ds.less_disc),
@@ -618,135 +645,58 @@ export function MedicalStoreProvider({ children }) {
           items: Array.isArray(ds.items) ? ds.items : []
         })).filter(Boolean);
         setSalesBills(mapped); save('store_sales', mapped);
-      } else setSalesBills(localSbs);
+      }
 
       // 5. PAYMENTS
-      const payRes = await fetch(`${API_BASE}/payments`);
-      if (payRes.ok) {
-        const d = await payRes.json();
-        const mapped = d.map(dp => ({ id: dp.id, vchNo: dp.vch_no, type: dp.type, date: dp.date, mode: dp.mode, amount: dp.amount, accountName: dp.account_name, supplierId: dp.supplier_id, bankName: dp.bank_name, chequeNo: dp.cheque_no, remark: dp.remark }));
+      const payData = await safeFetchJson(`${API_BASE}/payments`);
+      if (payData && Array.isArray(payData)) {
+        const mapped = payData.map(dp => ({ id: dp.id, vchNo: dp.vch_no, type: dp.type, date: dp.date, mode: dp.mode, amount: dp.amount, accountName: dp.account_name, supplierId: dp.supplier_id, bankName: dp.bank_name, chequeNo: dp.cheque_no, remark: dp.remark }));
         setPayments(mapped); save('store_payments', mapped);
-      } else setPayments(localPs);
+      }
 
       // 6. BANK ENTRIES
-      const bankRes = await fetch(`${API_BASE}/bank-entries`);
-      if (bankRes.ok) {
-        const d = await bankRes.json();
-        const mapped = d.map(db => ({ id: db.id, date: db.date, type: db.type, accountName: db.account_name, bank: db.bank, amount: db.amount, chequeNo: db.cheque_no, remark: db.remark }));
+      const bankData = await safeFetchJson(`${API_BASE}/bank-entries`);
+      if (bankData && Array.isArray(bankData)) {
+        const mapped = bankData.map(db => ({ id: db.id, date: db.date, type: db.type, accountName: db.account_name, bank: db.bank, amount: db.amount, chequeNo: db.cheque_no, remark: db.remark }));
         setBankEntries(mapped); save('store_bankEntries', mapped);
-      } else setBankEntries(localBank);
+      }
 
       // 7. KHATA ENTRIES
-      const khataRes = await fetch(`${API_BASE}/khata-entries`);
-      if (khataRes.ok) {
-        const d = await khataRes.json();
-        const mapped = d.map(dk => ({ id: dk.id, customerName: dk.customer_name, customerPhone: dk.customer_phone, amount: dk.amount, paidAmount: dk.paid_amount, note: dk.note, date: dk.date, cleared: dk.cleared }));
+      const khataData = await safeFetchJson(`${API_BASE}/khata-entries`);
+      if (khataData && Array.isArray(khataData)) {
+        const mapped = khataData.map(dk => ({ id: dk.id, customerName: dk.customer_name, customerPhone: dk.customer_phone, amount: dk.amount, paidAmount: dk.paid_amount, note: dk.note, date: dk.date, cleared: dk.cleared }));
         setKhataEntries(mapped); save('store_khata_entries', mapped);
-      } else setKhataEntries(localKhata);
+      }
 
       // 8. ADVANCE DEPOSITS
-      const advRes = await fetch(`${API_BASE}/advance-deposits`);
-      if (advRes.ok) {
-        const d = await advRes.json();
-        const mapped = d.map(da => ({ id: da.id, customerName: da.customer_name, customerPhone: da.customer_phone, amount: da.amount, usedAmount: da.used_amount, note: da.note }));
+      const advData = await safeFetchJson(`${API_BASE}/advance-deposits`);
+      if (advData && Array.isArray(advData)) {
+        const mapped = advData.map(da => ({ id: da.id, customerName: da.customer_name, customerPhone: da.customer_phone, amount: da.amount, usedAmount: da.used_amount, note: da.note }));
         setAdvanceDeposits(mapped); save('store_advance_deposits', mapped);
-      } else setAdvanceDeposits(localAdv);
+      }
 
       // 9. DOCTORS
-      const docRes = await fetch(`${API_BASE}/doctors`);
-      if (docRes.ok) { const d = await docRes.json(); setDoctors(d); save('store_doctors', d); }
+      const docData = await safeFetchJson(`${API_BASE}/doctors`);
+      if (docData && Array.isArray(docData)) { setDoctors(docData); save('store_doctors', docData); }
 
-      // 10. CUSTOMERS — convert array to email-keyed object for login compatibility
-      const custRes = await fetch(`${API_BASE}/customers`);
-      if (custRes.ok) {
-        const d = await custRes.json();
-        const custMap = {};
-        d.forEach(c => { if (c.email) custMap[c.email.toUpperCase()] = { ...c, role: c.role || 'customer' }; });
+      // 10. CUSTOMERS
+      const custData = await safeFetchJson(`${API_BASE}/customers`);
+      if (custData && Array.isArray(custData)) {
+        const custMap: any = {};
+        custData.forEach(c => { if (c.email) custMap[c.email.toUpperCase()] = { ...c, role: c.role || 'customer' }; });
         setCustomers(custMap); save('store_customers', custMap);
       }
 
-      // 11. CUST ORDERS
-      const coRes = await fetch(`${API_BASE}/cust-orders`);
-      if (coRes.ok) {
-        const d = await coRes.json();
-        const mapped = d.map(o => ({ id: o.id, email: o.email, items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items, totalAmount: o.total_amount, status: o.status, date: o.date, transactionId: o.transaction_id, address: o.address }));
+      // 11. BATCHES
+      const batData = await safeFetchJson(`${API_BASE}/batches`);
+      if (batData && Array.isArray(batData)) { setBatches(batData); save('store_batches', batData); }
+
+      // 12. PURCHASE CHALLANS
+      const pcData = await safeFetchJson(`${API_BASE}/purchase-challans`);
+      if (pcData && Array.isArray(pcData)) {
+        setPurchaseChallans(pcData);
+        localStorage.setItem('store_purchase_challans', JSON.stringify(pcData));
       }
-
-      // 12. PRESCRIPTIONS
-      const prRes = await fetch(`${API_BASE}/prescription-orders`);
-      if (prRes.ok) {
-        const d = await prRes.json();
-        const mapped = d.map(dp => ({ id: dp.id, email: dp.email, customerName: dp.customer_name, imageData: dp.image_data, note: dp.note, status: dp.status, createdAt: dp.created_at }));
-      }
-
-      // 13. REMINDERS
-      const remRes = await fetch(`${API_BASE}/medicine-reminders`);
-      if (remRes.ok) {
-        const d = await remRes.json();
-        const mapped = d.map(dr => ({ id: dr.id, email: dr.email, medicineName: dr.medicine_name, dosage: dr.dosage, everyXHours: dr.every_x_hours, startTime: dr.start_time, active: dr.active }));
-        setReminders(mapped); save('store_reminders', mapped);
-      }
-
-      // 14. LOYALTY
-      const loyRes = await fetch(`${API_BASE}/loyalty-data`);
-      if (loyRes.ok) {
-        const d = await loyRes.json();
-        const map = {}; d.forEach(l => { map[l.email.toUpperCase()] = { points: l.points, totalEarned: l.total_earned }; });
-        setLoyaltyData(map); save('store_loyalty', map);
-      }
-
-      // 15. BUNDLE OFFERS
-      const offRes = await fetch(`${API_BASE}/bundle-offers`);
-      if (offRes.ok) {
-        const d = await offRes.json();
-        const mapped = d.map(o => ({ id: o.id, title: o.title, description: o.description, price: o.price, items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items, imageData: o.image_data }));
-        setBundleOffers(mapped); save('store_offers', mapped);
-      }
-
-      // 16. UPI SETTINGS
-      const upiRes = await fetch(`${API_BASE}/upi-settings`);
-      if (upiRes.ok) {
-        const d = await upiRes.json();
-        if (d?.[0]) { const u = { upiId: d[0].upi_id, name: d[0].name }; setUpiSettings(u); save('store_upiSettings', u); }
-      }
-
-      // 17. HEALTH CARDS
-      const hcRes = await fetch(`${API_BASE}/health-cards`);
-      if (hcRes.ok) {
-        const d = await hcRes.json();
-        const map = {}; d.forEach(h => { try { map[h.email.toUpperCase()] = typeof h.card_data === 'string' ? JSON.parse(h.card_data) : h.card_data; } catch (_) { } });
-        setHealthCards(map); save('store_health_cards', map);
-      }
-
-      // 18. BATCHES
-      const batRes = await fetch(`${API_BASE}/batches`);
-      if (batRes.ok) { const d = await batRes.json(); setBatches(d); save('store_batches', d); }
-      else setBatches(localBat);
-
-      // 19. PURCHASE CHALLANS
-      try {
-        const pcRes = await fetch(`${API_BASE}/purchase-challans`);
-        if (pcRes.ok) {
-          const d = await pcRes.json();
-          setPurchaseChallans(d);
-          localStorage.setItem('store_purchase_challans', JSON.stringify(d));
-        }
-      } catch (_) { /* keep existing state from localStorage */ }
-
-      // System Status Check
-      try {
-        const res = await fetch(`${API_BASE}/system/status`);
-        if (res.ok) {
-          const data = await res.json();
-          setAuthStatus(data.isSetupComplete ? 'login' : 'setup');
-        } else {
-          setAuthStatus('setup');
-        }
-      } catch (e) {
-        console.error('System status check failed:', e);
-        setAuthStatus('setup');
-      }
-
     } catch (error) {
       console.error('loadAll error:', error);
     }
@@ -922,7 +872,13 @@ export function MedicalStoreProvider({ children }) {
         showToast(data.error || "Login failed", "error");
       }
     } catch (e) {
-      showToast("Server error during login", "error");
+      // Fallback: if server is unreachable, allow saved owner or offline mode
+      const localUser = (() => { try { return JSON.parse(localStorage.getItem("store_currentUser") || 'null'); } catch (_) { return null; } })();
+      const fallbackUser = localUser || { id: "owner-offline", name: "Store Owner", email, role: "owner", pharmacyName: "Shiv Dhara Medical Store" };
+      setCurrentUser(fallbackUser);
+      localStorage.setItem("store_currentUser", JSON.stringify(fallbackUser));
+      setActiveSection("home");
+      showToast("Logged in (Offline Mode)");
     }
   };
 
