@@ -3215,33 +3215,33 @@ const pending = [];
 
             {/* ── PURCHASE ITEMS GRID (MATCHES LEGACY VISUAL INFOSOFT COLS) ── */}
             <div style={{ overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", tableLayout: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                 <thead>
                   <tr style={{ background: "#f1f5f9" }}>
                     {[
-                      { l: "No", w: "30px", a: "center" },
-                      { l: "Item Name *", w: "auto", minW: "180px", a: "left" },
-                      { l: "Unit", w: "48px", a: "center" },
-                      { l: "Batch", w: "75px", a: "left" },
-                      { l: "Exp Dt", w: "60px", a: "center" },
-                      { l: "MRP", w: "58px", a: "right" },
-                      { l: "Qty", w: "46px", a: "center" },
-                      { l: "Fr", w: "40px", a: "center" },
-                      { l: "PTR", w: "58px", a: "right" },
-                      { l: "D%", w: "44px", a: "center" },
-                      { l: "Disc", w: "55px", a: "right" },
-                      { l: "BASE", w: "60px", a: "right" },
-                      { l: "Gst%", w: "52px", a: "center" },
-                      { l: "Amount", w: "70px", a: "right" },
-                      { l: "L.P.", w: "52px", a: "right" },
-                      { l: "Locat.", w: "48px", a: "center" },
-                      { l: "", w: "26px", a: "center" },
+                      { l: "No", w: "32px", a: "center" },
+                      { l: "Item Name *", w: "210px", a: "left" },
+                      { l: "Unit", w: "55px", a: "center" },
+                      { l: "Batch", w: "85px", a: "left" },
+                      { l: "Exp Dt", w: "68px", a: "center" },
+                      { l: "MRP", w: "68px", a: "right" },
+                      { l: "Qty", w: "52px", a: "center" },
+                      { l: "Fr", w: "46px", a: "center" },
+                      { l: "PTR", w: "68px", a: "right" },
+                      { l: "D%", w: "50px", a: "center" },
+                      { l: "Disc", w: "65px", a: "right" },
+                      { l: "BASE", w: "70px", a: "right" },
+                      { l: "Gst%", w: "58px", a: "center" },
+                      { l: "Amount", w: "80px", a: "right" },
+                      { l: "L.P.", w: "65px", a: "right" },
+                      { l: "Locat.", w: "58px", a: "center" },
+                      { l: "", w: "30px", a: "center" },
                     ].map(h => (
                       <th
                         key={h.l}
                         style={{
-                          width: h.w !== "auto" ? h.w : undefined,
-                          minWidth: h.minW || (h.w !== "auto" ? h.w : undefined),
+                          width: h.w,
+                          minWidth: h.w,
                           padding: "5px 4px",
                           textAlign: h.a as any,
                           fontWeight: "700",
@@ -3270,12 +3270,12 @@ const pending = [];
                         }}
                       >
                         {/* No */}
-                        <td style={{ width: "30px", padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", boxSizing: "border-box" }}>
+                        <td style={{ width: "32px", minWidth: "32px", padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", boxSizing: "border-box" }}>
                           {idx + 1}
                         </td>
 
-                        {/* Item Name (Full 100% width of cell) */}
-                        <td style={{ padding: "2px 4px", position: "relative", minWidth: "180px", boxSizing: "border-box" }}>
+                        {/* Item Name (Compact 210px width) */}
+                        <td style={{ width: "210px", minWidth: "210px", padding: "2px 4px", position: "relative", boxSizing: "border-box" }}>
                           {(() => {
                             const q = (purchaseItemSearch[idx] || "").toLowerCase();
                             const filtered = items.filter((i: any) => !q || (i.name || "").toLowerCase().includes(q) || (i.company || "").toLowerCase().includes(q));
@@ -3293,7 +3293,7 @@ const pending = [];
                                   value={purchaseItemSearch[idx] !== undefined ? purchaseItemSearch[idx] : (pi.itemName || "")}
                                   onChange={e => {
                                     const r = e.target.getBoundingClientRect();
-                                    setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 260) });
+                                    setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 240) });
                                     setPurchaseItemSearch({ ...purchaseItemSearch, [idx]: e.target.value });
                                     setPurchaseItemHighlight({ ...purchaseItemHighlight, [idx]: 0 });
                                     setPurchaseItemDropdown(idx);
@@ -3301,7 +3301,7 @@ const pending = [];
                                   }}
                                   onFocus={e => {
                                     const r = e.target.getBoundingClientRect();
-                                    setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 260) });
+                                    setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 240) });
                                     setPurchaseItemSearch((prev: any) => ({ ...prev, [idx]: prev[idx] ?? "" }));
                                     setPurchaseItemHighlight((prev: any) => ({ ...prev, [idx]: 0 }));
                                     setPurchaseItemDropdown(idx);
@@ -3348,7 +3348,7 @@ const pending = [];
                         </td>
 
                         {/* Unit */}
-                        <td style={{ width: "48px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "55px", minWidth: "55px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             value={pi.unit || ""}
                             onChange={e => updatePurchaseItem(idx, "unit", e.target.value)}
@@ -3360,7 +3360,7 @@ const pending = [];
                         </td>
 
                         {/* Batch */}
-                        <td style={{ width: "75px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "85px", minWidth: "85px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             value={pi.batchNo || ""}
                             onChange={e => updatePurchaseItem(idx, "batchNo", e.target.value)}
@@ -3373,7 +3373,7 @@ const pending = [];
                         </td>
 
                         {/* Exp Dt (MM/YY) */}
-                        <td style={{ width: "60px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "68px", minWidth: "68px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             value={pi.expiryDate || ""}
                             onChange={e => {
@@ -3391,7 +3391,7 @@ const pending = [];
                         </td>
 
                         {/* MRP */}
-                        <td style={{ width: "58px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "68px", minWidth: "68px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.mrp || ""}
@@ -3405,7 +3405,7 @@ const pending = [];
                         </td>
 
                         {/* Qty */}
-                        <td style={{ width: "46px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "52px", minWidth: "52px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.qty || ""}
@@ -3419,7 +3419,7 @@ const pending = [];
                         </td>
 
                         {/* Fr (Free Qty) */}
-                        <td style={{ width: "40px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "46px", minWidth: "46px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.freeQty || ""}
@@ -3433,7 +3433,7 @@ const pending = [];
                         </td>
 
                         {/* PTR */}
-                        <td style={{ width: "58px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "68px", minWidth: "68px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.ptr || ""}
@@ -3447,7 +3447,7 @@ const pending = [];
                         </td>
 
                         {/* D% */}
-                        <td style={{ width: "44px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "50px", minWidth: "50px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.disc || "0"}
@@ -3461,17 +3461,17 @@ const pending = [];
                         </td>
 
                         {/* Disc Amt */}
-                        <td style={{ width: "55px", padding: "3px 4px", fontWeight: "700", color: "#ef4444", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
+                        <td style={{ width: "65px", minWidth: "65px", padding: "3px 4px", fontWeight: "700", color: "#ef4444", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
                           ₹{fmt(num(pi.ptr) * int(pi.qty) * num(pi.disc) / 100)}
                         </td>
 
                         {/* BASE (Taxable) */}
-                        <td style={{ width: "60px", padding: "3px 4px", fontWeight: "700", color: "var(--color-primary)", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
+                        <td style={{ width: "70px", minWidth: "70px", padding: "3px 4px", fontWeight: "700", color: "var(--color-primary)", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
                           ₹{fmt(num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100))}
                         </td>
 
                         {/* GST% */}
-                        <td style={{ width: "52px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "58px", minWidth: "58px", padding: "2px", boxSizing: "border-box" }}>
                           <select
                             value={pi.gst || "5"}
                             onChange={e => updatePurchaseItem(idx, "gst", e.target.value)}
@@ -3485,17 +3485,17 @@ const pending = [];
                         </td>
 
                         {/* Amount */}
-                        <td style={{ width: "70px", padding: "3px 4px", fontWeight: "800", color: "#2563eb", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
+                        <td style={{ width: "80px", minWidth: "80px", padding: "3px 4px", fontWeight: "800", color: "#2563eb", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
                           ₹{fmt(pi.amount || 0)}
                         </td>
 
                         {/* L.P. (Last Purchase Rate) */}
-                        <td style={{ width: "52px", padding: "3px 4px", color: "#475569", textAlign: "right", fontSize: "10px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
+                        <td style={{ width: "65px", minWidth: "65px", padding: "3px 4px", color: "#475569", textAlign: "right", fontSize: "10px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
                           {pi.lastPurchaseRate ? `₹${fmt(pi.lastPurchaseRate)}` : "—"}
                         </td>
 
                         {/* Locat. (Rack / Location) */}
-                        <td style={{ width: "48px", padding: "2px", boxSizing: "border-box" }}>
+                        <td style={{ width: "58px", minWidth: "58px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             value={pi.location || ""}
                             onChange={e => updatePurchaseItem(idx, "location", e.target.value)}
@@ -3507,10 +3507,10 @@ const pending = [];
                         </td>
 
                         {/* Delete Row */}
-                        <td style={{ width: "26px", padding: "2px", textAlign: "center", boxSizing: "border-box" }}>
+                        <td style={{ width: "30px", minWidth: "30px", padding: "2px", textAlign: "center", boxSizing: "border-box" }}>
                           <button
                             onClick={() => removePurchaseItem(idx)}
-                            style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "2px 3px", cursor: "pointer" }}
+                            style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "2px 4px", cursor: "pointer" }}
                             title="Remove row"
                           >
                             <X size={11} />
@@ -4210,28 +4210,28 @@ const pending = [];
 
                 {/* Item search + table (Legacy Visual InfoSoft Parity Columns: No, Item Name, Unit, Batch, Expiry, MRP, Base, GST%, Qty, Disc%, Amount) */}
                 <div style={{ overflowX: "auto", marginBottom: "8px", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                     <thead>
                       <tr style={{ background: "#f1f5f9" }}>
                         {[
-                          { l: "NO", w: "32px", a: "center" },
-                          { l: "ITEM NAME", w: "auto", minW: "200px", a: "left" },
-                          { l: "UNIT", w: "55px", a: "center" },
-                          { l: "BATCH", w: "80px", a: "left" },
-                          { l: "EXPIRY", w: "65px", a: "center" },
-                          { l: "MRP", w: "65px", a: "right" },
-                          { l: "BASE", w: "65px", a: "right" },
-                          { l: "GST%", w: "55px", a: "center" },
-                          { l: "QTY", w: "48px", a: "center" },
-                          { l: "DISC%", w: "48px", a: "center" },
-                          { l: "AMOUNT", w: "75px", a: "right" },
-                          { l: "", w: "26px", a: "center" },
+                          { l: "NO", w: "35px", a: "center" },
+                          { l: "ITEM NAME", w: "240px", a: "left" },
+                          { l: "UNIT", w: "65px", a: "center" },
+                          { l: "BATCH", w: "95px", a: "left" },
+                          { l: "EXPIRY", w: "75px", a: "center" },
+                          { l: "MRP", w: "75px", a: "right" },
+                          { l: "BASE", w: "75px", a: "right" },
+                          { l: "GST%", w: "65px", a: "center" },
+                          { l: "QTY", w: "55px", a: "center" },
+                          { l: "DISC%", w: "55px", a: "center" },
+                          { l: "AMOUNT", w: "85px", a: "right" },
+                          { l: "", w: "30px", a: "center" },
                         ].map(h => (
                           <th
                             key={h.l}
                             style={{
-                              width: h.w !== "auto" ? h.w : undefined,
-                              minWidth: h.minW || (h.w !== "auto" ? h.w : undefined),
+                              width: h.w,
+                              minWidth: h.w,
                               padding: "5px 4px",
                               textAlign: h.a as any,
                               fontWeight: "700",
@@ -4255,12 +4255,12 @@ const pending = [];
                           style={{ borderBottom: "1px solid #e9ecef", background: activeSalesItemIdx === idx ? "#f0fdf4" : "white" }}
                         >
                           {/* No */}
-                          <td style={{ width: "32px", padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", boxSizing: "border-box" }}>
+                          <td style={{ width: "35px", minWidth: "35px", padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", boxSizing: "border-box" }}>
                             {idx + 1}
                           </td>
 
-                          {/* Item Name (Full 100% width of cell) */}
-                          <td style={{ padding: "3px 4px", position: "relative", minWidth: "200px", boxSizing: "border-box" }}>
+                          {/* Item Name (Compact 240px width) */}
+                          <td style={{ width: "240px", minWidth: "240px", padding: "3px 4px", position: "relative", boxSizing: "border-box" }}>
                             {(() => {
                               const q = (salesItemSearch[idx] || "").toLowerCase();
                               const filtered = items.filter((i: any) => { const alreadyAdded = salesItems.some((s: any, sidx: number) => sidx !== idx && s.itemId === i.id); if (alreadyAdded) return false; return !q || (i.name || "").toLowerCase().includes(q) || (i.company || "").toLowerCase().includes(q); });
@@ -4349,7 +4349,7 @@ const pending = [];
                           </td>
 
                           {/* Unit / Packing */}
-                          <td style={{ width: "55px", padding: "2px", boxSizing: "border-box" }}>
+                          <td style={{ width: "65px", minWidth: "65px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-unit-${idx}`}
                               type="text"
@@ -4362,7 +4362,7 @@ const pending = [];
                           </td>
 
                           {/* Batch No */}
-                          <td style={{ width: "80px", padding: "2px", boxSizing: "border-box" }}>
+                          <td style={{ width: "95px", minWidth: "95px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-batch-${idx}`}
                               type="text"
@@ -4394,7 +4394,7 @@ const pending = [];
                           </td>
 
                           {/* Expiry Date */}
-                          <td style={{ width: "65px", padding: "2px", boxSizing: "border-box" }}>
+                          <td style={{ width: "75px", minWidth: "75px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-expiry-${idx}`}
                               type="text"
@@ -4417,7 +4417,7 @@ const pending = [];
                           </td>
 
                           {/* MRP */}
-                          <td style={{ width: "65px", padding: "2px", boxSizing: "border-box" }}>
+                          <td style={{ width: "75px", minWidth: "75px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-mrp-${idx}`}
                               type="number"
@@ -4429,7 +4429,7 @@ const pending = [];
                           </td>
 
                           {/* Base Rate */}
-                          <td style={{ width: "65px", padding: "2px", boxSizing: "border-box" }}>
+                          <td style={{ width: "75px", minWidth: "75px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-base-${idx}`}
                               type="number"
@@ -4442,20 +4442,20 @@ const pending = [];
                           </td>
 
                           {/* GST % */}
-                          <td style={{ width: "55px", padding: "2px", boxSizing: "border-box" }}>
+                          <td style={{ width: "65px", minWidth: "65px", padding: "2px", boxSizing: "border-box" }}>
                             <select
                               id={`sales-gst-${idx}`}
                               value={si.gst || "0"}
                               onChange={e => updateSalesItem(idx, "gst", e.target.value)}
                               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-qty-${idx}`)?.focus(); } }}
-                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "26px", fontSize: "11px", textAlign: "center" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "26px", fontSize: "11px" }}
                             >
                               {GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}
                             </select>
                           </td>
 
                           {/* Qty */}
-                          <td style={{ width: "48px", padding: "2px", boxSizing: "border-box" }}>
+                          <td style={{ width: "55px", minWidth: "55px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-qty-${idx}`}
                               type="number"
@@ -4467,7 +4467,7 @@ const pending = [];
                           </td>
 
                           {/* Disc % */}
-                          <td style={{ width: "48px", padding: "2px", boxSizing: "border-box" }}>
+                          <td style={{ width: "55px", minWidth: "55px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-disc-${idx}`}
                               type="number"
@@ -4485,13 +4485,13 @@ const pending = [];
                           </td>
 
                           {/* Amount */}
-                          <td style={{ width: "75px", padding: "3px 6px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right", fontSize: "12px", boxSizing: "border-box" }}>
+                          <td style={{ width: "85px", minWidth: "85px", padding: "3px 6px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right", fontSize: "12px", boxSizing: "border-box" }}>
                             ₹{fmt(si.amount || 0)}
                           </td>
 
                           {/* Action */}
-                          <td style={{ width: "26px", padding: "2px", textAlign: "center", boxSizing: "border-box" }}>
-                            <button onClick={() => removeSalesItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "3px 4px", cursor: "pointer" }}><X size={11} /></button>
+                          <td style={{ width: "30px", minWidth: "30px", padding: "2px", textAlign: "center", boxSizing: "border-box" }}>
+                            <button onClick={() => removeSalesItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "3px 5px", cursor: "pointer" }}><X size={11} /></button>
                           </td>
                         </tr>
                       ))}
