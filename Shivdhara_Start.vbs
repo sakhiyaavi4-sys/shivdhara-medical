@@ -1,13 +1,15 @@
 Set WshShell = CreateObject("WScript.Shell")
+Set fso = CreateObject("Scripting.FileSystemObject")
+currentDir = fso.GetParentFolderName(WScript.ScriptFullName)
 
 ' Step 1: Start Backend Server (hidden window)
-WshShell.Run "cmd /c cd /d ""c:\Users\avisa\OneDrive\Desktop\shivdhara-medical\src\server"" && node index.js", 0, False
+WshShell.Run "cmd /c cd /d """ & currentDir & "\src\server"" && node index.js", 0, False
 
 ' Wait 3 seconds for backend to start
 WScript.Sleep 3000
 
 ' Step 2: Start Frontend (hidden window)
-WshShell.Run "cmd /c cd /d ""c:\Users\avisa\OneDrive\Desktop\shivdhara-medical"" && npm run dev", 0, False
+WshShell.Run "cmd /c cd /d """ & currentDir & """ && npm run dev", 0, False
 
 ' Wait 5 seconds for frontend to start
 WScript.Sleep 5000

@@ -27,8 +27,10 @@ dist_electron_final
 
 # Large binary / node bundles
 node-v*-win-x64/
+node-v*-win-x86/
 node-v*-linux-x64/
 node-v*-darwin-x64/
+scratch/
 *.exe
 *.msi
 

@@ -5,14 +5,14 @@ echo Starting Shiv Dhara Medical Store Server...
 echo ==========================================
 
 :: Start the Backend Server
-cd /d "c:\Users\avisa\OneDrive\Desktop\shivdhara-medical\src\server"
+cd /d "%~dp0src\server"
 start "Medical-Backend" cmd /k "node index.js"
 
 echo Waiting for backend to initialize...
 timeout /t 3
 
 :: Start the Frontend React App
-cd /d "c:\Users\avisa\OneDrive\Desktop\shivdhara-medical"
+cd /d "%~dp0"
 start "Medical-Frontend" cmd /k "npm run dev"
 
 echo Waiting for frontend to initialize...
