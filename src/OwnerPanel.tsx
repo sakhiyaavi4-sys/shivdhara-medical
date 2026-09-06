@@ -321,6 +321,14 @@ export default function OwnerPanel() {
   // ── Sidebar State ──
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  // ── Sales POS Legacy Features & Selection States ──
+  const [selectedSalesRow, setSelectedSalesRow] = useState(0);
+  const [salesPrintCopies, setSalesPrintCopies] = useState(1);
+  const [pendingSalesBills, setPendingSalesBills] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('store_pending_sales') || '[]'); } catch (_) { return []; }
+  });
+  const [showPendingSalesModal, setShowPendingSalesModal] = useState(false);
+
   // ── Search Dropdowns ──
   const [salesBillSearchDropdown, setSalesBillSearchDropdown] = useState(false);
   const [salesBillSearchHighlight, setSalesBillSearchHighlight] = useState(0);
@@ -3475,10 +3483,93 @@ const pending = [];
             {/* Sales Form */}
             {showSalesForm && (
               <div style={{ background: "white", borderRadius: "6px", padding: "10px 14px", marginBottom: "8px", border: `2px solid ${isReturn ? "#fecaca" : "#bbf7d0"}`, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "center" }}>
-                  <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "700" }}>{isReturn ? "↩️ Sales Return" : "🧾 New Sales Bill"}</h3>
-                  <button onClick={() => setShowSalesForm(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={16} /></button>
+                {/* Top Header Row with Bill No, Date, Mode Buttons, and Tax Category */}
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "center", flexWrap: "wrap", gap: "8px", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: "700", color: "#64748b" }}>BillNo:</span>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: "var(--color-primary)", background: "#eff6ff", padding: "2px 8px", borderRadius: "4px", border: "1px solid #bfdbfe" }}>
+                        G {salesForm.billNo || "AUTO"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "11px", fontWeight: "600", color: "#64748b" }}>Date:</span>
+                      <input
+                        type="date"
+                        value={salesForm.date || today()}
+                        onChange={e => setSalesForm({ ...salesForm, date: e.target.value })}
+                        style={{ ...inp, height: "26px", fontSize: "11px", padding: "2px 6px", width: "125px" }}
+                      />
+                    </div>
+                    {/* Mode Buttons: Retail | Tax | Return | Quot */}
+                    <div style={{ display: "flex", borderRadius: "6px", overflow: "hidden", border: "1px solid #cbd5e1" }}>
+                      <button
+                        type="button"
+                        onClick={() => { setSalesForm({ ...salesForm, billType: "retail", quotation: false }); setIsReturn(false); }}
+                        style={{
+                          padding: "3px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", border: "none",
+                          background: (!isReturn && !salesForm.quotation && salesForm.billType !== "tax") ? "#2563eb" : "#f1f5f9",
+                          color: (!isReturn && !salesForm.quotation && salesForm.billType !== "tax") ? "white" : "#475569"
+                        }}
+                      >
+                        Retail
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSalesForm({ ...salesForm, billType: "tax", quotation: false }); setIsReturn(false); }}
+                        style={{
+                          padding: "3px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", border: "none", borderLeft: "1px solid #cbd5e1",
+                          background: (!isReturn && !salesForm.quotation && salesForm.billType === "tax") ? "#0891b2" : "#f1f5f9",
+                          color: (!isReturn && !salesForm.quotation && salesForm.billType === "tax") ? "white" : "#475569"
+                        }}
+                      >
+                        Tax
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSalesForm({ ...salesForm, billType: "return", quotation: false }); setIsReturn(true); }}
+                        style={{
+                          padding: "3px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", border: "none", borderLeft: "1px solid #cbd5e1",
+                          background: isReturn ? "#dc2626" : "#f1f5f9",
+                          color: isReturn ? "white" : "#475569"
+                        }}
+                      >
+                        Return
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSalesForm({ ...salesForm, billType: "quot", quotation: true }); setIsReturn(false); }}
+                        style={{
+                          padding: "3px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", border: "none", borderLeft: "1px solid #cbd5e1",
+                          background: (salesForm.quotation || salesForm.billType === "quot") ? "#d97706" : "#f1f5f9",
+                          color: (salesForm.quotation || salesForm.billType === "quot") ? "white" : "#475569"
+                        }}
+                      >
+                        Quot
+                      </button>
+                    </div>
+                    {/* Tax Category */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "11px", fontWeight: "600", color: "#64748b" }}>Tax Cat:</span>
+                      <select
+                        value={salesForm.taxCategory || "RD (within state - SGST&UGST)"}
+                        onChange={e => setSalesForm({ ...salesForm, taxCategory: e.target.value })}
+                        style={{ ...inp, height: "26px", fontSize: "11px", padding: "1px 6px", minWidth: "170px" }}
+                      >
+                        <option value="RD (within state - SGST&UGST)">RD (within state - SGST&UGST)</option>
+                        <option value="Inter-state (IGST)">Inter-state (IGST)</option>
+                        <option value="Exempt / Nil Rated">Exempt / Nil Rated</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "11px", color: isReturn ? "#ef4444" : "#16a34a", fontWeight: "700", background: isReturn ? "#fef2f2" : "#f0fdf4", padding: "2px 8px", borderRadius: "12px", border: `1px solid ${isReturn ? "#fecaca" : "#bbf7d0"}` }}>
+                      {isReturn ? "↩️ Return Mode" : (salesForm.quotation ? "📝 Quotation Mode" : "🧾 Sales Bill")}
+                    </span>
+                    <button onClick={() => setShowSalesForm(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }} title="Close Form"><X size={16} /></button>
+                  </div>
                 </div>
+
                 {/* Lock Status Banner */}
                 {(() => {
                   const check = isDateLocked(isReturn ? "salesReturn" : "sales", salesForm.date || today());
@@ -3490,8 +3581,19 @@ const pending = [];
                     </div>
                   );
                 })()}
-                {/* Patient/Doctor details */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: "6px", marginBottom: "8px", background: "#f8fafc", borderRadius: "8px", padding: "8px 12px", border: "1px solid var(--color-border)" }}>
+
+                {/* Patient / Doctor / Account Details */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(125px,1fr))", gap: "6px", marginBottom: "8px", background: "#f8fafc", borderRadius: "8px", padding: "8px 12px", border: "1px solid var(--color-border)" }}>
+                  <div>
+                    <label style={lbl}>A/c Name</label>
+                    <input
+                      type="text"
+                      value={salesForm.acName || "CASH ***"}
+                      onChange={e => setSalesForm({ ...salesForm, acName: e.target.value.toUpperCase() })}
+                      placeholder="A/c Name (CASH ***)"
+                      style={inp}
+                    />
+                  </div>
                   {[
                     { k: "patientName", l: "Patient Name", t: "text", ph: "Patient name" }, { k: "patientArea", l: "Patient Area", t: "text", ph: "Area/Locality" },
                     { k: "mobile", l: "Mobile No", t: "tel", ph: "Mobile no" }, { k: "address", l: "Address", t: "text", ph: "Address" },
@@ -3522,167 +3624,662 @@ const pending = [];
                   <div><label style={lbl}>Extra Discount %</label><input type="number" value={salesForm.discount || "0"} onChange={e => setSalesForm({ ...salesForm, discount: e.target.value })} style={inp} /></div>
                   <div><label style={lbl}>Refill Due Date (Optional)</label><input type="date" value={salesForm.refillDate || ""} onChange={e => setSalesForm({ ...salesForm, refillDate: e.target.value })} style={inp} /></div>
                   <div><label style={lbl}>Pay Rec / Refund (₹)</label><input type="number" value={salesForm.payRec || "0"} onChange={e => setSalesForm({ ...salesForm, payRec: e.target.value })} placeholder="0.00" style={inp} /></div>
-                  <div style={{ display: "flex", gap: "12px", alignItems: "center", paddingTop: "6px" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
-                      <input type="checkbox" checked={!!isReturn} disabled style={{ width: "13px", height: "13px" }} />
-                      Return Bill
-                    </label>
-                    <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", cursor: "pointer", color: "var(--color-text-dark)", fontWeight: "600" }}>
-                      <input type="checkbox" checked={!!salesForm.quotation} onChange={e => setSalesForm({ ...salesForm, quotation: e.target.checked })} style={{ width: "13px", height: "13px" }} />
-                      Quotation
-                    </label>
-                  </div>
                 </div>
-                {/* Item search + table */}
 
+                {/* Item Search & Legacy Pos Grid */}
                 <div style={{ overflowX: "auto", marginBottom: "8px" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-                    <thead><tr style={{ background: "#f1f5f9" }}>{["Sr", "Item", "Batch No", "Qty", "MRP", "Rate", "GST%", "Disc%", "Amount", ""].map(h => <th key={h} style={{ padding: "4px 6px", textAlign: h === "Sr" ? "center" : h === "Amount" ? "right" : "left", fontWeight: "600", color: "var(--color-text-dark)", fontSize: "11px", textTransform: "uppercase" }}>{h}</th>)}</tr></thead>
+                    <thead>
+                      <tr style={{ background: "#f1f5f9" }}>
+                        {[
+                          { h: "Sr", w: "28px", a: "center" },
+                          { h: "Item Name", w: "auto", a: "left" },
+                          { h: "Unit", w: "44px", a: "center" },
+                          { h: "Batch No", w: "72px", a: "left" },
+                          { h: "Expiry", w: "52px", a: "center" },
+                          { h: "MRP", w: "52px", a: "right" },
+                          { h: "Base", w: "52px", a: "right" },
+                          { h: "Rate", w: "52px", a: "right" },
+                          { h: "GST%", w: "50px", a: "center" },
+                          { h: "Qty", w: "45px", a: "center" },
+                          { h: "Disc%", w: "45px", a: "center" },
+                          { h: "Amount", w: "65px", a: "right" },
+                          { h: "", w: "26px", a: "center" },
+                        ].map(c => (
+                          <th key={c.h} style={{ padding: "4px 6px", textAlign: c.a as any, fontWeight: "600", color: "var(--color-text-dark)", fontSize: "11px", textTransform: "uppercase", width: c.w }}>
+                            {c.h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
                     <tbody>
-                      {salesItems.map((si, idx) => (
-                        <tr key={idx} style={{ borderBottom: "1px solid #e9ecef" }}>
-                          <td style={{ padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", width: "26px", whiteSpace: "nowrap" }}>{idx + 1}</td>
-                          <td style={{ padding: "3px", position: "relative", minWidth: "140px" }}>
-                            {(() => {
-                              const q = (salesItemSearch[idx] || "").toLowerCase();
-                              const filtered = items.filter(i => { const alreadyAdded = salesItems.some((s, sidx) => sidx !== idx && s.itemId === i.id); if (alreadyAdded) return false; return !q || (i.name || "").toLowerCase().includes(q) || (i.company || "").toLowerCase().includes(q); });
-                              const hi = salesItemHighlight[idx] || 0;
-                              const selectItem = (i) => { setSalesItems(prev => { const updated = [...prev]; const si2 = { ...emptySalesItem(), itemId: i.id, itemName: i.name, mrp: num(i.mrp) || num(i.price), rate: num(i.price), gst: num(i.gst) || 0 }; si2.amount = calcSalesItemAmt(si2); updated[idx] = { ...updated[idx], ...si2 }; return updated; }); setSalesItemSearch(prev => ({ ...prev, [idx]: undefined })); setSalesItemHighlight(prev => ({ ...prev, [idx]: 0 })); setSalesItemDropdown(null); };
-                              return (<>
-                                <input
-                                  id={`sales-item-${idx}`}
-                                  value={salesItemSearch[idx] !== undefined ? salesItemSearch[idx] : (si.itemName || "")}
-                                  onChange={e => { const r = e.target.getBoundingClientRect(); setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) }); setSalesItemSearch({ ...salesItemSearch, [idx]: e.target.value }); setSalesItemHighlight({ ...salesItemHighlight, [idx]: 0 }); setSalesItemDropdown(idx); }}
-                                  onFocus={e => { const r = e.target.getBoundingClientRect(); setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) }); setSalesItemSearch(prev => ({ ...prev, [idx]: prev[idx] ?? "" })); setSalesItemHighlight(prev => ({ ...prev, [idx]: 0 })); setSalesItemDropdown(idx); }}
-                                  onBlur={() => setTimeout(() => setSalesItemDropdown(null), 200)}
-                                  onKeyDown={e => {
-                                    if (e.key === "Enter") {
-                                      e.preventDefault(); e.stopPropagation();
-                                      if (salesItemDropdown === idx && filtered.length > 0) {
-                                        const item = filtered[hi]; if (item) { selectItem(item); setTimeout(() => document.getElementById(`sales-batch-${idx}`)?.focus(), 50); }
-                                      } else {
-                                        document.getElementById(`sales-batch-${idx}`)?.focus();
-                                      }
-                                    }
-                                    else if (e.key === "ArrowDown" && salesItemDropdown === idx && filtered.length > 0) { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.min((prev[idx] || 0) + 1, filtered.length - 1) })) }
-                                    else if (e.key === "ArrowUp" && salesItemDropdown === idx && filtered.length > 0) { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.max((prev[idx] || 0) - 1, 0) })) }
-                                  }}
-                                  placeholder="Search item..."
-                                  style={{ ...inp, minWidth: "130px", padding: "3px 6px", height: "26px", fontSize: "12px" }}
-                                  autoComplete="off"
-                                  data-pf="skip"
-                                />
-                                {salesItemDropdown === idx && salesItemSearch[idx] !== undefined && (
-                                  <div style={{ position: "fixed", top: salesDropdownPos.top, left: salesDropdownPos.left, zIndex: 9999, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "0 8px 24px rgba(0,0,0,0.15)", minWidth: salesDropdownPos.width }}>
-                                    {filtered.map((i, pos) => (
-                                      <div key={i.id} onMouseDown={() => selectItem(i)} onMouseEnter={() => setSalesItemHighlight(prev => ({ ...prev, [idx]: pos }))} style={{ padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid #e9ecef", fontSize: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", background: pos === hi ? "#eff6ff" : "white" }}>
-                                        <span><strong>{i.name}</strong></span>
-                                        <span style={{ color: "#64748b", fontSize: "11px", marginLeft: "8px" }}>{getDivision(i.division).icon} ₹{i.price} {i.stock <= 0 ? <span style={{ color: "#ef4444", fontSize: "10px" }}>OOS</span> : ""}</span>
+                      {salesItems.map((si, idx) => {
+                        const isSelectedRow = selectedSalesRow === idx;
+                        return (
+                          <tr
+                            key={idx}
+                            onClick={() => setSelectedSalesRow(idx)}
+                            style={{
+                              borderBottom: "1px solid #e9ecef",
+                              background: isSelectedRow ? "#f0f9ff" : "transparent"
+                            }}
+                          >
+                            <td style={{ padding: "3px 4px", textAlign: "center", fontWeight: "600", color: isSelectedRow ? "#0284c7" : "#64748b", fontSize: "11px", width: "28px", whiteSpace: "nowrap" }}>
+                              {idx + 1}
+                            </td>
+                            <td style={{ padding: "3px", position: "relative", minWidth: "140px" }}>
+                              {(() => {
+                                const q = (salesItemSearch[idx] || "").toLowerCase();
+                                const filtered = items.filter(i => {
+                                  const alreadyAdded = salesItems.some((s, sidx) => sidx !== idx && s.itemId === i.id);
+                                  if (alreadyAdded) return false;
+                                  return !q || (i.name || "").toLowerCase().includes(q) || (i.company || "").toLowerCase().includes(q);
+                                });
+                                const hi = salesItemHighlight[idx] || 0;
+                                const selectItem = (i) => {
+                                  setSalesItems(prev => {
+                                    const updated = [...prev];
+                                    const gstVal = num(i.gst) || 0;
+                                    const rateVal = num(i.price) || 0;
+                                    const baseVal = gstVal > 0 ? (rateVal / (1 + gstVal / 100)).toFixed(2) : rateVal.toFixed(2);
+                                    const si2 = {
+                                      ...emptySalesItem(),
+                                      itemId: i.id,
+                                      itemName: i.name,
+                                      unit: i.unit || i.pack || "10",
+                                      batchNo: i.batch || "",
+                                      expiry: i.expiryDate ? i.expiryDate.slice(2, 7) : "12/28",
+                                      mrp: num(i.mrp) || rateVal,
+                                      base: baseVal,
+                                      rate: rateVal,
+                                      gst: gstVal,
+                                      company: i.company || "",
+                                      location: i.location || i.rack || "A1",
+                                      drugName: i.drugGroup || i.generic || ""
+                                    };
+                                    si2.amount = calcSalesItemAmt(si2);
+                                    updated[idx] = { ...updated[idx], ...si2 };
+                                    return updated;
+                                  });
+                                  setSelectedSalesRow(idx);
+                                  setSalesItemSearch(prev => ({ ...prev, [idx]: undefined }));
+                                  setSalesItemHighlight(prev => ({ ...prev, [idx]: 0 }));
+                                  setSalesItemDropdown(null);
+                                };
+                                return (
+                                  <>
+                                    <input
+                                      id={`sales-item-${idx}`}
+                                      value={salesItemSearch[idx] !== undefined ? salesItemSearch[idx] : (si.itemName || "")}
+                                      onChange={e => {
+                                        const r = e.target.getBoundingClientRect();
+                                        setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) });
+                                        setSalesItemSearch({ ...salesItemSearch, [idx]: e.target.value });
+                                        setSalesItemHighlight({ ...salesItemHighlight, [idx]: 0 });
+                                        setSalesItemDropdown(idx);
+                                      }}
+                                      onFocus={e => {
+                                        setSelectedSalesRow(idx);
+                                        const r = e.target.getBoundingClientRect();
+                                        setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) });
+                                        setSalesItemSearch(prev => ({ ...prev, [idx]: prev[idx] ?? "" }));
+                                        setSalesItemHighlight(prev => ({ ...prev, [idx]: 0 }));
+                                        setSalesItemDropdown(idx);
+                                      }}
+                                      onBlur={() => setTimeout(() => setSalesItemDropdown(null), 200)}
+                                      onKeyDown={e => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault(); e.stopPropagation();
+                                          if (salesItemDropdown === idx && filtered.length > 0) {
+                                            const item = filtered[hi];
+                                            if (item) { selectItem(item); setTimeout(() => document.getElementById(`sales-unit-${idx}`)?.focus(), 50); }
+                                          } else {
+                                            document.getElementById(`sales-unit-${idx}`)?.focus();
+                                          }
+                                        }
+                                        else if (e.key === "ArrowDown" && salesItemDropdown === idx && filtered.length > 0) { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.min((prev[idx] || 0) + 1, filtered.length - 1) })) }
+                                        else if (e.key === "ArrowUp" && salesItemDropdown === idx && filtered.length > 0) { e.preventDefault(); setSalesItemHighlight(prev => ({ ...prev, [idx]: Math.max((prev[idx] || 0) - 1, 0) })) }
+                                      }}
+                                      placeholder="Search item..."
+                                      style={{ ...inp, minWidth: "130px", padding: "3px 6px", height: "26px", fontSize: "12px" }}
+                                      autoComplete="off"
+                                      data-pf="skip"
+                                    />
+                                    {salesItemDropdown === idx && salesItemSearch[idx] !== undefined && (
+                                      <div style={{ position: "fixed", top: salesDropdownPos.top, left: salesDropdownPos.left, zIndex: 9999, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "0 8px 24px rgba(0,0,0,0.15)", minWidth: salesDropdownPos.width }}>
+                                        {filtered.map((i, pos) => (
+                                          <div key={i.id} onMouseDown={() => selectItem(i)} onMouseEnter={() => setSalesItemHighlight(prev => ({ ...prev, [idx]: pos }))} style={{ padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid #e9ecef", fontSize: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", background: pos === hi ? "#eff6ff" : "white" }}>
+                                            <span><strong>{i.name}</strong></span>
+                                            <span style={{ color: "#64748b", fontSize: "11px", marginLeft: "8px" }}>{getDivision(i.division).icon} ₹{i.price} {i.stock <= 0 ? <span style={{ color: "#ef4444", fontSize: "10px" }}>OOS</span> : ""}</span>
+                                          </div>
+                                        ))}
+                                        {filtered.length === 0 && (
+                                          <div style={{ padding: "10px", color: "#64748b", fontSize: "12px", textAlign: "center" }}>No items found</div>
+                                        )}
                                       </div>
-                                    ))}
-                                    {filtered.length === 0 && (
-                                      <div style={{ padding: "10px", color: "#64748b", fontSize: "12px", textAlign: "center" }}>No items found</div>
                                     )}
-                                  </div>
-                                )}
-                              </>);
-                            })()}
-                          </td>
-                          <td style={{ padding: "3px", width: "75px" }}><input id={`sales-batch-${idx}`} type="text" value={si.batchNo || ""} onChange={e => updateSalesItem(idx, "batchNo", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-qty-${idx}`)?.focus(); } }} placeholder="Batch No" style={{ ...inp, width: "100%", padding: "3px 5px", height: "26px", fontSize: "12px" }} /></td>
-                          {[{ f: "qty", t: "number", w: "48px", next: "mrp" }, { f: "mrp", t: "number", w: "55px", next: "rate" }, { f: "rate", t: "number", w: "55px", next: "gst" }].map(f => (
-                            <td key={f.f} style={{ padding: "3px", width: f.w }}><input id={`sales-${f.f}-${idx}`} type={f.t} value={si[f.f] || ""} onChange={e => updateSalesItem(idx, f.f, e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-${f.next}-${idx}`)?.focus(); } }} style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "12px" }} /></td>
-                          ))}
-                          <td style={{ padding: "3px", width: "55px" }}><select id={`sales-gst-${idx}`} value={si.gst || "0"} onChange={e => updateSalesItem(idx, "gst", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-disc-${idx}`)?.focus(); } }} style={{ ...inp, width: "100%", padding: "2px 4px", height: "26px", fontSize: "11px" }}>{GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}</select></td>
-                          <td style={{ padding: "3px", width: "48px" }}><input id={`sales-disc-${idx}`} type="number" value={si.disc || "0"} onChange={e => updateSalesItem(idx, "disc", e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSalesItem(); setTimeout(() => document.getElementById(`sales-item-${idx + 1}`)?.focus(), 100); } }} style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "12px" }} /></td>
-                          <td style={{ padding: "3px 6px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right", width: "65px", fontSize: "12px" }}>₹{fmt(si.amount || 0)}</td>
-                          <td style={{ padding: "3px", width: "26px", textAlign: "center" }}><button onClick={() => removeSalesItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "3px 5px", cursor: "pointer" }}><X size={11} /></button></td>
-                        </tr>
-                      ))}
+                                  </>
+                                );
+                              })()}
+                            </td>
+                            {/* Unit */}
+                            <td style={{ padding: "3px", width: "44px" }}>
+                              <input
+                                id={`sales-unit-${idx}`}
+                                type="text"
+                                value={si.unit || "10"}
+                                onChange={e => updateSalesItem(idx, "unit", e.target.value)}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-batch-${idx}`)?.focus(); } }}
+                                style={{ ...inp, width: "100%", padding: "3px 3px", height: "26px", fontSize: "11px", textAlign: "center" }}
+                              />
+                            </td>
+                            {/* Batch No */}
+                            <td style={{ padding: "3px", width: "72px" }}>
+                              <input
+                                id={`sales-batch-${idx}`}
+                                type="text"
+                                value={si.batchNo || ""}
+                                onChange={e => updateSalesItem(idx, "batchNo", e.target.value)}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-expiry-${idx}`)?.focus(); } }}
+                                placeholder="Batch"
+                                style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px" }}
+                              />
+                            </td>
+                            {/* Expiry */}
+                            <td style={{ padding: "3px", width: "52px" }}>
+                              <input
+                                id={`sales-expiry-${idx}`}
+                                type="text"
+                                value={si.expiry || ""}
+                                onChange={e => updateSalesItem(idx, "expiry", e.target.value)}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-mrp-${idx}`)?.focus(); } }}
+                                placeholder="MM/YY"
+                                style={{ ...inp, width: "100%", padding: "3px 2px", height: "26px", fontSize: "11px", textAlign: "center" }}
+                              />
+                            </td>
+                            {/* MRP */}
+                            <td style={{ padding: "3px", width: "52px" }}>
+                              <input
+                                id={`sales-mrp-${idx}`}
+                                type="number"
+                                value={si.mrp || ""}
+                                onChange={e => updateSalesItem(idx, "mrp", e.target.value)}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-rate-${idx}`)?.focus(); } }}
+                                style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "right" }}
+                              />
+                            </td>
+                            {/* Base (Auto-calculated/displayed) */}
+                            <td style={{ padding: "3px", width: "52px" }}>
+                              <input
+                                id={`sales-base-${idx}`}
+                                type="text"
+                                readOnly
+                                value={si.base || (num(si.gst) > 0 ? (num(si.rate) / (1 + num(si.gst) / 100)).toFixed(2) : String(si.rate || "0.00"))}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "right", background: "#f8fafc", color: "#64748b" }}
+                              />
+                            </td>
+                            {/* Rate */}
+                            <td style={{ padding: "3px", width: "52px" }}>
+                              <input
+                                id={`sales-rate-${idx}`}
+                                type="number"
+                                value={si.rate || ""}
+                                onChange={e => updateSalesItem(idx, "rate", e.target.value)}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-gst-${idx}`)?.focus(); } }}
+                                style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "right" }}
+                              />
+                            </td>
+                            {/* GST% */}
+                            <td style={{ padding: "3px", width: "50px" }}>
+                              <select
+                                id={`sales-gst-${idx}`}
+                                value={si.gst || "0"}
+                                onChange={e => updateSalesItem(idx, "gst", e.target.value)}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-qty-${idx}`)?.focus(); } }}
+                                style={{ ...inp, width: "100%", padding: "2px 2px", height: "26px", fontSize: "11px" }}
+                              >
+                                {GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}
+                              </select>
+                            </td>
+                            {/* Qty */}
+                            <td style={{ padding: "3px", width: "45px" }}>
+                              <input
+                                id={`sales-qty-${idx}`}
+                                type="number"
+                                value={si.qty || ""}
+                                onChange={e => updateSalesItem(idx, "qty", e.target.value)}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-disc-${idx}`)?.focus(); } }}
+                                style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "center" }}
+                              />
+                            </td>
+                            {/* Disc% */}
+                            <td style={{ padding: "3px", width: "45px" }}>
+                              <input
+                                id={`sales-disc-${idx}`}
+                                type="number"
+                                value={si.disc || "0"}
+                                onChange={e => updateSalesItem(idx, "disc", e.target.value)}
+                                onFocus={() => setSelectedSalesRow(idx)}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addSalesItem();
+                                    setTimeout(() => document.getElementById(`sales-item-${idx + 1}`)?.focus(), 100);
+                                  }
+                                }}
+                                style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "center" }}
+                              />
+                            </td>
+                            {/* Amount */}
+                            <td style={{ padding: "3px 6px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right", width: "65px", fontSize: "12px" }}>
+                              ₹{fmt(si.amount || 0)}
+                            </td>
+                            {/* Action Remove */}
+                            <td style={{ padding: "3px", width: "26px", textAlign: "center" }}>
+                              <button
+                                onClick={() => removeSalesItem(idx)}
+                                style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "3px 5px", cursor: "pointer" }}
+                                title="Remove row"
+                              >
+                                <X size={11} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
-                {/* Totals - PDF style */}
+
+                {/* Bottom Dual Panels: Left (Live Info & Tax) + Right (Totals) */}
                 {(() => {
+                  const selRow = salesItems[selectedSalesRow] || salesItems[0] || {};
                   const gross = salesItems.reduce((s, si) => s + num(si.amount || 0), 0);
                   const lessDisc = gross * num(salesForm.discount) / 100;
                   const net = gross - lessDisc;
-                  const sgst = salesItems.reduce((s, si) => { const b = num(si.rate) * int(si.qty) * (1 - num(si.disc) / 100); return s + b * num(si.gst) / 200; }, 0);
-                  const cgst = sgst;
+
+                  // Live GST calculations
+                  const isInterState = (salesForm.taxCategory || "").includes("Inter-state");
+                  const taxableBase = salesItems.reduce((s, si) => {
+                    const r = num(si.rate), q = int(si.qty), d = num(si.disc), g = num(si.gst);
+                    const b = r * q * (1 - d / 100);
+                    return s + (g > 0 ? (b / (1 + g / 100)) : b);
+                  }, 0);
+                  const totalTax = salesItems.reduce((s, si) => {
+                    const r = num(si.rate), q = int(si.qty), d = num(si.disc), g = num(si.gst);
+                    const b = r * q * (1 - d / 100);
+                    const baseItem = g > 0 ? (b / (1 + g / 100)) : b;
+                    return s + baseItem * g / 100;
+                  }, 0);
+                  const sgst = isInterState ? 0 : totalTax / 2;
+                  const cgst = isInterState ? 0 : totalTax / 2;
+                  const igst = isInterState ? totalTax : 0;
+                  const netFinal = net - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue);
+
                   return (
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "6px 12px", minWidth: "240px", fontSize: "11px" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 14px" }}>
-                          <span style={{ color: "#64748b" }}>SGST:</span><span style={{ textAlign: "right" }}>₹{fmt(sgst)}</span>
-                          <span style={{ color: "#64748b" }}>CGST:</span><span style={{ textAlign: "right" }}>₹{fmt(cgst)}</span>
-                          <span style={{ fontWeight: "600" }}>Gross Amount:</span><span style={{ textAlign: "right", fontWeight: "600" }}>₹{fmt(gross)}</span>
-                          <span style={{ color: "#495057" }}>Half Scheme:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.halfScheme || "0"} onChange={e => setSalesForm({ ...salesForm, halfScheme: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
-                          <span style={{ color: "#495057" }}>Oct on Free:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.octOnFree || "0"} onChange={e => setSalesForm({ ...salesForm, octOnFree: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
-                          <span style={{ color: "#495057" }}>Other +/-:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.otherAdj || "0"} onChange={e => setSalesForm({ ...salesForm, otherAdj: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
-                          <span style={{ color: "#ef4444" }}>Less Disc ({salesForm.discount || 0}%):</span><span style={{ textAlign: "right", color: "#ef4444" }}>-₹{fmt(lessDisc)}</span>
-                          <span style={{ color: "#495057" }}>Cr Note:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.crNote || "0"} onChange={e => setSalesForm({ ...salesForm, crNote: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
-                          <span style={{ color: "#495057" }}>TCS Value:</span><span style={{ textAlign: "right" }}><input type="number" value={salesForm.tcsValue || "0"} onChange={e => setSalesForm({ ...salesForm, tcsValue: e.target.value })} style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px" }} /></span>
-                          <span style={{ fontWeight: "800", fontSize: "13px", borderTop: "1px solid var(--color-border)", paddingTop: "4px" }}>NET:</span>
-                          <span style={{ textAlign: "right", fontWeight: "800", fontSize: "13px", color: "var(--color-primary)", borderTop: "1px solid var(--color-border)", paddingTop: "4px" }}>₹{fmt(net - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue))}</span>
+                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px", marginBottom: "8px", alignItems: "start" }}>
+                      {/* Left: Live Item Info, Msg, Fast checkboxes & Live GST Table */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        {/* Live Selected Item Box */}
+                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "6px 10px", fontSize: "11px" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto 1fr", gap: "2px 10px", alignItems: "center" }}>
+                            <span style={{ color: "#64748b", fontWeight: "600" }}>Company:</span>
+                            <span style={{ fontWeight: "700", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {selRow.company || "—"}
+                            </span>
+                            <span style={{ color: "#64748b", fontWeight: "600" }}>Location:</span>
+                            <span style={{ fontWeight: "700", color: "#0284c7" }}>
+                              {selRow.location || "A1"}
+                            </span>
+                            <span style={{ color: "#64748b", fontWeight: "600" }}>Drug Name:</span>
+                            <span style={{ fontWeight: "600", color: "#475569", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {selRow.drugName || "—"}
+                            </span>
+                            <span style={{ color: "#64748b", fontWeight: "600" }}>MRP:</span>
+                            <span style={{ fontWeight: "700", color: "#16a34a" }}>
+                              ₹{fmt(selRow.mrp || 0)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Message & Fast Checkboxes */}
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px", flex: 1 }}>
+                            <span style={{ fontSize: "11px", fontWeight: "600", color: "#64748b", whiteSpace: "nowrap" }}>Msg:</span>
+                            <input
+                              type="text"
+                              value={salesForm.billMsg || "HAVE A FAST RECOVERY & GOOD HEALTH"}
+                              onChange={e => setSalesForm({ ...salesForm, billMsg: e.target.value.toUpperCase() })}
+                              style={{ ...inp, height: "24px", fontSize: "10px", padding: "2px 6px", width: "100%" }}
+                              placeholder="Invoice Message"
+                            />
+                          </div>
+                          <label style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "11px", cursor: "pointer", color: "#334155", fontWeight: "600", whiteSpace: "nowrap" }}>
+                            <input
+                              type="checkbox"
+                              checked={!!salesForm.barcodeScan}
+                              onChange={e => setSalesForm({ ...salesForm, barcodeScan: e.target.checked })}
+                              style={{ width: "12px", height: "12px" }}
+                            />
+                            Barcode
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "11px", cursor: "pointer", color: "#334155", fontWeight: "600", whiteSpace: "nowrap" }}>
+                            <input
+                              type="checkbox"
+                              checked={!!salesForm.cardPayment}
+                              onChange={e => setSalesForm({ ...salesForm, cardPayment: e.target.checked })}
+                              style={{ width: "12px", height: "12px" }}
+                            />
+                            Card
+                          </label>
+                        </div>
+
+                        {/* Live GST Breakdown Table */}
+                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", overflow: "hidden" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px", textAlign: "right" }}>
+                            <thead>
+                              <tr style={{ background: "#f1f5f9", color: "#475569", fontWeight: "600", borderBottom: "1px solid #e2e8f0" }}>
+                                <th style={{ padding: "3px 6px", textAlign: "left" }}>Tax Category</th>
+                                <th style={{ padding: "3px 6px" }}>Base Amt</th>
+                                <th style={{ padding: "3px 6px" }}>SGST</th>
+                                <th style={{ padding: "3px 6px" }}>CGST</th>
+                                <th style={{ padding: "3px 6px" }}>IGST</th>
+                                <th style={{ padding: "3px 6px" }}>Tax Amt</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td style={{ padding: "3px 6px", textAlign: "left", color: "#0284c7", fontWeight: "600" }}>{salesForm.taxCategory || "RD (SGST/UGST)"}</td>
+                                <td style={{ padding: "3px 6px", fontWeight: "600" }}>₹{fmt(taxableBase)}</td>
+                                <td style={{ padding: "3px 6px" }}>₹{fmt(sgst)}</td>
+                                <td style={{ padding: "3px 6px" }}>₹{fmt(cgst)}</td>
+                                <td style={{ padding: "3px 6px" }}>₹{fmt(igst)}</td>
+                                <td style={{ padding: "3px 6px", fontWeight: "700", color: "#16a34a" }}>₹{fmt(totalTax)}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Right: Summary Totals */}
+                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "6px 12px", fontSize: "11px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "2px 14px", alignItems: "center" }}>
+                          <span style={{ fontWeight: "600", color: "#334155" }}>Gross Amount:</span>
+                          <span style={{ textAlign: "right", fontWeight: "600" }}>₹{fmt(gross)}</span>
+
+                          <span style={{ color: "#ef4444" }}>Less Disc ({salesForm.discount || 0}%):</span>
+                          <span style={{ textAlign: "right", color: "#ef4444" }}>-₹{fmt(lessDisc)}</span>
+
+                          <span style={{ color: "#495057" }}>Other (+/-):</span>
+                          <span style={{ textAlign: "right" }}>
+                            <input
+                              type="number"
+                              value={salesForm.otherAdj || "0"}
+                              onChange={e => setSalesForm({ ...salesForm, otherAdj: e.target.value })}
+                              style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px", textAlign: "right" }}
+                            />
+                          </span>
+
+                          <span style={{ color: "#495057" }}>Round Off / Pay Rec:</span>
+                          <span style={{ textAlign: "right" }}>
+                            <input
+                              type="number"
+                              value={salesForm.payRec || "0"}
+                              onChange={e => setSalesForm({ ...salesForm, payRec: e.target.value })}
+                              style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px", textAlign: "right" }}
+                            />
+                          </span>
+
+                          <span style={{ color: "#64748b" }}>Cr Note:</span>
+                          <span style={{ textAlign: "right" }}>
+                            <input
+                              type="number"
+                              value={salesForm.crNote || "0"}
+                              onChange={e => setSalesForm({ ...salesForm, crNote: e.target.value })}
+                              style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px", textAlign: "right" }}
+                            />
+                          </span>
+
+                          <span style={{ color: "#64748b" }}>TCS Value:</span>
+                          <span style={{ textAlign: "right" }}>
+                            <input
+                              type="number"
+                              value={salesForm.tcsValue || "0"}
+                              onChange={e => setSalesForm({ ...salesForm, tcsValue: e.target.value })}
+                              style={{ ...inp, width: "65px", padding: "1px 4px", fontSize: "10px", height: "20px", textAlign: "right" }}
+                            />
+                          </span>
+
+                          <span style={{ fontWeight: "800", fontSize: "14px", borderTop: "1px solid var(--color-border)", paddingTop: "4px", color: "#1e293b" }}>NET AMOUNT:</span>
+                          <span style={{ textAlign: "right", fontWeight: "900", fontSize: "15px", color: "var(--color-primary)", borderTop: "1px solid var(--color-border)", paddingTop: "4px" }}>
+                            ₹{fmt(netFinal)}
+                          </span>
                         </div>
                       </div>
                     </div>
                   );
                 })()}
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                  <button onClick={() => { setScannerTarget("sales"); setShowCameraScanner(true); }}
-                    style={{ ...btn("var(--color-primary)"), fontSize: "12px" }}>📷 Scan — Sales</button>
-                  <button onClick={handleSaveSales} style={{ ...btn(isReturn ? "#ef4444" : "#16a34a"), fontSize: "13px", fontWeight: "700" }}>
-                    <CheckCircle size={14} />{salesForm.id ? "Update Bill" : (isReturn ? "Save Return" : "Save Bill")}
-                  </button>
-                  <button onClick={() => {
-                    const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
-                    const grossAmount = validItems.reduce((s, si) => s + num(si.amount || 0), 0);
-                    const lessDisc = grossAmount * num(salesForm.discount) / 100;
-                    const netAmount = grossAmount - lessDisc;
-                    const sign = isReturn ? -1 : 1;
-                    const b = {
-                      id: salesForm.id || "preview",
-                      billNo: salesForm.billNo || (salesBills.length + 1),
-                      date: salesForm.date || today(),
-                      ...salesForm,
-                      items: validItems.length > 0 ? validItems : salesItems,
-                      grossAmount: grossAmount * sign,
-                      lessDisc: lessDisc * sign,
-                      netAmount: (netAmount - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue)) * sign,
-                      isReturn,
-                      status: "Completed"
-                    };
-                    handlePrintSalesBill(b);
-                  }} style={{ ...btn("#2563eb"), fontSize: "13px", fontWeight: "600" }}>
-                    🖨️ Print Bill
-                  </button>
-                  <button onClick={() => {
-                    const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
-                    const grossAmount = validItems.reduce((s, si) => s + num(si.amount || 0), 0);
-                    const lessDisc = grossAmount * num(salesForm.discount) / 100;
-                    const netAmount = grossAmount - lessDisc;
-                    const sign = isReturn ? -1 : 1;
-                    const b = {
-                      id: salesForm.id || "preview",
-                      billNo: salesForm.billNo || (salesBills.length + 1),
-                      date: salesForm.date || today(),
-                      ...salesForm,
-                      items: validItems.length > 0 ? validItems : salesItems,
-                      grossAmount: grossAmount * sign,
-                      lessDisc: lessDisc * sign,
-                      netAmount: (netAmount - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue)) * sign,
-                      isReturn,
-                      status: "Completed"
-                    };
-                    if (!b.mobile) {
-                      showToast("Please enter patient mobile number for WhatsApp", "error");
-                      return;
-                    }
-                    handleWhatsAppBill(b);
-                  }} style={{ ...btn("#15803d"), fontSize: "13px", fontWeight: "600" }}>
-                    💬 Send WhatsApp
-                  </button>
+
+                {/* Bottom Action Toolbar */}
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: "8px" }}>
+                  {/* New */}
                   <button
+                    type="button"
+                    onClick={() => openSalesForm(false)}
+                    style={{ ...btn("var(--color-primary)"), fontSize: "11px", padding: "5px 9px" }}
+                    title="Start New Sale Bill"
+                  >
+                    <Plus size={12} /> New
+                  </button>
+
+                  {/* Pending */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
+                      if (validItems.length > 0) {
+                        const parked = {
+                          id: uid(),
+                          date: salesForm.date || today(),
+                          time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+                          patientName: salesForm.patientName || salesForm.acName || "Walk-in Customer",
+                          mobile: salesForm.mobile || "",
+                          totalAmount: validItems.reduce((s, si) => s + num(si.amount || 0), 0),
+                          itemsCount: validItems.length,
+                          form: { ...salesForm },
+                          items: [...salesItems]
+                        };
+                        const updated = [parked, ...pendingSalesBills];
+                        setPendingSalesBills(updated);
+                        try { localStorage.setItem("store_pending_sales", JSON.stringify(updated)); } catch (_) {}
+                        showToast(`Bill parked to Pending (${updated.length} on hold)`);
+                        setSalesForm(emptySalesForm());
+                        setSalesItems([emptySalesItem()]);
+                      } else {
+                        setShowPendingSalesModal(true);
+                      }
+                    }}
+                    style={{ ...btn("#6366f1"), fontSize: "11px", padding: "5px 9px" }}
+                    title="Park Current Bill or View Pending Bills"
+                  >
+                    📋 Pending {pendingSalesBills.length > 0 ? `(${pendingSalesBills.length})` : ""}
+                  </button>
+
+                  {/* Save */}
+                  <button
+                    type="button"
+                    onClick={handleSaveSales}
+                    style={{ ...btn(isReturn ? "#ef4444" : "#16a34a"), fontSize: "11px", fontWeight: "700", padding: "5px 10px" }}
+                    title="Save Sales Bill"
+                  >
+                    <CheckCircle size={12} /> {salesForm.id ? "Update Bill" : (isReturn ? "Save Return" : "Save Bill")}
+                  </button>
+
+                  {/* Print */}
+                  <div style={{ display: "inline-flex", borderRadius: "6px", overflow: "hidden", border: "1px solid #2563eb" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
+                        const grossAmount = validItems.reduce((s, si) => s + num(si.amount || 0), 0);
+                        const lessDisc = grossAmount * num(salesForm.discount) / 100;
+                        const netAmount = grossAmount - lessDisc;
+                        const sign = isReturn ? -1 : 1;
+                        const b = {
+                          id: salesForm.id || "preview",
+                          billNo: salesForm.billNo || (salesBills.length + 1),
+                          date: salesForm.date || today(),
+                          ...salesForm,
+                          items: validItems.length > 0 ? validItems : salesItems,
+                          grossAmount: grossAmount * sign,
+                          lessDisc: lessDisc * sign,
+                          netAmount: (netAmount - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue)) * sign,
+                          isReturn,
+                          status: "Completed",
+                          copies: salesPrintCopies
+                        };
+                        handlePrintSalesBill(b);
+                      }}
+                      style={{ ...btn("#2563eb"), fontSize: "11px", fontWeight: "600", padding: "5px 9px", borderRadius: 0 }}
+                      title={`Print Bill (${salesPrintCopies} ${salesPrintCopies === 1 ? 'Copy' : 'Copies'})`}
+                    >
+                      🖨️ Print
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSalesPrintCopies(prev => prev === 1 ? 2 : 1)}
+                      style={{ background: "#1d4ed8", color: "white", border: "none", padding: "4px 6px", fontSize: "10px", fontWeight: "700", cursor: "pointer" }}
+                      title="Toggle Copies (1 or 2 copies)"
+                    >
+                      {salesPrintCopies}C
+                    </button>
+                  </div>
+
+                  {/* Preview */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
+                      const grossAmount = validItems.reduce((s, si) => s + num(si.amount || 0), 0);
+                      const lessDisc = grossAmount * num(salesForm.discount) / 100;
+                      const netAmount = grossAmount - lessDisc;
+                      const sign = isReturn ? -1 : 1;
+                      const b = {
+                        id: salesForm.id || "preview",
+                        billNo: salesForm.billNo || (salesBills.length + 1),
+                        date: salesForm.date || today(),
+                        ...salesForm,
+                        items: validItems.length > 0 ? validItems : salesItems,
+                        grossAmount: grossAmount * sign,
+                        lessDisc: lessDisc * sign,
+                        netAmount: (netAmount - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue)) * sign,
+                        isReturn,
+                        status: "Completed"
+                      };
+                      handlePrintSalesBill(b);
+                    }}
+                    style={{ ...btn("#0284c7"), fontSize: "11px", fontWeight: "600", padding: "5px 8px" }}
+                    title="Preview Invoice"
+                  >
+                    <Eye size={12} /> Preview
+                  </button>
+
+                  {/* Z Return */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsReturn(true);
+                      setSalesForm(prev => ({ ...prev, billType: "return", quotation: false }));
+                    }}
+                    style={{ ...btn("#dc2626"), fontSize: "11px", padding: "5px 8px" }}
+                    title="Switch to Return"
+                  >
+                    ↩️ Z Return
+                  </button>
+
+                  {/* Quotation */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nq = !salesForm.quotation;
+                      setSalesForm(prev => ({ ...prev, quotation: nq, billType: nq ? "quot" : "retail" }));
+                      if (nq) setIsReturn(false);
+                    }}
+                    style={{ ...btn("#d97706"), fontSize: "11px", padding: "5px 8px" }}
+                    title="Toggle Quotation Mode"
+                  >
+                    📝 Quotation
+                  </button>
+
+                  {/* Remove Item */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (salesItems.length > 1) {
+                        removeSalesItem(selectedSalesRow);
+                        setSelectedSalesRow(Math.max(0, selectedSalesRow - 1));
+                      } else {
+                        setSalesItems([emptySalesItem()]);
+                      }
+                    }}
+                    style={{ ...btn("#e2e8f0"), color: "#475569", fontSize: "11px", padding: "5px 8px" }}
+                    title="Remove Current Selected Item"
+                  >
+                    ✖️ Remove Item
+                  </button>
+
+                  {/* Camera Scanner */}
+                  <button
+                    type="button"
+                    onClick={() => { setScannerTarget("sales"); setShowCameraScanner(true); }}
+                    style={{ ...btn("var(--color-primary)"), fontSize: "11px", padding: "5px 8px" }}
+                  >
+                    📷 Scan Sales
+                  </button>
+
+                  {/* WhatsApp */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const validItems = salesItems.filter(si => si.itemId && int(si.qty) > 0);
+                      const grossAmount = validItems.reduce((s, si) => s + num(si.amount || 0), 0);
+                      const lessDisc = grossAmount * num(salesForm.discount) / 100;
+                      const netAmount = grossAmount - lessDisc;
+                      const sign = isReturn ? -1 : 1;
+                      const b = {
+                        id: salesForm.id || "preview",
+                        billNo: salesForm.billNo || (salesBills.length + 1),
+                        date: salesForm.date || today(),
+                        ...salesForm,
+                        items: validItems.length > 0 ? validItems : salesItems,
+                        grossAmount: grossAmount * sign,
+                        lessDisc: lessDisc * sign,
+                        netAmount: (netAmount - num(salesForm.crNote) + num(salesForm.otherAdj) + num(salesForm.tcsValue)) * sign,
+                        isReturn,
+                        status: "Completed"
+                      };
+                      if (!b.mobile) {
+                        showToast("Please enter patient mobile number for WhatsApp", "error");
+                        return;
+                      }
+                      handleWhatsAppBill(b);
+                    }}
+                    style={{ ...btn("#15803d"), fontSize: "11px", fontWeight: "600", padding: "5px 8px" }}
+                  >
+                    💬 WhatsApp
+                  </button>
+
+                  {/* Delete / Discard */}
+                  <button
+                    type="button"
                     onClick={() => {
                       if (salesForm.id) {
                         handleDeleteSalesBill(salesForm);
@@ -3699,18 +4296,115 @@ const pending = [];
                       background: "#fef2f2",
                       border: "1px solid #fecaca",
                       color: "#ef4444",
-                      borderRadius: "8px",
-                      padding: "8px 11px",
+                      borderRadius: "6px",
+                      padding: "5px 9px",
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      marginLeft: "auto"
+                      gap: "4px",
+                      fontSize: "11px",
+                      fontWeight: "600"
                     }}
                     title={salesForm.id ? "Delete this Bill" : "Discard Bill"}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={12} /> {salesForm.id ? "Delete" : "Discard"}
                   </button>
+
+                  {/* Close button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowSalesForm(false)}
+                    style={{
+                      background: "#f1f5f9",
+                      border: "1px solid #cbd5e1",
+                      color: "#475569",
+                      borderRadius: "6px",
+                      padding: "5px 9px",
+                      cursor: "pointer",
+                      fontSize: "11px",
+                      fontWeight: "600",
+                      marginLeft: "auto"
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Pending (Parked) Sales Bills Modal */}
+            {showPendingSalesModal && (
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+                <div style={{ background: "white", borderRadius: "10px", width: "100%", maxWidth: "680px", maxHeight: "85vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
+                  <div style={{ padding: "14px 18px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span>📋</span> Pending (Parked) Sales Bills ({pendingSalesBills.length})
+                    </h3>
+                    <button onClick={() => setShowPendingSalesModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}><X size={18} /></button>
+                  </div>
+                  <div style={{ padding: "16px", overflowY: "auto", flex: 1 }}>
+                    {pendingSalesBills.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "40px 20px", color: "#64748b" }}>
+                        <div style={{ fontSize: "36px", marginBottom: "8px" }}>📭</div>
+                        <p style={{ fontWeight: "600", fontSize: "14px", margin: 0 }}>No Pending Bills On Hold</p>
+                        <p style={{ fontSize: "12px", opacity: 0.7, marginTop: "4px" }}>Click "Pending" on the Sales Form to hold an unfinished bill.</p>
+                      </div>
+                    ) : (
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                        <thead>
+                          <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#475569" }}>
+                            <th style={{ padding: "8px", textAlign: "left" }}>Time</th>
+                            <th style={{ padding: "8px", textAlign: "left" }}>Patient / Account</th>
+                            <th style={{ padding: "8px", textAlign: "left" }}>Mobile</th>
+                            <th style={{ padding: "8px", textAlign: "center" }}>Items</th>
+                            <th style={{ padding: "8px", textAlign: "right" }}>Amount</th>
+                            <th style={{ padding: "8px", textAlign: "center" }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingSalesBills.map((pb, pidx) => (
+                            <tr key={pb.id || pidx} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                              <td style={{ padding: "8px", color: "#64748b", fontSize: "11px" }}>{pb.time} ({pb.date})</td>
+                              <td style={{ padding: "8px", fontWeight: "600", color: "#1e293b" }}>{pb.patientName || "Walk-in"}</td>
+                              <td style={{ padding: "8px", color: "#64748b" }}>{pb.mobile || "—"}</td>
+                              <td style={{ padding: "8px", textAlign: "center", fontWeight: "600" }}>{pb.itemsCount || (pb.items || []).length}</td>
+                              <td style={{ padding: "8px", textAlign: "right", fontWeight: "700", color: "#16a34a" }}>₹{fmt(pb.totalAmount || 0)}</td>
+                              <td style={{ padding: "8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                                <button
+                                  onClick={() => {
+                                    setSalesForm({ ...pb.form });
+                                    setSalesItems([...pb.items]);
+                                    const updated = pendingSalesBills.filter((_, i) => i !== pidx);
+                                    setPendingSalesBills(updated);
+                                    try { localStorage.setItem("store_pending_sales", JSON.stringify(updated)); } catch (_) {}
+                                    setShowPendingSalesModal(false);
+                                    showToast("Pending bill resumed!");
+                                  }}
+                                  style={{ ...btn("#2563eb"), padding: "4px 10px", fontSize: "11px", marginRight: "6px" }}
+                                >
+                                  Resume
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const updated = pendingSalesBills.filter((_, i) => i !== pidx);
+                                    setPendingSalesBills(updated);
+                                    try { localStorage.setItem("store_pending_sales", JSON.stringify(updated)); } catch (_) {}
+                                    showToast("Removed from pending");
+                                  }}
+                                  style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "11px" }}
+                                >
+                                  <Trash2 size={11} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                  <div style={{ padding: "12px 18px", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end" }}>
+                    <button onClick={() => setShowPendingSalesModal(false)} style={{ ...btn("#64748b"), padding: "6px 14px", fontSize: "12px" }}>Close</button>
+                  </div>
                 </div>
               </div>
             )}

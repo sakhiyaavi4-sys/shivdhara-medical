@@ -1221,8 +1221,17 @@ export function MedicalStoreProvider({ children }) {
   // ═══════════════════════════════════════════════════
   // SALES BILL (POS)
   // ═══════════════════════════════════════════════════
-  const emptySalesForm = () => ({ patientName: "", patientArea: "", doctorName: "", mobile: "", address: "", paymentMode: "cash", discount: "0", salesMan: "", retailInv: "", payRec: "0", quotation: false, halfScheme: "0", octOnFree: "0", otherAdj: "0", crNote: "0", tcsValue: "0", remarks: "" });
-  const emptySalesItem = () => ({ itemId: "", itemName: "", batchNo: "", qty: "1", mrp: "", rate: "", gst: "0", disc: "0", amount: 0 });
+  const emptySalesForm = () => ({
+    patientName: "", patientArea: "", doctorName: "", mobile: "", address: "",
+    paymentMode: "cash", discount: "0", salesMan: "", retailInv: "Retail Inv", payRec: "0",
+    quotation: false, halfScheme: "0", octOnFree: "0", otherAdj: "0", crNote: "0", tcsValue: "0",
+    remarks: "", acName: "CASH ***", billType: "retail", taxCategory: "RD (within state - SGST&UGST)",
+    billMsg: "HAVE A FAST RECOVERY & GOOD HEALTH", barcodeScan: false, cardPayment: false, billSeries: "G"
+  });
+  const emptySalesItem = () => ({
+    itemId: "", itemName: "", unit: "10", batchNo: "", expiry: "", mrp: "", base: "", rate: "",
+    gst: "0", disc: "0", amount: 0, company: "", location: "", drugName: ""
+  });
 
   const calcSalesItemAmt = (si) => {
     const rate = num(si.rate), qty = int(si.qty), gst = num(si.gst), disc = num(si.disc);
@@ -1244,7 +1253,7 @@ export function MedicalStoreProvider({ children }) {
         paymentMode: existingBill.paymentMode || "cash",
         discount: existingBill.discount || existingBill.lessDisc || "0",
         salesMan: existingBill.salesMan || "",
-        retailInv: existingBill.retailInv || "",
+        retailInv: existingBill.retailInv || "Retail Inv",
         payRec: existingBill.payRec || "0",
         quotation: existingBill.quotation || false,
         halfScheme: existingBill.halfScheme || "0",
@@ -1253,10 +1262,22 @@ export function MedicalStoreProvider({ children }) {
         crNote: existingBill.crNote || "0",
         tcsValue: existingBill.tcsValue || "0",
         remarks: existingBill.remarks || "",
+        acName: existingBill.acName || "CASH ***",
+        billType: existingBill.billType || (existingBill.isReturn ? "return" : existingBill.quotation ? "quot" : "retail"),
+        taxCategory: existingBill.taxCategory || "RD (within state - SGST&UGST)",
+        billMsg: existingBill.billMsg || "HAVE A FAST RECOVERY & GOOD HEALTH",
+        barcodeScan: !!existingBill.barcodeScan,
+        cardPayment: !!existingBill.cardPayment,
+        billSeries: existingBill.billSeries || "G",
         isEdit: true
       });
       const bItems = (existingBill.items || []).filter(si => si.itemId || si.itemName);
-      setSalesItems(bItems.length > 0 ? bItems.map(si => ({ ...si, amount: calcSalesItemAmt(si) })) : [emptySalesItem()]);
+      setSalesItems(bItems.length > 0 ? bItems.map(si => ({
+        ...emptySalesItem(),
+        ...si,
+        amount: calcSalesItemAmt(si),
+        base: si.base || (num(si.gst) > 0 ? (num(si.rate) / (1 + num(si.gst) / 100)).toFixed(2) : String(si.rate || ""))
+      })) : [emptySalesItem()]);
       setIsReturn(existingBill.isReturn || returnMode);
       setShowSalesForm(true);
     } else {
@@ -1269,9 +1290,37 @@ export function MedicalStoreProvider({ children }) {
 
   const updateSalesItem = (idx, field, val) => {
     setSalesItems(prev => {
-      const updated = [...prev]; updated[idx] = { ...updated[idx], [field]: val };
-      if (field === "itemId" && val) { const found = items.find(i => i.id === val); if (found) updated[idx] = { ...updated[idx], itemName: found.name, mrp: num(found.mrp) || num(found.price), rate: num(found.price), gst: num(found.gst) || 0 }; }
-      updated[idx].amount = calcSalesItemAmt(updated[idx]); return updated;
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], [field]: val };
+      if (field === "itemId" && val) {
+        const found = items.find(i => i.id === val);
+        if (found) {
+          const gstVal = num(found.gst) || 0;
+          const rateVal = num(found.price) || 0;
+          const baseVal = gstVal > 0 ? (rateVal / (1 + gstVal / 100)).toFixed(2) : rateVal.toFixed(2);
+          updated[idx] = {
+            ...updated[idx],
+            itemName: found.name,
+            unit: found.unit || found.pack || "10",
+            batchNo: found.batch || updated[idx].batchNo || "",
+            expiry: found.expiryDate ? found.expiryDate.slice(2, 7) : (updated[idx].expiry || "12/28"),
+            mrp: num(found.mrp) || rateVal,
+            base: baseVal,
+            rate: rateVal,
+            gst: gstVal,
+            company: found.company || "",
+            location: found.location || found.rack || "A1",
+            drugName: found.drugGroup || found.generic || ""
+          };
+        }
+      }
+      if (field === "rate" || field === "gst") {
+        const r = num(field === "rate" ? val : updated[idx].rate);
+        const g = num(field === "gst" ? val : updated[idx].gst);
+        updated[idx].base = g > 0 ? (r / (1 + g / 100)).toFixed(2) : r.toFixed(2);
+      }
+      updated[idx].amount = calcSalesItemAmt(updated[idx]);
+      return updated;
     });
   };
 
@@ -1388,7 +1437,13 @@ export function MedicalStoreProvider({ children }) {
 
   const handlePrintSalesBill = (bill) => {
     // Uses the dot-matrix generator — correct @page size for EPSON LX-300+ (10x4)
-    setPrintHtml(generateDotMatrixInvoiceHTML(bill));
+    if (bill && bill.copies === 2) {
+      const c1 = generateDotMatrixInvoiceHTML({ ...bill, copyTitle: 'ORIGINAL FOR RECIPIENT' });
+      const c2 = generateDotMatrixInvoiceHTML({ ...bill, copyTitle: 'DUPLICATE FOR STORE' });
+      setPrintHtml(c1 + '<div style="page-break-after:always;"></div>' + c2);
+    } else {
+      setPrintHtml(generateDotMatrixInvoiceHTML(bill));
+    }
   };
 
   // ═══════════════════════════════════════════════════
@@ -2813,7 +2868,7 @@ Rules:
     const storeName = (currentUser?.pharmacyName || "SHIV DHARA MEDICAL STORE").toUpperCase();
     const storeAddr = appSetupData?.address1 || "20, GIRIRAJ COMPLEX NIKOL GAAM ROAD ,NIKOL,AHMEDABAD";
     const dlNo = appSetupData?.dlNo || "DL NO:20 GARA 588,21 GARA 588.";
-    const footMsg = appSetupData?.message || "HAVE A FAST RECOVERY & GOOD HEALTH";
+    const footMsg = bill.billMsg || appSetupData?.message || "HAVE A FAST RECOVERY & GOOD HEALTH";
     const phone = "9924237606";
     const dateStr = bill.date
       ? new Date(bill.date).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" })
