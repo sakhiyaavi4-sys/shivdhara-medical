@@ -3215,23 +3215,44 @@ const pending = [];
 
             {/* ── PURCHASE ITEMS GRID (MATCHES LEGACY VISUAL INFOSOFT COLS) ── */}
             <div style={{ overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", tableLayout: "auto" }}>
                 <thead>
                   <tr style={{ background: "#f1f5f9" }}>
-                    {["No", "Item Name *", "Unit", "Batch", "Exp Dt", "MRP", "Qty", "Fr", "PTR", "D%", "Disc", "BASE", "Gst%", "Amount", "L.P.", "Locat.", ""].map(h => (
+                    {[
+                      { l: "No", w: "30px", a: "center" },
+                      { l: "Item Name *", w: "auto", minW: "180px", a: "left" },
+                      { l: "Unit", w: "48px", a: "center" },
+                      { l: "Batch", w: "75px", a: "left" },
+                      { l: "Exp Dt", w: "60px", a: "center" },
+                      { l: "MRP", w: "58px", a: "right" },
+                      { l: "Qty", w: "46px", a: "center" },
+                      { l: "Fr", w: "40px", a: "center" },
+                      { l: "PTR", w: "58px", a: "right" },
+                      { l: "D%", w: "44px", a: "center" },
+                      { l: "Disc", w: "55px", a: "right" },
+                      { l: "BASE", w: "60px", a: "right" },
+                      { l: "Gst%", w: "52px", a: "center" },
+                      { l: "Amount", w: "70px", a: "right" },
+                      { l: "L.P.", w: "52px", a: "right" },
+                      { l: "Locat.", w: "48px", a: "center" },
+                      { l: "", w: "26px", a: "center" },
+                    ].map(h => (
                       <th
-                        key={h}
+                        key={h.l}
                         style={{
-                          padding: "4px 5px",
-                          textAlign: ["MRP", "PTR", "D%", "Disc", "BASE", "Gst%", "Amount", "L.P."].includes(h) ? "right" : h === "No" || h === "Unit" || h === "Exp Dt" || h === "Qty" || h === "Fr" || h === "Locat." ? "center" : "left",
+                          width: h.w !== "auto" ? h.w : undefined,
+                          minWidth: h.minW || (h.w !== "auto" ? h.w : undefined),
+                          padding: "5px 4px",
+                          textAlign: h.a as any,
                           fontWeight: "700",
                           color: "var(--color-text-dark)",
                           fontSize: "11px",
                           whiteSpace: "nowrap",
-                          borderBottom: "1px solid #cbd5e1"
+                          borderBottom: "1px solid #cbd5e1",
+                          boxSizing: "border-box"
                         }}
                       >
-                        {h}
+                        {h.l}
                       </th>
                     ))}
                   </tr>
@@ -3249,12 +3270,12 @@ const pending = [];
                         }}
                       >
                         {/* No */}
-                        <td style={{ padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", width: "24px" }}>
+                        <td style={{ width: "30px", padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", boxSizing: "border-box" }}>
                           {idx + 1}
                         </td>
 
-                        {/* Item Name */}
-                        <td style={{ padding: "2px", position: "relative", minWidth: "150px" }}>
+                        {/* Item Name (Full 100% width of cell) */}
+                        <td style={{ padding: "2px 4px", position: "relative", minWidth: "180px", boxSizing: "border-box" }}>
                           {(() => {
                             const q = (purchaseItemSearch[idx] || "").toLowerCase();
                             const filtered = items.filter((i: any) => !q || (i.name || "").toLowerCase().includes(q) || (i.company || "").toLowerCase().includes(q));
@@ -3272,7 +3293,7 @@ const pending = [];
                                   value={purchaseItemSearch[idx] !== undefined ? purchaseItemSearch[idx] : (pi.itemName || "")}
                                   onChange={e => {
                                     const r = e.target.getBoundingClientRect();
-                                    setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 240) });
+                                    setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 260) });
                                     setPurchaseItemSearch({ ...purchaseItemSearch, [idx]: e.target.value });
                                     setPurchaseItemHighlight({ ...purchaseItemHighlight, [idx]: 0 });
                                     setPurchaseItemDropdown(idx);
@@ -3280,7 +3301,7 @@ const pending = [];
                                   }}
                                   onFocus={e => {
                                     const r = e.target.getBoundingClientRect();
-                                    setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 240) });
+                                    setPurchaseDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 260) });
                                     setPurchaseItemSearch((prev: any) => ({ ...prev, [idx]: prev[idx] ?? "" }));
                                     setPurchaseItemHighlight((prev: any) => ({ ...prev, [idx]: 0 }));
                                     setPurchaseItemDropdown(idx);
@@ -3288,7 +3309,7 @@ const pending = [];
                                   }}
                                   onBlur={() => setTimeout(() => setPurchaseItemDropdown(null), 200)}
                                   placeholder="Search medicine..."
-                                  style={{ ...inp, minWidth: "140px", padding: "2px 5px", height: "24px", fontSize: "11px", fontWeight: "600" }}
+                                  style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 6px", height: "24px", fontSize: "11px", fontWeight: "600" }}
                                   autoComplete="off"
                                   data-pf={`${idx}-item`}
                                   onKeyDown={e => {
@@ -3327,19 +3348,19 @@ const pending = [];
                         </td>
 
                         {/* Unit */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "48px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             value={pi.unit || ""}
                             onChange={e => updatePurchaseItem(idx, "unit", e.target.value)}
                             onFocus={() => setActivePurchaseItemIdx(idx)}
                             placeholder="Unit"
-                            style={{ ...inp, width: "42px", padding: "2px 3px", height: "24px", fontSize: "10px", textAlign: "center" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
                             title="Unit (e.g. 10T, 1B)"
                           />
                         </td>
 
                         {/* Batch */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "75px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             value={pi.batchNo || ""}
                             onChange={e => updatePurchaseItem(idx, "batchNo", e.target.value)}
@@ -3347,12 +3368,12 @@ const pending = [];
                             onKeyDown={e => focusNext(e, idx, "batchNo")}
                             placeholder="Batch"
                             data-pf={`${idx}-batchNo`}
-                            style={{ ...inp, width: "68px", padding: "2px 4px", height: "24px", fontSize: "11px" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 4px", height: "24px", fontSize: "11px" }}
                           />
                         </td>
 
                         {/* Exp Dt (MM/YY) */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "60px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             value={pi.expiryDate || ""}
                             onChange={e => {
@@ -3365,12 +3386,12 @@ const pending = [];
                             onKeyDown={e => focusNext(e, idx, "expiryDate")}
                             placeholder="MM/YY"
                             data-pf={`${idx}-expiryDate`}
-                            style={{ ...inp, width: "55px", padding: "2px 3px", height: "24px", fontSize: "11px", textAlign: "center", letterSpacing: "1px" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "11px", textAlign: "center", letterSpacing: "1px" }}
                           />
                         </td>
 
                         {/* MRP */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "58px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.mrp || ""}
@@ -3379,12 +3400,12 @@ const pending = [];
                             onKeyDown={e => focusNext(e, idx, "mrp")}
                             placeholder="MRP"
                             data-pf={`${idx}-mrp`}
-                            style={{ ...inp, width: "52px", padding: "2px 4px", height: "24px", fontSize: "11px", textAlign: "right" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 3px", height: "24px", fontSize: "11px", textAlign: "right" }}
                           />
                         </td>
 
                         {/* Qty */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "46px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.qty || ""}
@@ -3393,12 +3414,12 @@ const pending = [];
                             onKeyDown={e => focusNext(e, idx, "qty")}
                             placeholder="Qty"
                             data-pf={`${idx}-qty`}
-                            style={{ ...inp, width: "44px", padding: "2px 3px", height: "24px", fontSize: "11px", textAlign: "center", fontWeight: "700" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "11px", textAlign: "center", fontWeight: "700" }}
                           />
                         </td>
 
                         {/* Fr (Free Qty) */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "40px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.freeQty || ""}
@@ -3407,12 +3428,12 @@ const pending = [];
                             onKeyDown={e => focusNext(e, idx, "freeQty")}
                             placeholder="Free"
                             data-pf={`${idx}-freeQty`}
-                            style={{ ...inp, width: "38px", padding: "2px 3px", height: "24px", fontSize: "11px", textAlign: "center" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "11px", textAlign: "center" }}
                           />
                         </td>
 
                         {/* PTR */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "58px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.ptr || ""}
@@ -3421,12 +3442,12 @@ const pending = [];
                             onKeyDown={e => focusNext(e, idx, "ptr")}
                             placeholder="PTR"
                             data-pf={`${idx}-ptr`}
-                            style={{ ...inp, width: "55px", padding: "2px 4px", height: "24px", fontSize: "11px", textAlign: "right", fontWeight: "700" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 3px", height: "24px", fontSize: "11px", textAlign: "right", fontWeight: "700" }}
                           />
                         </td>
 
                         {/* D% */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "44px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             type="number"
                             value={pi.disc || "0"}
@@ -3435,61 +3456,61 @@ const pending = [];
                             onKeyDown={e => focusNext(e, idx, "disc")}
                             placeholder="D%"
                             data-pf={`${idx}-disc`}
-                            style={{ ...inp, width: "40px", padding: "2px 3px", height: "24px", fontSize: "11px", textAlign: "right" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "11px", textAlign: "center" }}
                           />
                         </td>
 
                         {/* Disc Amt */}
-                        <td style={{ padding: "3px 5px", fontWeight: "700", color: "#ef4444", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap" }}>
+                        <td style={{ width: "55px", padding: "3px 4px", fontWeight: "700", color: "#ef4444", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
                           ₹{fmt(num(pi.ptr) * int(pi.qty) * num(pi.disc) / 100)}
                         </td>
 
                         {/* BASE (Taxable) */}
-                        <td style={{ padding: "3px 5px", fontWeight: "700", color: "var(--color-primary)", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap" }}>
+                        <td style={{ width: "60px", padding: "3px 4px", fontWeight: "700", color: "var(--color-primary)", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
                           ₹{fmt(num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100))}
                         </td>
 
                         {/* GST% */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "52px", padding: "2px", boxSizing: "border-box" }}>
                           <select
                             value={pi.gst || "5"}
                             onChange={e => updatePurchaseItem(idx, "gst", e.target.value)}
                             onFocus={() => setActivePurchaseItemIdx(idx)}
                             onKeyDown={e => focusNext(e, idx, "gst")}
                             data-pf={`${idx}-gst`}
-                            style={{ ...inp, width: "50px", padding: "1px 2px", height: "24px", fontSize: "10px" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "1px 1px", height: "24px", fontSize: "10px", textAlign: "center" }}
                           >
                             {GST_RATES.map((r: any) => <option key={r} value={r}>{r}%</option>)}
                           </select>
                         </td>
 
                         {/* Amount */}
-                        <td style={{ padding: "3px 5px", fontWeight: "800", color: "#2563eb", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap" }}>
+                        <td style={{ width: "70px", padding: "3px 4px", fontWeight: "800", color: "#2563eb", textAlign: "right", fontSize: "11px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
                           ₹{fmt(pi.amount || 0)}
                         </td>
 
                         {/* L.P. (Last Purchase Rate) */}
-                        <td style={{ padding: "3px 5px", color: "#475569", textAlign: "right", fontSize: "10px", whiteSpace: "nowrap" }}>
+                        <td style={{ width: "52px", padding: "3px 4px", color: "#475569", textAlign: "right", fontSize: "10px", whiteSpace: "nowrap", boxSizing: "border-box" }}>
                           {pi.lastPurchaseRate ? `₹${fmt(pi.lastPurchaseRate)}` : "—"}
                         </td>
 
                         {/* Locat. (Rack / Location) */}
-                        <td style={{ padding: "2px" }}>
+                        <td style={{ width: "48px", padding: "2px", boxSizing: "border-box" }}>
                           <input
                             value={pi.location || ""}
                             onChange={e => updatePurchaseItem(idx, "location", e.target.value)}
                             onFocus={() => setActivePurchaseItemIdx(idx)}
                             placeholder="Loc"
-                            style={{ ...inp, width: "42px", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
+                            style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
                             title="Rack / Shelf Location"
                           />
                         </td>
 
                         {/* Delete Row */}
-                        <td style={{ padding: "2px", textAlign: "center", width: "24px" }}>
+                        <td style={{ width: "26px", padding: "2px", textAlign: "center", boxSizing: "border-box" }}>
                           <button
                             onClick={() => removePurchaseItem(idx)}
-                            style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "2px 4px", cursor: "pointer" }}
+                            style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "2px 3px", cursor: "pointer" }}
                             title="Remove row"
                           >
                             <X size={11} />
@@ -3502,14 +3523,14 @@ const pending = [];
                 <tfoot>
                   <tr style={{ borderTop: "2px solid var(--color-border)", background: "#f8fafc" }}>
                     <td colSpan={10} style={{ padding: "5px 8px", fontWeight: "700", textAlign: "right", fontSize: "11px", color: "#64748b" }}>TOTALS →</td>
-                    <td style={{ padding: "5px 6px", fontWeight: "800", textAlign: "right", fontSize: "11px", color: "#ef4444", whiteSpace: "nowrap" }}>
+                    <td style={{ padding: "5px 4px", fontWeight: "800", textAlign: "right", fontSize: "11px", color: "#ef4444", whiteSpace: "nowrap" }}>
                       ₹{fmt(purchaseItems.reduce((s: any, pi: any) => s + num(pi.ptr) * int(pi.qty) * num(pi.disc) / 100, 0))}
                     </td>
-                    <td style={{ padding: "5px 6px", fontWeight: "800", textAlign: "right", fontSize: "11px", color: "var(--color-primary)", whiteSpace: "nowrap" }}>
+                    <td style={{ padding: "5px 4px", fontWeight: "800", textAlign: "right", fontSize: "11px", color: "var(--color-primary)", whiteSpace: "nowrap" }}>
                       ₹{fmt(purchaseItems.reduce((s: any, pi: any) => s + num(pi.ptr) * int(pi.qty) * (1 - num(pi.disc) / 100), 0))}
                     </td>
                     <td></td>
-                    <td style={{ padding: "5px 6px", fontWeight: "800", textAlign: "right", fontSize: "12px", color: "#16a34a", whiteSpace: "nowrap" }}>
+                    <td style={{ padding: "5px 4px", fontWeight: "800", textAlign: "right", fontSize: "12px", color: "#16a34a", whiteSpace: "nowrap" }}>
                       ₹{fmt(purchaseItems.reduce((s: any, pi: any) => s + num(pi.amount || 0), 0))}
                     </td>
                     <td colSpan={3}></td>
@@ -4188,12 +4209,41 @@ const pending = [];
                 </div>
 
                 {/* Item search + table (Legacy Visual InfoSoft Parity Columns: No, Item Name, Unit, Batch, Expiry, MRP, Base, GST%, Qty, Disc%, Amount) */}
-                <div style={{ overflowX: "auto", marginBottom: "8px" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                <div style={{ overflowX: "auto", marginBottom: "8px", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "auto" }}>
                     <thead>
                       <tr style={{ background: "#f1f5f9" }}>
-                        {["No", "Item Name", "Unit", "Batch", "Expiry", "MRP", "Base", "GST%", "Qty", "Disc%", "Amount", ""].map(h => (
-                          <th key={h} style={{ padding: "4px 6px", textAlign: h === "No" ? "center" : h === "Amount" ? "right" : "left", fontWeight: "600", color: "var(--color-text-dark)", fontSize: "11px", textTransform: "uppercase" }}>{h}</th>
+                        {[
+                          { l: "NO", w: "32px", a: "center" },
+                          { l: "ITEM NAME", w: "auto", minW: "200px", a: "left" },
+                          { l: "UNIT", w: "55px", a: "center" },
+                          { l: "BATCH", w: "80px", a: "left" },
+                          { l: "EXPIRY", w: "65px", a: "center" },
+                          { l: "MRP", w: "65px", a: "right" },
+                          { l: "BASE", w: "65px", a: "right" },
+                          { l: "GST%", w: "55px", a: "center" },
+                          { l: "QTY", w: "48px", a: "center" },
+                          { l: "DISC%", w: "48px", a: "center" },
+                          { l: "AMOUNT", w: "75px", a: "right" },
+                          { l: "", w: "26px", a: "center" },
+                        ].map(h => (
+                          <th
+                            key={h.l}
+                            style={{
+                              width: h.w !== "auto" ? h.w : undefined,
+                              minWidth: h.minW || (h.w !== "auto" ? h.w : undefined),
+                              padding: "5px 4px",
+                              textAlign: h.a as any,
+                              fontWeight: "700",
+                              color: "var(--color-text-dark)",
+                              fontSize: "11px",
+                              textTransform: "uppercase",
+                              borderBottom: "1px solid #cbd5e1",
+                              boxSizing: "border-box"
+                            }}
+                          >
+                            {h.l}
+                          </th>
                         ))}
                       </tr>
                     </thead>
@@ -4204,9 +4254,13 @@ const pending = [];
                           onClick={() => setActiveSalesItemIdx(idx)}
                           style={{ borderBottom: "1px solid #e9ecef", background: activeSalesItemIdx === idx ? "#f0fdf4" : "white" }}
                         >
-                          <td style={{ padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", width: "26px", whiteSpace: "nowrap" }}>{idx + 1}</td>
-                          {/* Item Name */}
-                          <td style={{ padding: "3px", position: "relative", minWidth: "150px" }}>
+                          {/* No */}
+                          <td style={{ width: "32px", padding: "3px 4px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "11px", boxSizing: "border-box" }}>
+                            {idx + 1}
+                          </td>
+
+                          {/* Item Name (Full 100% width of cell) */}
+                          <td style={{ padding: "3px 4px", position: "relative", minWidth: "200px", boxSizing: "border-box" }}>
                             {(() => {
                               const q = (salesItemSearch[idx] || "").toLowerCase();
                               const filtered = items.filter((i: any) => { const alreadyAdded = salesItems.some((s: any, sidx: number) => sidx !== idx && s.itemId === i.id); if (alreadyAdded) return false; return !q || (i.name || "").toLowerCase().includes(q) || (i.company || "").toLowerCase().includes(q); });
@@ -4257,8 +4311,8 @@ const pending = [];
                                 <input
                                   id={`sales-item-${idx}`}
                                   value={salesItemSearch[idx] !== undefined ? salesItemSearch[idx] : (si.itemName || "")}
-                                  onChange={e => { const r = e.target.getBoundingClientRect(); setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) }); setSalesItemSearch({ ...salesItemSearch, [idx]: e.target.value }); setSalesItemHighlight({ ...salesItemHighlight, [idx]: 0 }); setSalesItemDropdown(idx); }}
-                                  onFocus={e => { setActiveSalesItemIdx(idx); const r = e.target.getBoundingClientRect(); setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 220) }); setSalesItemSearch((prev: any) => ({ ...prev, [idx]: prev[idx] ?? "" })); setSalesItemHighlight((prev: any) => ({ ...prev, [idx]: 0 })); setSalesItemDropdown(idx); }}
+                                  onChange={e => { const r = e.target.getBoundingClientRect(); setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 240) }); setSalesItemSearch({ ...salesItemSearch, [idx]: e.target.value }); setSalesItemHighlight({ ...salesItemHighlight, [idx]: 0 }); setSalesItemDropdown(idx); }}
+                                  onFocus={e => { setActiveSalesItemIdx(idx); const r = e.target.getBoundingClientRect(); setSalesDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: Math.max(r.width, 240) }); setSalesItemSearch((prev: any) => ({ ...prev, [idx]: prev[idx] ?? "" })); setSalesItemHighlight((prev: any) => ({ ...prev, [idx]: 0 })); setSalesItemDropdown(idx); }}
                                   onBlur={() => setTimeout(() => setSalesItemDropdown(null), 200)}
                                   onKeyDown={e => {
                                     if (e.key === "Enter") {
@@ -4273,7 +4327,7 @@ const pending = [];
                                     else if (e.key === "ArrowUp" && salesItemDropdown === idx && filtered.length > 0) { e.preventDefault(); setSalesItemHighlight((prev: any) => ({ ...prev, [idx]: Math.max((prev[idx] || 0) - 1, 0) })) }
                                   }}
                                   placeholder="Search item..."
-                                  style={{ ...inp, minWidth: "140px", padding: "3px 6px", height: "26px", fontSize: "12px" }}
+                                  style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "3px 8px", height: "26px", fontSize: "12px", fontWeight: "600" }}
                                   autoComplete="off"
                                   data-pf="skip"
                                 />
@@ -4295,7 +4349,7 @@ const pending = [];
                           </td>
 
                           {/* Unit / Packing */}
-                          <td style={{ padding: "3px", width: "55px" }}>
+                          <td style={{ width: "55px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-unit-${idx}`}
                               type="text"
@@ -4303,12 +4357,12 @@ const pending = [];
                               onChange={e => updateSalesItem(idx, "unit", e.target.value)}
                               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-batch-${idx}`)?.focus(); } }}
                               placeholder="10's"
-                              style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "center" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "3px 2px", height: "26px", fontSize: "11px", textAlign: "center" }}
                             />
                           </td>
 
                           {/* Batch No */}
-                          <td style={{ padding: "3px", width: "80px" }}>
+                          <td style={{ width: "80px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-batch-${idx}`}
                               type="text"
@@ -4335,12 +4389,12 @@ const pending = [];
                               }}
                               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-expiry-${idx}`)?.focus(); } }}
                               placeholder="Batch"
-                              style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "3px 4px", height: "26px", fontSize: "11px" }}
                             />
                           </td>
 
                           {/* Expiry Date */}
-                          <td style={{ padding: "3px", width: "55px" }}>
+                          <td style={{ width: "65px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-expiry-${idx}`}
                               type="text"
@@ -4358,24 +4412,24 @@ const pending = [];
                               }}
                               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-mrp-${idx}`)?.focus(); } }}
                               placeholder="MM/YY"
-                              style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "center" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "3px 2px", height: "26px", fontSize: "11px", textAlign: "center", letterSpacing: "1px" }}
                             />
                           </td>
 
                           {/* MRP */}
-                          <td style={{ padding: "3px", width: "60px" }}>
+                          <td style={{ width: "65px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-mrp-${idx}`}
                               type="number"
                               value={si.mrp || ""}
                               onChange={e => updateSalesItem(idx, "mrp", e.target.value)}
                               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-base-${idx}`)?.focus(); } }}
-                              style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "right" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "right" }}
                             />
                           </td>
 
                           {/* Base Rate */}
-                          <td style={{ padding: "3px", width: "60px" }}>
+                          <td style={{ width: "65px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-base-${idx}`}
                               type="number"
@@ -4383,37 +4437,37 @@ const pending = [];
                               onChange={e => updateSalesItem(idx, "base", e.target.value)}
                               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-gst-${idx}`)?.focus(); } }}
                               placeholder="Base"
-                              style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "right", background: "#f8fafc" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "right", background: "#f8fafc" }}
                             />
                           </td>
 
                           {/* GST % */}
-                          <td style={{ padding: "3px", width: "55px" }}>
+                          <td style={{ width: "55px", padding: "2px", boxSizing: "border-box" }}>
                             <select
                               id={`sales-gst-${idx}`}
                               value={si.gst || "0"}
                               onChange={e => updateSalesItem(idx, "gst", e.target.value)}
                               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-qty-${idx}`)?.focus(); } }}
-                              style={{ ...inp, width: "100%", padding: "2px 2px", height: "26px", fontSize: "11px" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "26px", fontSize: "11px", textAlign: "center" }}
                             >
                               {GST_RATES.map(r => <option key={r} value={r}>{r}%</option>)}
                             </select>
                           </td>
 
                           {/* Qty */}
-                          <td style={{ padding: "3px", width: "48px" }}>
+                          <td style={{ width: "48px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-qty-${idx}`}
                               type="number"
                               value={si.qty || ""}
                               onChange={e => updateSalesItem(idx, "qty", e.target.value)}
                               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`sales-disc-${idx}`)?.focus(); } }}
-                              style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "center", fontWeight: "700" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "3px 2px", height: "26px", fontSize: "11px", textAlign: "center", fontWeight: "700" }}
                             />
                           </td>
 
                           {/* Disc % */}
-                          <td style={{ padding: "3px", width: "45px" }}>
+                          <td style={{ width: "48px", padding: "2px", boxSizing: "border-box" }}>
                             <input
                               id={`sales-disc-${idx}`}
                               type="number"
@@ -4426,18 +4480,18 @@ const pending = [];
                                   setTimeout(() => document.getElementById(`sales-item-${idx + 1}`)?.focus(), 100);
                                 }
                               }}
-                              style={{ ...inp, width: "100%", padding: "3px 4px", height: "26px", fontSize: "11px", textAlign: "center" }}
+                              style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "3px 2px", height: "26px", fontSize: "11px", textAlign: "center" }}
                             />
                           </td>
 
                           {/* Amount */}
-                          <td style={{ padding: "3px 6px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right", width: "65px", fontSize: "12px" }}>
+                          <td style={{ width: "75px", padding: "3px 6px", fontWeight: "700", color: "#3b82f6", whiteSpace: "nowrap", textAlign: "right", fontSize: "12px", boxSizing: "border-box" }}>
                             ₹{fmt(si.amount || 0)}
                           </td>
 
                           {/* Action */}
-                          <td style={{ padding: "3px", width: "26px", textAlign: "center" }}>
-                            <button onClick={() => removeSalesItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "3px 5px", cursor: "pointer" }}><X size={11} /></button>
+                          <td style={{ width: "26px", padding: "2px", textAlign: "center", boxSizing: "border-box" }}>
+                            <button onClick={() => removeSalesItem(idx)} style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", padding: "3px 4px", cursor: "pointer" }}><X size={11} /></button>
                           </td>
                         </tr>
                       ))}
