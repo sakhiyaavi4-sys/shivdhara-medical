@@ -743,10 +743,12 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                             setItemSearch((prev: any) => ({ ...prev, [idx]: undefined }));
                             setItemHighlight((prev: any) => ({ ...prev, [idx]: 0 }));
                             setItemDropdown(null);
+                            setTimeout(() => document.getElementById(`pc-unit-${idx}`)?.focus(), 50);
                           };
                           return (
                             <>
                               <input
+                                id={`pc-item-${idx}`}
                                 value={itemSearch[idx] !== undefined ? itemSearch[idx] : (pi.itemName || "")}
                                 onChange={e => {
                                   const r = e.target.getBoundingClientRect();
@@ -772,7 +774,15 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                                   if (itemDropdown === idx && filtered.length > 0) {
                                     if (e.key === "ArrowDown") { e.preventDefault(); setItemHighlight((prev: any) => ({ ...prev, [idx]: Math.min((prev[idx] || 0) + 1, filtered.length - 1) })); return; }
                                     if (e.key === "ArrowUp") { e.preventDefault(); setItemHighlight((prev: any) => ({ ...prev, [idx]: Math.max((prev[idx] || 0) - 1, 0) })); return; }
-                                    if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); const item = filtered[hi]; if (item) { selectItem(item); } return; }
+                                    if (e.key === "Enter") {
+                                      e.preventDefault(); e.stopPropagation();
+                                      const item = filtered[hi];
+                                      if (item) { selectItem(item); } else { document.getElementById(`pc-unit-${idx}`)?.focus(); }
+                                      return;
+                                    }
+                                  } else if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    document.getElementById(`pc-unit-${idx}`)?.focus();
                                   }
                                 }}
                               />
@@ -805,9 +815,11 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* Unit */}
                       <td style={{ width: "55px", minWidth: "55px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-unit-${idx}`}
                           value={pi.unit || ""}
                           onChange={e => updateItem(idx, "unit", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-batch-${idx}`)?.focus(); } }}
                           placeholder="Unit"
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
                           title="Unit (e.g. 10T, 1B)"
@@ -817,9 +829,11 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* Batch */}
                       <td style={{ width: "85px", minWidth: "85px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-batch-${idx}`}
                           value={pi.batchNo || ""}
                           onChange={e => updateItem(idx, "batchNo", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-exp-${idx}`)?.focus(); } }}
                           placeholder="Batch"
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 4px", height: "24px", fontSize: "10px" }}
                         />
@@ -828,6 +842,7 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* Exp Dt */}
                       <td style={{ width: "68px", minWidth: "68px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-exp-${idx}`}
                           value={pi.expiryDate || ""}
                           onChange={e => {
                             let v = e.target.value.replace(/[^0-9/]/g, "");
@@ -835,6 +850,7 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                             updateItem(idx, "expiryDate", v);
                           }}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-mrp-${idx}`)?.focus(); } }}
                           placeholder="MM/YY"
                           maxLength={5}
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
@@ -844,10 +860,12 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* Mrp */}
                       <td style={{ width: "68px", minWidth: "68px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-mrp-${idx}`}
                           type="number"
                           value={pi.mrp || ""}
                           onChange={e => updateItem(idx, "mrp", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-qty-${idx}`)?.focus(); } }}
                           placeholder="0.00"
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 4px", height: "24px", fontSize: "10px", textAlign: "right" }}
                         />
@@ -856,11 +874,13 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* Qty */}
                       <td style={{ width: "52px", minWidth: "52px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-qty-${idx}`}
                           type="number"
                           min="1"
                           value={pi.qty || ""}
                           onChange={e => updateItem(idx, "qty", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-free-${idx}`)?.focus(); } }}
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "11px", textAlign: "center", fontWeight: "700", color: "#1d4ed8" }}
                         />
                       </td>
@@ -868,11 +888,13 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* Fr (Free Qty) */}
                       <td style={{ width: "46px", minWidth: "46px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-free-${idx}`}
                           type="number"
                           min="0"
                           value={pi.freeQty || "0"}
                           onChange={e => updateItem(idx, "freeQty", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-ptr-${idx}`)?.focus(); } }}
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
                         />
                       </td>
@@ -880,10 +902,12 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* PTR (Purchase Rate) */}
                       <td style={{ width: "68px", minWidth: "68px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-ptr-${idx}`}
                           type="number"
                           value={pi.ptr || ""}
                           onChange={e => updateItem(idx, "ptr", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-disc-${idx}`)?.focus(); } }}
                           placeholder="0.00"
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 4px", height: "24px", fontSize: "10px", textAlign: "right", fontWeight: "700" }}
                         />
@@ -892,10 +916,12 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* D% */}
                       <td style={{ width: "50px", minWidth: "50px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-disc-${idx}`}
                           type="number"
                           value={pi.disc || "0"}
                           onChange={e => updateItem(idx, "disc", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-gst-${idx}`)?.focus(); } }}
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
                         />
                       </td>
@@ -913,9 +939,11 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                       {/* Gst% */}
                       <td style={{ width: "58px", minWidth: "58px", padding: "2px", boxSizing: "border-box" }}>
                         <select
+                          id={`pc-gst-${idx}`}
                           value={pi.gst || "5"}
                           onChange={e => updateItem(idx, "gst", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById(`pc-loc-${idx}`)?.focus(); } }}
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "1px 1px", height: "24px", fontSize: "10px", textAlign: "center" }}
                         >
                           {GST_RATES.map((r: any) => <option key={r} value={r}>{r}%</option>)}
@@ -932,12 +960,26 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
                         {pi.lastPurchaseRate ? `₹${fmt(pi.lastPurchaseRate)}` : "—"}
                       </td>
 
-                      {/* Locat. (Rack location) */}
+                      {/* Locat. (Rack location) - THE LAST INPUT IN THE ROW */}
                       <td style={{ width: "58px", minWidth: "58px", padding: "2px", boxSizing: "border-box" }}>
                         <input
+                          id={`pc-loc-${idx}`}
                           value={pi.location || ""}
                           onChange={e => updateItem(idx, "location", e.target.value)}
                           onFocus={() => setActiveItemIdx(idx)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (idx === purchaseChallanItems.length - 1) {
+                                setPurchaseChallanItems((prev: any) => [...prev, emptyItem()]);
+                                setTimeout(() => {
+                                  document.getElementById(`pc-item-${idx + 1}`)?.focus();
+                                }, 50);
+                              } else {
+                                document.getElementById(`pc-item-${idx + 1}`)?.focus();
+                              }
+                            }
+                          }}
                           placeholder="Loc"
                           style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
                         />
@@ -1083,9 +1125,6 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
 
           {/* ── BOTTOM ACTION TOOLBAR (ZERO SCROLL COMPLIANT) ── */}
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center", borderTop: "1px solid var(--color-border)", paddingTop: "8px" }}>
-            <button onClick={addItem} style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "5px 10px" }}>
-              <Plus size={13} /> Add Row
-            </button>
             <button
               onClick={handleSave}
               style={{ ...btn("#16a34a"), fontSize: "12px", padding: "5px 12px", fontWeight: "700" }}

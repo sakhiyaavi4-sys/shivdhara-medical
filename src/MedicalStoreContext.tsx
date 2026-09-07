@@ -1188,7 +1188,7 @@ export function MedicalStoreProvider({ children }) {
 
   const focusNext = (e, rowIdx, colName) => {
     if (e.key !== "Enter") return; e.preventDefault();
-    const fields = ["item", "batchNo", "expiryDate", "qty", "freeQty", "mrp", "ptr", "gst", "disc"];
+    const fields = ["item", "unit", "batchNo", "expiryDate", "mrp", "qty", "freeQty", "ptr", "disc", "gst", "location"];
     const cur = fields.indexOf(colName); const nextField = fields[cur + 1];
     if (nextField) { const el = document.querySelector(`[data-pf="${rowIdx}-${nextField}"]`); if (el) { el.focus(); el.select && el.select(); return; } }
     const nextEl = document.querySelector(`[data-pf="${rowIdx + 1}-item"]`);

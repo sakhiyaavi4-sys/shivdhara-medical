@@ -3494,6 +3494,8 @@ const pending = [];
                             value={pi.unit || ""}
                             onChange={e => updatePurchaseItem(idx, "unit", e.target.value)}
                             onFocus={() => setActivePurchaseItemIdx(idx)}
+                            onKeyDown={e => focusNext(e, idx, "unit")}
+                            data-pf={`${idx}-unit`}
                             placeholder="Unit"
                             style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
                             title="Unit (e.g. 10T, 1B)"
@@ -3641,6 +3643,8 @@ const pending = [];
                             value={pi.location || ""}
                             onChange={e => updatePurchaseItem(idx, "location", e.target.value)}
                             onFocus={() => setActivePurchaseItemIdx(idx)}
+                            onKeyDown={e => focusNext(e, idx, "location")}
+                            data-pf={`${idx}-location`}
                             placeholder="Loc"
                             style={{ ...inp, width: "100%", boxSizing: "border-box", padding: "2px 2px", height: "24px", fontSize: "10px", textAlign: "center" }}
                             title="Rack / Shelf Location"
@@ -3771,9 +3775,6 @@ const pending = [];
 
             {/* ── BOTTOM ACTION TOOLBAR (ZERO SCROLL COMPLIANT) ── */}
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center", borderTop: "1px solid var(--color-border)", paddingTop: "8px" }}>
-              <button onClick={addPurchaseItem} style={{ ...btn("var(--color-primary)"), fontSize: "12px", padding: "5px 10px" }}>
-                <Plus size={13} /> Add Row
-              </button>
               <button
                 onClick={handleSavePurchase}
                 style={{ ...btn("#16a34a"), fontSize: "12px", padding: "5px 12px", fontWeight: "700" }}
