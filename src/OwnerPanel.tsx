@@ -2126,11 +2126,14 @@ export default function OwnerPanel() {
     setShowPurchaseReturnPreviewModal(true);
   };
 
+  const [challanDrawerRequested, setChallanDrawerRequested] = _useState(false);
+
   const ownerNavItems = [
     { id: "home", label: "Dashboard", icon: <Home size={15} /> },
     { id: "inventory", label: "Inventory", icon: <Package size={15} /> },
     { id: "purchase", label: "Purchase", icon: <Truck size={15} /> },
     { id: "purchase_return", label: "P.Return", icon: <span>↩️</span> },
+    { id: "purchase_challan", label: "P.Challan", icon: <span style={{ fontSize: "13px" }}>📦</span> },
     { id: "sales_pos", label: "Sales Bill", icon: <FileText size={15} /> },
     { id: "payments", label: "Payments", icon: <CreditCard size={15} /> },
     { id: "bank", label: "Bank Entry", icon: <span style={{ fontSize: "13px" }}>🏦</span> },
@@ -2230,7 +2233,7 @@ export default function OwnerPanel() {
                 {label:"Purchase Bill", action:()=>{setActiveSection("purchase");setTimeout(()=>openPurchaseForm(),50);setActiveMenu(null);}},
                 {label:"Purchase Return", action:()=>{setActiveSection("purchase_return");setActiveMenu(null);}},
                 {label:"Purchase Challan", action:()=>{setActiveSection("purchase_challan");setActiveMenu(null);}},
-                {label:"Purchase Chln to Bill", action:()=>{setShowWipModal("Purchase Chln to Bill");}},
+                {label:"Purchase Chln to Bill", action:()=>{setActiveSection("purchase_challan");setChallanDrawerRequested(true);setActiveMenu(null);}},
                 {sep:true},
                 {label:"Tax", action:()=>{setShowWipModal("Tax");}},
                 {label:"Sale Transfer", action:()=>{setShowWipModal("Sale Transfer");}},
@@ -6026,7 +6029,12 @@ const pending = [];
             OWNER: PURCHASE RETURN / DEBIT NOTE
         ══════════════════════════════════════════ */}
         {isOwner && activeSection === "purchase_challan" && (
-          <PurchaseChallan setScannerTarget={setScannerTarget} setShowCameraScanner={setShowCameraScanner} />
+          <PurchaseChallan
+            setScannerTarget={setScannerTarget}
+            setShowCameraScanner={setShowCameraScanner}
+            openListOnMount={challanDrawerRequested}
+            onDrawerClosed={() => setChallanDrawerRequested(false)}
+          />
         )}
 
         {isOwner && activeSection === "purchase_return" && (

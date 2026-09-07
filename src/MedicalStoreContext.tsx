@@ -259,7 +259,7 @@ export function MedicalStoreProvider({ children }) {
   const [purchaseReturnItems, setPurchaseReturnItems] = useState([]);
   const [purchaseReturns, setPurchaseReturns] = useState((() => { try { return JSON.parse(localStorage.getItem('store_purchase_returns') || 'null') || []; } catch (_) { return []; } })());
   const [purchaseChallans, setPurchaseChallans] = useState((() => { try { return JSON.parse(localStorage.getItem('store_purchase_challans') || 'null') || []; } catch (_) { return []; } })());
-  const savePurchaseChallans = async (l, newChallan?: any) => {
+  const savePurchaseChallans = async (l, newChallan?: any, deletedId?: string) => {
     setPurchaseChallans(l);
     localStorage.setItem('store_purchase_challans', JSON.stringify(l));
     // Persist the new challan to MySQL if provided
@@ -271,6 +271,13 @@ export function MedicalStoreProvider({ children }) {
           body: JSON.stringify(newChallan)
         });
       } catch (e) { console.error('Failed to save challan to DB:', e); }
+    }
+    if (deletedId) {
+      try {
+        await fetch(`${API_BASE}/purchase-challans/${deletedId}`, {
+          method: 'DELETE'
+        });
+      } catch (e) { console.error('Failed to delete challan from DB:', e); }
     }
   };
 
