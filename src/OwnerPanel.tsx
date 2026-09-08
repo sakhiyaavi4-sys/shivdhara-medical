@@ -2252,7 +2252,6 @@ export default function OwnerPanel() {
                 {label:"Purchase Challan", action:()=>{setActiveSection("purchase_challan");setActiveMenu(null);}},
                 {label:"Purchase Chln to Bill", action:()=>{setActiveSection("purchase_chln_to_bill");setActiveMenu(null);}},
                 {sep:true},
-                {label:"Tax", action:()=>{setShowWipModal("Tax");}},
                 {label:"Sale Transfer", action:()=>{setActiveSection("sale_transfer");setActiveMenu(null);}},
                 {sep:true},
                 {label:"Stock Entry Itemwise", action:()=>{setActiveSection("stock_entry_itemwise");setActiveMenu(null);}},
