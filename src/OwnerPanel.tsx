@@ -4,6 +4,18 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Plus, Edit2, Trash2, ShoppingCart, Package, LogOut, Eye, EyeOff, X, Check, CheckCircle, AlertCircle, User, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Clock, FileText, TrendingUp, Truck, CreditCard, Users, Home, Printer } from "lucide-react";
 import React from 'react';
 import PurchaseChallan from './PurchaseChallan';
+import PurchaseChlnToBill from './PurchaseChlnToBill';
+import SaleTransfer from './SaleTransfer';
+import StockEntryItemwise from './StockEntryItemwise';
+import StockAdjust from './StockAdjust';
+import OrderProcessing from './OrderProcessing';
+import PurchaseOrder from './PurchaseOrder';
+import ExpiryList from './ExpiryList';
+import SalesReceipt from './SalesReceipt';
+import PurchasePayment from './PurchasePayment';
+import CashEntry from './CashEntry';
+import BankEntry from './BankEntry';
+import JVEntry from './JVEntry';
 import ApplicationSetupModal from './ApplicationSetupModal';
 import LockBillModal from './components/supervisor/LockBillModal';
 import UserwiseChangesModal from './components/supervisor/UserwiseChangesModal';
@@ -2127,6 +2139,10 @@ export default function OwnerPanel() {
   };
 
   const [challanDrawerRequested, setChallanDrawerRequested] = _useState(false);
+  const [selectedChallanForBill, setSelectedChallanForBill] = _useState<any>(null);
+  const [stockEntryModalOpen, setStockEntryModalOpen] = _useState(false);
+  const [stockEntryInitialName, setStockEntryInitialName] = _useState("");
+  const [stockEntryTargetIdx, setStockEntryTargetIdx] = _useState<number | null>(null);
 
   const ownerNavItems = [
     { id: "home", label: "Dashboard", icon: <Home size={15} /> },
@@ -2134,6 +2150,7 @@ export default function OwnerPanel() {
     { id: "purchase", label: "Purchase", icon: <Truck size={15} /> },
     { id: "purchase_return", label: "P.Return", icon: <span>↩️</span> },
     { id: "purchase_challan", label: "P.Challan", icon: <span style={{ fontSize: "13px" }}>📦</span> },
+    { id: "purchase_chln_to_bill", label: "Chln to Bill", icon: <FileText size={15} /> },
     { id: "sales_pos", label: "Sales Bill", icon: <FileText size={15} /> },
     { id: "payments", label: "Payments", icon: <CreditCard size={15} /> },
     { id: "bank", label: "Bank Entry", icon: <span style={{ fontSize: "13px" }}>🏦</span> },
@@ -2233,23 +2250,23 @@ export default function OwnerPanel() {
                 {label:"Purchase Bill", action:()=>{setActiveSection("purchase");setTimeout(()=>openPurchaseForm(),50);setActiveMenu(null);}},
                 {label:"Purchase Return", action:()=>{setActiveSection("purchase_return");setActiveMenu(null);}},
                 {label:"Purchase Challan", action:()=>{setActiveSection("purchase_challan");setActiveMenu(null);}},
-                {label:"Purchase Chln to Bill", action:()=>{setActiveSection("purchase_challan");setChallanDrawerRequested(true);setActiveMenu(null);}},
+                {label:"Purchase Chln to Bill", action:()=>{setActiveSection("purchase_chln_to_bill");setActiveMenu(null);}},
                 {sep:true},
                 {label:"Tax", action:()=>{setShowWipModal("Tax");}},
-                {label:"Sale Transfer", action:()=>{setShowWipModal("Sale Transfer");}},
+                {label:"Sale Transfer", action:()=>{setActiveSection("sale_transfer");setActiveMenu(null);}},
                 {sep:true},
-                {label:"Stock Entry Itemwise", action:()=>{setActiveSection("inventory");setActiveMenu(null);}},
-                {label:"Stock Adjust", action:()=>{setShowWipModal("Stock Adjust");}},
+                {label:"Stock Entry Itemwise", action:()=>{setActiveSection("stock_entry_itemwise");setActiveMenu(null);}},
+                {label:"Stock Adjust", action:()=>{setActiveSection("stock_adjust");setActiveMenu(null);}},
                 {sep:true},
-                {label:"Order Processing", action:()=>{setActiveSection("home");setActiveMenu(null);}},
-                {label:"Purchase Order", action:()=>{setShowWipModal("Purchase Order");}},
-                {label:"Expiry List", action:()=>{setActiveSection("reports");setReportSubTab("summary");setActiveMenu(null);}},
+                {label:"Order Processing", action:()=>{setActiveSection("order_processing");setActiveMenu(null);}},
+                {label:"Purchase Order", action:()=>{setActiveSection("purchase_order");setActiveMenu(null);}},
+                {label:"Expiry List", action:()=>{setActiveSection("expiry_list");setActiveMenu(null);}},
                 {sep:true},
-                {label:"Sales Receipt", action:()=>{setActiveSection("payments");setTimeout(()=>openPaymentForm("receipt"),50);setActiveMenu(null);}},
-                {label:"Purchase Payment", action:()=>{setActiveSection("payments");setTimeout(()=>openPaymentForm("payment"),50);setActiveMenu(null);}},
-                {label:"Cash Entry", action:()=>{setActiveSection("payments");setTimeout(()=>openPaymentForm("payment"),50);setActiveMenu(null);}},
-                {label:"Bank Entry", action:()=>{setActiveSection("bank");setActiveMenu(null);}},
-                {label:"J V Entry", action:()=>{setShowWipModal("J V Entry");}},
+                {label:"Sales Receipt", action:()=>{setActiveSection("sales_receipt");setActiveMenu(null);}},
+                {label:"Purchase Payment", action:()=>{setActiveSection("purchase_payment");setActiveMenu(null);}},
+                {label:"Cash Entry", action:()=>{setActiveSection("cash_entry");setActiveMenu(null);}},
+                {label:"Bank Entry", action:()=>{setActiveSection("bank_entry");setActiveMenu(null);}},
+                {label:"J V Entry", action:()=>{setActiveSection("jv_entry");setActiveMenu(null);}},
               ]},
               {id:"mis", label:"MIS Reports", items:[
                 {label:"Vat Forms", action:()=>{setShowWipModal("Vat Forms");}},
@@ -3135,7 +3152,6 @@ const pending = [];
                   );
                 })()}
               </div>
-              <button onClick={openPurchaseForm} style={{ ...btn() }}><Plus size={14} />New Purchase</button>
             </div>
 
             {/* ══════════════════════════════════════════
@@ -3173,7 +3189,6 @@ const pending = [];
                 <div style={{ display: "flex", gap: "2px" }}>
                   <button onClick={handlePrevPurchaseBill} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 7px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Previous Purchase Bill">◀ Prev</button>
                   <button onClick={handleNextPurchaseBill} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 7px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Next Purchase Bill">Next ▶</button>
-                  <button onClick={() => setPurchaseBillListDrawer(true)} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 8px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Browse All Purchase Bills">📋 List</button>
                 </div>
 
                 {/* Tax Mode Toggle */}
@@ -3459,7 +3474,19 @@ const pending = [];
                                       if (e.key === "ArrowUp") { e.preventDefault(); setPurchaseItemHighlight((prev: any) => ({ ...prev, [idx]: Math.max((prev[idx] || 0) - 1, 0) })); return; }
                                       if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); const item = filtered[hi]; if (item) { selectItem(item); } return; }
                                     }
-                                    if (e.key === "Enter" && purchaseItemDropdown !== idx) { focusNext(e, idx, "item"); }
+                                    if (e.key === "Enter") {
+                                      const query = (purchaseItemSearch[idx] !== undefined ? purchaseItemSearch[idx] : (pi.itemName || "")).trim();
+                                      if (query && filtered.length === 0) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setStockEntryInitialName(query);
+                                        setStockEntryTargetIdx(idx);
+                                        setPurchaseItemDropdown(null);
+                                        setStockEntryModalOpen(true);
+                                        return;
+                                      }
+                                      if (purchaseItemDropdown !== idx) { focusNext(e, idx, "item"); }
+                                    }
                                   }}
                                 />
                                 {purchaseItemDropdown === idx && (purchaseItemSearch[idx] || "").length >= 0 && (
@@ -3479,7 +3506,18 @@ const pending = [];
                                       </div>
                                     ))}
                                     {filtered.length === 0 && (
-                                      <div style={{ padding: "8px", color: "#64748b", fontSize: "11px", textAlign: "center" }}>No items found</div>
+                                      <div
+                                        onMouseDown={() => {
+                                          const query = (purchaseItemSearch[idx] !== undefined ? purchaseItemSearch[idx] : (pi.itemName || "")).trim();
+                                          setStockEntryInitialName(query);
+                                          setStockEntryTargetIdx(idx);
+                                          setPurchaseItemDropdown(null);
+                                          setStockEntryModalOpen(true);
+                                        }}
+                                        style={{ padding: "8px 10px", color: "#0284c7", fontSize: "11px", textAlign: "center", cursor: "pointer", background: "#f0f9ff", fontWeight: "700" }}
+                                      >
+                                        ➕ Item not found. Press Enter to open Stock Entry Itemwise
+                                      </div>
                                     )}
                                   </div>
                                 )}
@@ -3833,7 +3871,6 @@ const pending = [];
             <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit an existing purchase bill.</p>
             <div style={{ marginTop: "16px", display: "flex", gap: "10px", justifyContent: "center" }}>
               <button onClick={openPurchaseForm} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ New Purchase Bill</button>
-              <button onClick={() => setPurchaseBillListDrawer(true)} style={{ ...btn("#475569"), padding: "8px 16px" }}>📋 Browse All Purchase Bills</button>
             </div>
           </div>
         )}
@@ -4170,12 +4207,6 @@ const pending = [];
                     <span><strong>{pendingSalesBills.length}</strong> Pending</span>
                   </button>
                 )}
-                <button onClick={() => setSalesBillListDrawer(true)} style={{ ...btn("#475569"), padding: "6px 12px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "6px" }} title="Browse All Sales Bills">
-                  <span>📋</span>
-                  <span>Bill List</span>
-                </button>
-                <button onClick={() => openSalesForm(false)} style={{ ...btn("var(--color-primary)") }}><Plus size={14} />New Sale</button>
-                <button onClick={() => openSalesForm(true)} style={{ ...btn("#ef4444") }}><Plus size={14} />Return</button>
               </div>
             </div>
 
@@ -4938,7 +4969,6 @@ const pending = [];
                 <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit an existing bill, or click <strong>New Sale</strong>.</p>
                 <div style={{ marginTop: "16px", display: "flex", gap: "10px", justifyContent: "center" }}>
                   <button onClick={() => openSalesForm(false)} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}><Plus size={15} /> New Sales Bill</button>
-                  <button onClick={() => setSalesBillListDrawer(true)} style={{ ...btn("#475569"), padding: "8px 16px" }}>📋 Browse Bill List</button>
                 </div>
               </div>
             )}
@@ -6035,7 +6065,67 @@ const pending = [];
             setShowCameraScanner={setShowCameraScanner}
             openListOnMount={challanDrawerRequested}
             onDrawerClosed={() => setChallanDrawerRequested(false)}
+            onConvertToBill={(chln: any) => {
+              setSelectedChallanForBill(chln);
+              setActiveSection("purchase_chln_to_bill");
+            }}
           />
+        )}
+
+        {isOwner && activeSection === "purchase_chln_to_bill" && (
+          <PurchaseChlnToBill
+            setScannerTarget={setScannerTarget}
+            setShowCameraScanner={setShowCameraScanner}
+            initialChallan={selectedChallanForBill}
+            onClearInitialChallan={() => setSelectedChallanForBill(null)}
+          />
+        )}
+
+        {isOwner && activeSection === "sale_transfer" && (
+          <SaleTransfer
+            setScannerTarget={setScannerTarget}
+            setShowCameraScanner={setShowCameraScanner}
+          />
+        )}
+
+        {isOwner && activeSection === "stock_entry_itemwise" && (
+          <StockEntryItemwise />
+        )}
+
+        {isOwner && activeSection === "stock_adjust" && (
+          <StockAdjust />
+        )}
+
+        {isOwner && activeSection === "order_processing" && (
+          <OrderProcessing />
+        )}
+
+        {isOwner && activeSection === "purchase_order" && (
+          <PurchaseOrder />
+        )}
+
+        {isOwner && activeSection === "expiry_list" && (
+          <ExpiryList />
+        )}
+
+        {isOwner && activeSection === "sales_receipt" && (
+          <SalesReceipt />
+        )}
+
+        {isOwner && activeSection === "purchase_payment" && (
+          <PurchasePayment />
+        )}
+
+        {isOwner && activeSection === "cash_entry" && (
+          <CashEntry />
+        )}
+
+        {isOwner && (activeSection === "bank_entry" || activeSection === "bank") && (
+          <BankEntry />
+        )}
+
+        {isOwner && activeSection === "jv_entry" && (
+          <JVEntry />
         )}
 
         {isOwner && activeSection === "purchase_return" && (
@@ -6096,7 +6186,6 @@ const pending = [];
                   );
                 })()}
               </div>
-              <button onClick={() => openPurchaseReturnForm()} style={{ ...btn() }}><Plus size={14} />New Return</button>
             </div>
 
             {/* ══════════════════════════════════════════
@@ -6134,7 +6223,6 @@ const pending = [];
                     <div style={{ display: "flex", gap: "2px" }}>
                       <button onClick={handlePrevPurchaseReturn} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 7px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Previous Purchase Return">◀ Prev</button>
                       <button onClick={handleNextPurchaseReturn} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 7px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Next Purchase Return">Next ▶</button>
-                      <button onClick={() => setPurchaseReturnListDrawer(true)} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 8px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Browse All Purchase Returns">📋 List</button>
                     </div>
 
                     {/* Type Selector (TAX / RETAIL) */}
@@ -6760,10 +6848,9 @@ const pending = [];
               <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)" }}>
                 <div style={{ fontSize: "44px", opacity: 0.5 }}>↩️</div>
                 <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Return#, Party, or Ref Bill to Open</p>
-                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above or browse the register to edit or reprint an existing debit note.</p>
+                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit or reprint an existing debit note.</p>
                 <div style={{ marginTop: "16px", display: "flex", gap: "10px", justifyContent: "center" }}>
                   <button onClick={() => openPurchaseReturnForm()} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ New Purchase Return</button>
-                  <button onClick={() => setPurchaseReturnListDrawer(true)} style={{ ...btn("#475569"), padding: "8px 16px" }}>📋 Browse All Debit Notes</button>
                 </div>
               </div>
             )}
@@ -25187,7 +25274,62 @@ const pending = [];
           );
         })()}
 
-
+        {stockEntryModalOpen && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 10000, display: "flex", justifyContent: "center", alignItems: "center", padding: "16px" }}>
+            <div style={{ width: "1250px", maxWidth: "98vw", maxHeight: "92vh", background: "#f8fafc", borderRadius: "10px", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.35)", border: "1px solid var(--color-border)" }}>
+              <div style={{ padding: "8px 14px", background: "#0284c7", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+                <span style={{ fontWeight: "800", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  📦 Stock Entry Itemwise — Quick Add for Purchase Bill
+                </span>
+                <button
+                  onClick={() => {
+                    setStockEntryModalOpen(false);
+                    setStockEntryTargetIdx(null);
+                  }}
+                  style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "16px", fontWeight: "700" }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: "10px" }}>
+                <StockEntryItemwise
+                  isModal={true}
+                  initialItemName={stockEntryInitialName}
+                  onClose={() => {
+                    setStockEntryModalOpen(false);
+                    setStockEntryTargetIdx(null);
+                  }}
+                  onItemCreated={(newItem: any, newBatch: any) => {
+                    if (stockEntryTargetIdx !== null && newItem) {
+                      updatePurchaseItem(stockEntryTargetIdx, "itemId", newItem.id);
+                      if (newBatch?.batchNo) {
+                        updatePurchaseItem(stockEntryTargetIdx, "batchNo", newBatch.batchNo);
+                      }
+                      if (newBatch?.expiryDate) {
+                        updatePurchaseItem(stockEntryTargetIdx, "expiryDate", newBatch.expiryDate);
+                      }
+                      if (newBatch?.mrp) {
+                        updatePurchaseItem(stockEntryTargetIdx, "mrp", newBatch.mrp);
+                      }
+                      if (newBatch?.pRate) {
+                        updatePurchaseItem(stockEntryTargetIdx, "ptr", newBatch.pRate);
+                      }
+                      if (newItem.unit) {
+                        updatePurchaseItem(stockEntryTargetIdx, "unit", newItem.unit);
+                      }
+                      if (newItem.gst) {
+                        updatePurchaseItem(stockEntryTargetIdx, "gst", newItem.gst);
+                      }
+                    }
+                    setStockEntryModalOpen(false);
+                    setStockEntryTargetIdx(null);
+                    showToast(`✅ '${newItem.name}' added to Purchase Bill!`);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

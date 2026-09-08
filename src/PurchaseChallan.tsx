@@ -23,7 +23,7 @@ const matchesDate = (dateVal: any, query: string) => {
   return false;
 };
 
-export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner, openListOnMount, onDrawerClosed }: any) {
+export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner, openListOnMount, onDrawerClosed, onConvertToBill }: any) {
   const { 
     purchaseChallans, savePurchaseChallans, 
     purchaseChallanForm, setPurchaseChallanForm, 
@@ -271,29 +271,12 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
   const convertToPurchaseBill = (chln: any) => {
     if (!chln) return;
     showConfirm(`Convert Challan #${chln.entryNo || chln.challanNo} to Purchase Bill?`, () => {
-      // Mark as converted
-      const updated = purchaseChallans.map((c: any) => c.id === chln.id ? { ...c, status: "Converted to Bill" } : c);
-      savePurchaseChallans(updated);
-
-      // Pre-fill purchase bill form
-      openPurchaseForm({
-        supplierId: chln.supplierId || "",
-        partyName: chln.partyName || "",
-        billNo: chln.challanNo || `CHLN-${chln.entryNo}`,
-        billDate: chln.challanDate || today(),
-        entryDate: today(),
-        taxType: chln.taxType || "exclusive",
-        taxZone: chln.taxZone || "sgst_ugst",
-        remarks: `Converted from Challan #${chln.entryNo || chln.challanNo}`,
-        billMsg: chln.billMsg || "",
-        items: (chln.items || []).map((i: any) => ({
-          ...i,
-          ptr: i.ptr || i.rate || "",
-          rate: i.ptr || i.rate || ""
-        }))
-      });
-      setActiveSection("purchase");
-      showToast(`Transferred Challan #${chln.entryNo} to Purchase Bill!`);
+      if (onConvertToBill) {
+        onConvertToBill(chln);
+      } else {
+        setActiveSection("purchase_chln_to_bill");
+      }
+      showToast(`Loaded Challan #${chln.entryNo || chln.challanNo} into Purchase Chln to Bill!`);
     });
   };
 
@@ -448,7 +431,6 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
             );
           })()}
         </div>
-        <button onClick={() => openForm()} style={{ ...btn() }}><Plus size={14} />New Challan</button>
       </div>
 
       {/* ══════════════════════════════════════════
@@ -486,7 +468,6 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
               <div style={{ display: "flex", gap: "2px" }}>
                 <button onClick={handlePrevChallan} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 7px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Previous Challan">◀ Prev</button>
                 <button onClick={handleNextChallan} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 7px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Next Challan">Next ▶</button>
-                <button onClick={() => setChallanListDrawer(true)} style={{ ...btn("#f1f5f9", "#334155"), padding: "2px 8px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Browse All Challans">📋 List</button>
               </div>
 
               {/* Time Badge */}
@@ -1189,10 +1170,9 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
         <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)" }}>
           <div style={{ fontSize: "44px", opacity: 0.5 }}>📦</div>
           <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Challan#, Party, or Entry# to Open</p>
-          <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above or browse the register to edit, reprint, or convert a delivery challan into a purchase bill.</p>
+          <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit, reprint, or convert a delivery challan into a purchase bill.</p>
           <div style={{ marginTop: "16px", display: "flex", gap: "10px", justifyContent: "center" }}>
             <button onClick={() => openForm()} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ New Purchase Challan</button>
-            <button onClick={() => setChallanListDrawer(true)} style={{ ...btn("#475569"), padding: "8px 16px" }}>📋 Browse All Challans</button>
           </div>
         </div>
       )}
