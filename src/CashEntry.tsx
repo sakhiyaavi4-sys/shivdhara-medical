@@ -411,145 +411,14 @@ export default function CashEntry() {
           setShowAccountDropdown(false);
         } else if (showFindModal) {
           setShowFindModal(false);
-        } else if (showForm) {
-          setShowForm(false);
+        } else {
+          handleNewVoucher();
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showForm, showAccountDropdown, showFindModal, vchNo, entryDate, accountName, amount, rpType, voucherRows]);
-
-  // ══════════════════════════════════════════════════════════════════════════════
-  // RENDER: SINGLE CENTER BUTTON (When no form open) — strictly Rule #2
-  // ══════════════════════════════════════════════════════════════════════════════
-  if (!showForm) {
-    const filteredVouchers = (overviewSearchQuery.trim() ? cashVouchers.filter(v => 
-      String(v.vchNo || "").toLowerCase().includes(overviewSearchQuery.toLowerCase()) ||
-      String(v.date || "").includes(overviewSearchQuery) ||
-      (v.rows || []).some((r: any) => r.accountName.toLowerCase().includes(overviewSearchQuery.toLowerCase()))
-    ) : cashVouchers).slice(0, 15);
-
-    return (
-      <div style={{ padding: "16px", maxWidth: "1200px", margin: "0 auto" }}>
-        
-        {/* Header Title with Search Bar (Clean Blue Accent - Image 2 Theme) */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "var(--color-text-dark)", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>💰</span> Cash Entry ({cashVouchers.length})
-            </h2>
-            <span style={{ background: "#e0f2fe", color: "#0284c7", border: "1px solid #bae6fd", padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: "700" }}>
-              Cash In Hand: ₹{fmt(liveCashBalance)}
-            </span>
-          </div>
-
-          <div style={{ position: "relative", minWidth: "280px" }}>
-            <Search size={14} style={{ position: "absolute", left: "10px", top: "8px", color: "#64748b" }} />
-            <input
-              placeholder="Search Voucher#, Account, Date... + Enter"
-              value={overviewSearchQuery}
-              onChange={e => setOverviewSearchQuery(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter" && filteredVouchers.length > 0) {
-                  handleOpenVoucher(filteredVouchers[0]);
-                }
-              }}
-              style={{ ...inp, paddingLeft: "30px", background: "white", borderColor: "#cbd5e1" }}
-            />
-          </div>
-        </div>
-
-        {/* ── SINGLE CENTER BUTTON WORKSPACE (Strict Rule #2: Only Center Button) ── */}
-        <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: "8px", border: "1px dashed #cbd5e1", boxShadow: "var(--shadow-sm)" }}>
-          <div style={{ fontSize: "44px", opacity: 0.8, marginBottom: "8px" }}>💰</div>
-          <h3 style={{ margin: "0 0 6px", fontWeight: "700", fontSize: "17px", color: "var(--color-text-dark)" }}>
-            Cash Counter Entry & Daily Vouchers
-          </h3>
-          <p style={{ fontSize: "12px", color: "#64748b", maxWidth: "520px", margin: "0 auto 18px", lineHeight: "1.5" }}>
-            Record cash receipts (R) and cash payments (P). Track instant cash in hand balances, disburse shop expenses, print cash vouchers, and send SMS alerts.
-          </p>
-
-          {/* SINGLE CENTER BUTTON */}
-          <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-            <button 
-              onClick={handleNewVoucher} 
-              style={{ ...btn("#0284c7", "white"), padding: "10px 24px", fontSize: "14px", fontWeight: "700", borderRadius: "6px" }}
-            >
-              ➕ New Cash Entry
-            </button>
-          </div>
-        </div>
-
-        {/* Recent Cash Vouchers Table */}
-        {cashVouchers.length > 0 && (
-          <div style={{ marginTop: "24px", background: "white", borderRadius: "8px", border: "1px solid #cbd5e1", overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
-            <div style={{ padding: "10px 14px", background: "#f8fafc", borderBottom: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b" }}>
-                📋 Recent Cash Vouchers ({cashVouchers.length})
-              </div>
-              <div style={{ fontSize: "11px", color: "#64748b" }}>Click on any voucher to view or edit details</div>
-            </div>
-
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-                <thead>
-                  <tr style={{ background: "#f1f5f9", color: "#475569", borderBottom: "1px solid #cbd5e1" }}>
-                    <th style={{ padding: "8px 10px", textAlign: "center", width: "80px" }}>Vch. No</th>
-                    <th style={{ padding: "8px 10px", textAlign: "center", width: "110px" }}>Date</th>
-                    <th style={{ padding: "8px 10px", textAlign: "center", width: "90px" }}>Time</th>
-                    <th style={{ padding: "8px 10px", textAlign: "left" }}>Accounts Included</th>
-                    <th style={{ padding: "8px 10px", textAlign: "right", width: "120px" }}>Received (R)</th>
-                    <th style={{ padding: "8px 10px", textAlign: "right", width: "120px" }}>Payment (P)</th>
-                    <th style={{ padding: "8px 10px", textAlign: "center", width: "80px" }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredVouchers.map(vch => (
-                    <tr 
-                      key={vch.id}
-                      onClick={() => handleOpenVoucher(vch)}
-                      style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer", transition: "background 0.15s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                    >
-                      <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: "700", color: "#0284c7" }}>
-                        #{vch.vchNo}
-                      </td>
-                      <td style={{ padding: "8px 10px", textAlign: "center", color: "#64748b" }}>
-                        {vch.date}
-                      </td>
-                      <td style={{ padding: "8px 10px", textAlign: "center", color: "#64748b", fontSize: "11px" }}>
-                        {vch.time || "-"}
-                      </td>
-                      <td style={{ padding: "8px 10px", fontWeight: "600", color: "#1e293b" }}>
-                        {(vch.rows || []).map((r: any) => `${r.accountName} (${r.rp})`).join(", ") || "General Cash"}
-                      </td>
-                      <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: "700", color: "#16a34a" }}>
-                        ₹{fmt(vch.totalReceived || 0)}
-                      </td>
-                      <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: "700", color: "#0284c7" }}>
-                        ₹{fmt(vch.totalPayment || 0)}
-                      </td>
-                      <td style={{ padding: "8px 10px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
-                        <button 
-                          onClick={() => handleOpenVoucher(vch)} 
-                          style={{ ...btn("#0284c7", "white"), padding: "3px 8px", fontSize: "11px" }}
-                        >
-                          Open
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-      </div>
-    );
-  }
+  }, [showAccountDropdown, showFindModal, vchNo, entryDate, accountName, amount, rpType, voucherRows]);
 
   // ══════════════════════════════════════════════════════════════════════════════
   // RENDER: FULL INTERACTIVE CASH ENTRY WORKSTATION (Matches Page 15 + Image 2 Theme)
