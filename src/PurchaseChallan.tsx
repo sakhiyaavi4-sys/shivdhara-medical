@@ -453,7 +453,7 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
           OWNER: PURCHASE CHALLAN ENTRY FORM
       ══════════════════════════════════════════ */}
       {showForm && (
-        <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", marginBottom: "8px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", gap: "8px", height: "calc(100vh - 48px)", maxHeight: "calc(100vh - 48px)", overflow: "hidden" }}>
           
           {/* ── TOP HEADER / TOOLBAR (MATCHES TRANSECTION.PDF PAGE 5) ── */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--color-border)", paddingBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
@@ -668,9 +668,9 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
           })()}
 
           {/* ── CHALLAN ITEMS GRID (MATCHES TRANSECTION.PDF PAGE 5 COLS) ── */}
-          <div style={{ overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
-              <thead>
+              <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                 <tr style={{ background: "#f1f5f9" }}>
                   {[
                     { l: "No", w: "32px", a: "center" },

@@ -3163,7 +3163,7 @@ const pending = [];
             OWNER: PURCHASE BILL (ENTRY & AUDIT)
         ══════════════════════════════════════════ */}
         {showPurchaseForm && (
-          <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", marginBottom: "8px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", gap: "8px", height: "calc(100vh - 48px)", maxHeight: "calc(100vh - 48px)", overflow: "hidden" }}>
             
             {/* ── TOP HEADER / TOOLBAR ── */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--color-border)", paddingBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
@@ -3375,9 +3375,9 @@ const pending = [];
             </div>
 
             {/* ── PURCHASE ITEMS GRID (MATCHES LEGACY VISUAL INFOSOFT COLS) ── */}
-            <div style={{ overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
-                <thead>
+                <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                   <tr style={{ background: "#f1f5f9" }}>
                     {[
                       { l: "No", w: "32px", a: "center" },
@@ -4213,7 +4213,7 @@ const pending = [];
 
             {/* Sales Form */}
             {showSalesForm && (
-              <div style={{ background: "white", borderRadius: "8px", padding: "12px 14px", marginBottom: "8px", border: `2px solid ${isReturn ? "#fecaca" : "#bbf7d0"}`, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
+              <div style={{ background: "white", borderRadius: "8px", padding: "12px 14px", border: `2px solid ${isReturn ? "#fecaca" : "#bbf7d0"}`, boxShadow: "0 2px 10px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", height: "calc(100vh - 48px)", maxHeight: "calc(100vh - 48px)", overflow: "hidden" }}>
                 {/* Header Bar with Bill No Series, Prev/Next, Mode Switcher & Date */}
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", alignItems: "center", flexWrap: "wrap", gap: "8px", background: "#f8fafc", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
                   {/* Left: Bill No, Series, Navigation & Mode */}
@@ -4383,9 +4383,9 @@ const pending = [];
                 </div>
 
                 {/* Item search + table (Legacy Visual InfoSoft Parity Columns: No, Item Name, Unit, Batch, Expiry, MRP, Base, GST%, Qty, Disc%, Amount) */}
-                <div style={{ overflowX: "auto", marginBottom: "8px", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
+                <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "auto", marginBottom: "8px", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-                    <thead>
+                    <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                       <tr style={{ background: "#f1f5f9" }}>
                         {[
                           { l: "NO", w: "35px", a: "center" },
@@ -6195,7 +6195,7 @@ const pending = [];
                 OWNER: PURCHASE RETURN / DEBIT NOTE FORM
             ══════════════════════════════════════════ */}
             {showPurchaseReturnForm && (
-              <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", marginBottom: "8px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", gap: "8px", height: "calc(100vh - 48px)", maxHeight: "calc(100vh - 48px)", overflow: "hidden" }}>
                 
                 {/* ── TOP HEADER / TOOLBAR (MATCHES TRANSECTION.PDF PAGE 4) ── */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--color-border)", paddingBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
@@ -6416,9 +6416,9 @@ const pending = [];
                 })()}
 
                 {/* ── RETURN ITEMS GRID (MATCHES TRANSECTION.PDF PAGE 4 COLS) ── */}
-                <div style={{ overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
+                <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "6px" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
-                    <thead>
+                    <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                       <tr style={{ background: "#f1f5f9" }}>
                         {[
                           { l: "No", w: "32px", a: "center" },

@@ -555,7 +555,7 @@ export default function CashEntry() {
   // RENDER: FULL INTERACTIVE CASH ENTRY WORKSTATION (Matches Page 15 + Image 2 Theme)
   // ══════════════════════════════════════════════════════════════════════════════
   return (
-    <div style={{ background: "white", borderRadius: "8px", border: "1px solid #cbd5e1", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", minHeight: "85vh" }}>
+    <div style={{ background: "white", borderRadius: "8px", border: "1px solid #cbd5e1", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", height: "calc(100vh - 48px)", maxHeight: "calc(100vh - 48px)", overflow: "hidden" }}>
       
       {/* ── TOP HEADER / LIVE CASH STATUS BAR (MATCHES SCREENSHOT PAGE 15) ── */}
       <div style={{ padding: "8px 14px", background: "#f8fafc", borderBottom: "1px solid #cbd5e1", display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -789,7 +789,7 @@ export default function CashEntry() {
       </div>
 
       {/* ── CASH VOUCHER GRID (MATCHES SCREENSHOT PAGE 15 COLUMNS: Account Name, RP, Amount, Remark) ── */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "0" }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
           <thead>
             <tr style={{ background: "#f1f5f9", color: "#334155", textAlign: "left", position: "sticky", top: 0, zIndex: 10, borderBottom: "1px solid #cbd5e1" }}>
