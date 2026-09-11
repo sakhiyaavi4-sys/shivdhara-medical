@@ -391,69 +391,71 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
   return (
     <>
       {/* ── TOP SEARCH & ACTION BAR ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
-        <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800" }}>📦 Purchase Challans ({purchaseChallans.length})</h2>
-        <div style={{ position: "relative" }}>
-          <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "#64748b" }} />
-          {(() => {
-            const q = (challanSearch || "").toLowerCase();
-            const filtered = q ? purchaseChallans.filter((b: any) => (String(b.entryNo) || "").toLowerCase().includes(q) || (b.challanNo || "").toLowerCase().includes(q) || (b.partyName || "").toLowerCase().includes(q) || matchesDate(b.challanDate || b.entryDate, q)).slice(0, 15) : [];
-            return (
-              <>
-                <input
-                  placeholder="Search Challan# / Party / Entry... + Enter"
-                  value={challanSearch || ""}
-                  onChange={e => {
-                    setChallanSearch(e.target.value);
-                    setChallanSearchDropdown(true);
-                    setChallanSearchHighlight(0);
-                  }}
-                  onKeyDown={e => {
-                    if (e.key === "ArrowDown") { e.preventDefault(); setChallanSearchHighlight(prev => Math.min(prev + 1, filtered.length - 1)); }
-                    else if (e.key === "ArrowUp") { e.preventDefault(); setChallanSearchHighlight(prev => Math.max(prev - 1, 0)); }
-                    else if (e.key === "Enter") {
-                      e.preventDefault();
-                      if (filtered.length > 0 && challanSearchDropdown) {
-                        openForm(filtered[challanSearchHighlight]);
-                        setChallanSearchDropdown(false);
-                        setChallanSearch("");
-                      } else if (q) {
-                        const match = purchaseChallans.find((b: any) => (String(b.entryNo) || "").toLowerCase() === q || (b.challanNo || "").toLowerCase() === q || (b.partyName || "").toLowerCase() === q || matchesDate(b.challanDate || b.entryDate, q));
-                        if (match) {
-                          openForm(match);
+      {!showForm && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "800" }}>📦 Purchase Challans ({purchaseChallans.length})</h2>
+          <div style={{ position: "relative" }}>
+            <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "#64748b" }} />
+            {(() => {
+              const q = (challanSearch || "").toLowerCase();
+              const filtered = q ? purchaseChallans.filter((b: any) => (String(b.entryNo) || "").toLowerCase().includes(q) || (b.challanNo || "").toLowerCase().includes(q) || (b.partyName || "").toLowerCase().includes(q) || matchesDate(b.challanDate || b.entryDate, q)).slice(0, 15) : [];
+              return (
+                <>
+                  <input
+                    placeholder="Search Challan# / Party / Entry... + Enter"
+                    value={challanSearch || ""}
+                    onChange={e => {
+                      setChallanSearch(e.target.value);
+                      setChallanSearchDropdown(true);
+                      setChallanSearchHighlight(0);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === "ArrowDown") { e.preventDefault(); setChallanSearchHighlight(prev => Math.min(prev + 1, filtered.length - 1)); }
+                      else if (e.key === "ArrowUp") { e.preventDefault(); setChallanSearchHighlight(prev => Math.max(prev - 1, 0)); }
+                      else if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (filtered.length > 0 && challanSearchDropdown) {
+                          openForm(filtered[challanSearchHighlight]);
                           setChallanSearchDropdown(false);
                           setChallanSearch("");
-                        } else {
-                          showToast("No purchase challan found matching: " + challanSearch, "error");
+                        } else if (q) {
+                          const match = purchaseChallans.find((b: any) => (String(b.entryNo) || "").toLowerCase() === q || (b.challanNo || "").toLowerCase() === q || (b.partyName || "").toLowerCase() === q || matchesDate(b.challanDate || b.entryDate, q));
+                          if (match) {
+                            openForm(match);
+                            setChallanSearchDropdown(false);
+                            setChallanSearch("");
+                          } else {
+                            showToast("No purchase challan found matching: " + challanSearch, "error");
+                          }
                         }
                       }
-                    }
-                  }}
-                  onFocus={() => setChallanSearchDropdown(true)}
-                  onBlur={() => setTimeout(() => setChallanSearchDropdown(false), 200)}
-                  style={{ ...inp, width: "320px", paddingLeft: "30px", borderRadius: "20px", background: "#f8fafc" }}
-                />
-                {challanSearchDropdown && filtered.length > 0 && (
-                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden" }}>
-                    {filtered.map((b: any, idx: number) => (
-                      <div key={b.id} onClick={() => { openForm(b); setChallanSearchDropdown(false); setChallanSearch(""); }} style={{ padding: "8px 12px", cursor: "pointer", background: idx === challanSearchHighlight ? "#f1f5f9" : "white", borderBottom: "1px solid #f1f5f9" }} onMouseEnter={() => setChallanSearchHighlight(idx)}>
-                        <div style={{ fontSize: "12px", fontWeight: "600", color: "#1e293b" }}>Entry #{b.entryNo} — {b.partyName}</div>
-                        <div style={{ fontSize: "10px", color: "#64748b" }}>Challan: {b.challanNo || "N/A"} | Amt: ₹{fmt(b.total)} | Status: {b.status || "Pending"}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            );
-          })()}
+                    }}
+                    onFocus={() => setChallanSearchDropdown(true)}
+                    onBlur={() => setTimeout(() => setChallanSearchDropdown(false), 200)}
+                    style={{ ...inp, width: "320px", paddingLeft: "30px", borderRadius: "20px", background: "#f8fafc" }}
+                  />
+                  {challanSearchDropdown && filtered.length > 0 && (
+                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", border: "1px solid var(--color-border)", borderRadius: "8px", boxShadow: "var(--shadow-lg)", zIndex: 50, marginTop: "4px", overflow: "hidden" }}>
+                      {filtered.map((b: any, idx: number) => (
+                        <div key={b.id} onClick={() => { openForm(b); setChallanSearchDropdown(false); setChallanSearch(""); }} style={{ padding: "8px 12px", cursor: "pointer", background: idx === challanSearchHighlight ? "#f1f5f9" : "white", borderBottom: "1px solid #f1f5f9" }} onMouseEnter={() => setChallanSearchHighlight(idx)}>
+                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#1e293b" }}>Entry #{b.entryNo} — {b.partyName}</div>
+                          <div style={{ fontSize: "10px", color: "#64748b" }}>Challan: {b.challanNo || "N/A"} | Amt: ₹{fmt(b.total)} | Status: {b.status || "Pending"}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ══════════════════════════════════════════
           OWNER: PURCHASE CHALLAN ENTRY FORM
       ══════════════════════════════════════════ */}
       {showForm && (
-        <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", gap: "8px", height: "calc(100vh - 48px)", maxHeight: "calc(100vh - 48px)", overflow: "hidden" }}>
+        <div style={{ background: "white", borderRadius: "8px", padding: "10px 14px", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", gap: "8px", height: "100%", maxHeight: "100%", minHeight: 0, overflow: "hidden" }}>
           
           {/* ── TOP HEADER / TOOLBAR (MATCHES TRANSECTION.PDF PAGE 5) ── */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--color-border)", paddingBottom: "8px", flexWrap: "wrap", gap: "8px" }}>

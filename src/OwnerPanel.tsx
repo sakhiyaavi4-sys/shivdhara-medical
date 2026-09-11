@@ -2209,7 +2209,7 @@ export default function OwnerPanel() {
       )}
 
       {/* ─── MAIN CONTENT CONTAINER ─── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, height: "calc(100vh - 50px)", maxHeight: "calc(100vh - 50px)", overflow: "hidden" }}>
         
         {/* ─── MODERN TOP NAVBAR ─── */}
         <div style={{ background: "white", padding: "4px 12px", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", zIndex: 90 }}>
@@ -2452,7 +2452,7 @@ export default function OwnerPanel() {
       {/* ─────────────────────────────────── */}
       {/* OWNER CONTENT SECTIONS               */}
       {/* ─────────────────────────────────── */}
-      <div style={{ flex: 1, height: "calc(100vh - 84px)", minHeight: 0, overflowX: "hidden", overflowY: "auto", display: "flex", flexDirection: "column", padding: "4px 10px 24px 10px", width: "100%", boxSizing: "border-box", background: "var(--bg-body)", color: "var(--color-text-dark)" }}>
+      <div style={{ flex: 1, height: "calc(100vh - 88px)", maxHeight: "calc(100vh - 88px)", minHeight: 0, overflowX: "hidden", overflowY: (["sales_pos", "purchase", "purchase_return", "purchase_challan", "cash_entry", "bank_entry", "jv_entry"].includes(activeSection) ? "hidden" : "auto"), display: "flex", flexDirection: "column", padding: "4px 8px 6px 8px", width: "100%", boxSizing: "border-box", background: "var(--bg-body)", color: "var(--color-text-dark)" }}>
 
         {isOwner && activeSection === "home" && (
           <>

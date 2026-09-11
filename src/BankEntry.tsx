@@ -698,7 +698,7 @@ export default function BankEntry() {
   // RENDER: FULL INTERACTIVE BANK ENTRY WORKSTATION (Matches Page 16 + Image 2 Theme)
   // ══════════════════════════════════════════════════════════════════════════════
   return (
-    <div style={{ background: "white", borderRadius: "8px", border: "1px solid #cbd5e1", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", height: "calc(100vh - 48px)", maxHeight: "calc(100vh - 48px)", overflow: "hidden" }}>
+    <div style={{ background: "white", borderRadius: "8px", border: "1px solid #cbd5e1", boxShadow: "var(--shadow-card)", display: "flex", flexDirection: "column", height: "100%", maxHeight: "100%", minHeight: 0, overflow: "hidden" }}>
       
       {/* ── TOP HEADER (MATCHES SCREENSHOT PAGE 16: Voucher#, Last Entry, Date, Load Date) ── */}
       <div style={{ padding: "8px 14px", background: "#f8fafc", borderBottom: "1px solid #cbd5e1", display: "flex", flexDirection: "column", gap: "6px" }}>
