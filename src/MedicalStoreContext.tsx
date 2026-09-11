@@ -303,37 +303,90 @@ export function MedicalStoreProvider({ children }) {
   const [editProfile, setEditProfile] = useState(false);
   const [profileData, setProfileData] = useState({ name: "", phone: "", address: "" });
 
-  // ─── UI DENSITY & SCREEN FIT ──────────────────────
-  const [uiScale, setUiScale] = useState(() => {
+  // ─── UI DENSITY & SCREEN AUTO-FIT ──────────────────
+  const computeOptimalScale = () => {
+    if (typeof window === "undefined") return 1.0;
+    const h = window.innerHeight;
+    const w = window.innerWidth;
+    
+    // Safety minimum 0.88 so fonts NEVER become too small or unreadable!
+    // Spacing/density handles the rest cleanly.
+    if (h <= 680 || w <= 1260) {
+      return 0.88; // Small laptop or low resolution
+    } else if (h <= 790 || w <= 1400) {
+      return 0.92; // 1366x768 / 1440x900 standard laptops
+    } else if (h >= 1050 && w >= 1850) {
+      return 1.05; // Large desktop monitor
+    } else {
+      return 1.0; // Standard 1080p desktop
+    }
+  };
+
+  const [isAutoFit, setIsAutoFit] = useState<boolean>(() => {
     try {
-      const saved = localStorage.getItem("shivdhara_ui_scale");
-      if (saved) return parseFloat(saved);
-      if (typeof window !== "undefined" && (window.innerWidth <= 1400 || window.innerHeight <= 850)) {
-        return 0.85;
+      const saved = localStorage.getItem("shivdhara_auto_scale");
+      return saved !== null ? saved === "true" : true; // Default to true: Auto Fit on any PC!
+    } catch (_) {
+      return true;
+    }
+  });
+
+  const [uiScale, setUiScale] = useState<number>(() => {
+    try {
+      const savedAuto = localStorage.getItem("shivdhara_auto_scale");
+      if (savedAuto === "false") {
+        const saved = localStorage.getItem("shivdhara_ui_scale");
+        if (saved) return parseFloat(saved);
       }
-      return 1.0;
+      return computeOptimalScale();
     } catch (_) {
       return 1.0;
     }
   });
 
-  const changeUiScale = (newScale: number) => {
-    const clamped = Math.max(0.60, Math.min(1.25, Math.round(newScale * 100) / 100));
+  const changeUiScale = (newScale: number, isManual = true) => {
+    const clamped = Math.max(0.85, Math.min(1.20, Math.round(newScale * 100) / 100));
     setUiScale(clamped);
+    if (isManual) {
+      setIsAutoFit(false);
+      try {
+        localStorage.setItem("shivdhara_auto_scale", "false");
+        localStorage.setItem("shivdhara_ui_scale", String(clamped));
+      } catch (_) { }
+    }
+  };
+
+  const autoFitNow = () => {
+    setIsAutoFit(true);
     try {
-      localStorage.setItem("shivdhara_ui_scale", String(clamped));
+      localStorage.setItem("shivdhara_auto_scale", "true");
     } catch (_) { }
+    const optimal = computeOptimalScale();
+    setUiScale(optimal);
   };
 
   const zoomIn = () => changeUiScale(uiScale + 0.05);
   const zoomOut = () => changeUiScale(uiScale - 0.05);
-  const resetZoom = () => changeUiScale(1.0);
+  const resetZoom = () => autoFitNow();
   const setPresetScale = (preset: number) => changeUiScale(preset);
+
+  // Auto-adapt to any screen on mount and when resizing / moving between monitors
+  useEffect(() => {
+    const handleResize = () => {
+      if (isAutoFit) {
+        const optimal = computeOptimalScale();
+        setUiScale(optimal);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isAutoFit]);
 
   useEffect(() => {
     try {
       document.documentElement.style.zoom = `${Math.round(uiScale * 100)}%`;
-      if (uiScale <= 0.88) {
+      if (uiScale <= 0.94) {
         document.body.classList.add("density-compact");
       } else {
         document.body.classList.remove("density-compact");
@@ -354,13 +407,13 @@ export function MedicalStoreProvider({ children }) {
           zoomIn();
         } else if (e.key === "0") {
           e.preventDefault();
-          resetZoom();
+          autoFitNow();
         }
       }
     };
     window.addEventListener("keydown", handleKeyZoom);
     return () => window.removeEventListener("keydown", handleKeyZoom);
-  }, [uiScale]);
+  }, [uiScale, isAutoFit]);
 
   // ─── BILL LOCK CONFIGURATION (SUPERVISOR) ───────────
   const [lockBillData, setLockBillData] = useState(() => {
@@ -3576,6 +3629,7 @@ ${renderedPages}
     reportSearch, setReportSearch,
     // UI Density & Screen Scale
     uiScale, setUiScale, changeUiScale, zoomIn, zoomOut, resetZoom, setPresetScale,
+    isAutoFit, setIsAutoFit, autoFitNow,
     lockBillData, setLockBillData, saveLockBillData, isDateLocked,
     // Enterprise Hardening & Features
     auditLogs, setAuditLogs, loadAuditLogs, logUserChange, showAuditModal, setShowAuditModal,

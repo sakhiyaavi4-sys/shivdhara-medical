@@ -34,7 +34,7 @@ function ShivDharaApp() {
     authStatus, setAuthStatus, authInput, setAuthInput,
     showPass, setShowPass,
     handleLogin, handleSetupAccount, handleLogout,
-    uiScale, zoomIn, zoomOut, setPresetScale,
+    uiScale, zoomIn, zoomOut, setPresetScale, isAutoFit, autoFitNow,
   } = useMedicalStore();
 
   const [updaterMsg, setUpdaterMsg] = React.useState<{text:string,percent:number,ready?:boolean}|null>(null);
@@ -158,26 +158,31 @@ function ShivDharaApp() {
           <div style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,0.14)",borderRadius:"8px",padding:"2px 6px",border:"1px solid rgba(255,255,255,0.25)",gap:"4px"}}>
             <button 
               onClick={zoomOut} 
-              title="Zoom Out / Make More Dense (Ctrl + -)" 
+              title="Zoom Out (Ctrl + -)" 
               style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:"4px",width:"22px",height:"22px",cursor:"pointer",fontWeight:"bold",fontSize:"13px",display:"flex",alignItems:"center",justifyContent:"center"}}
             >
               −
             </button>
             <select
-              value={Math.round((uiScale || 1.0) * 100)}
-              onChange={(e) => setPresetScale(parseInt(e.target.value) / 100)}
-              title="Screen Fit & UI Density"
+              value={isAutoFit ? "auto" : String(Math.round((uiScale || 1.0) * 100))}
+              onChange={(e) => {
+                if (e.target.value === "auto") {
+                  autoFitNow();
+                } else {
+                  setPresetScale(parseInt(e.target.value) / 100);
+                }
+              }}
+              title="Auto Screen Fit & Density (Auto detects laptop or desktop)"
               style={{background:"transparent",border:"none",color:"white",fontSize:"12px",fontWeight:"700",cursor:"pointer",outline:"none",padding:"2px 4px"}}
             >
-              <option value="100" style={{color:"#000"}}>🖥️ Normal (100%)</option>
-              <option value="90" style={{color:"#000"}}>💻 Medium (90%)</option>
-              <option value="85" style={{color:"#000"}}>🏪 Shop PC (85%)</option>
-              <option value="75" style={{color:"#000"}}>⚡ Dense POS (75%)</option>
-              <option value="68" style={{color:"#000"}}>📦 Ultra Fit (68%)</option>
+              <option value="auto" style={{color:"#000"}}>🖥️ Auto Fit ({Math.round((uiScale || 1.0) * 100)}%)</option>
+              <option value="100" style={{color:"#000"}}>💻 100% (Normal)</option>
+              <option value="92" style={{color:"#000"}}>🏪 92% (Compact)</option>
+              <option value="88" style={{color:"#000"}}>📦 88% (Small Screen)</option>
             </select>
             <button 
               onClick={zoomIn} 
-              title="Zoom In / Make Bigger (Ctrl + +)" 
+              title="Zoom In (Ctrl + +)" 
               style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:"4px",width:"22px",height:"22px",cursor:"pointer",fontWeight:"bold",fontSize:"13px",display:"flex",alignItems:"center",justifyContent:"center"}}
             >
               +
