@@ -31,11 +31,27 @@ export default function CashEntry() {
   };
 
   // Form / Workstation State
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [activeVoucherId, setActiveVoucherId] = useState<string | null>(null);
   const [overviewSearchQuery, setOverviewSearchQuery] = useState("");
   const [showFindModal, setShowFindModal] = useState(false);
   const [currentTimeStr, setCurrentTimeStr] = useState("10:27:07");
+
+  useEffect(() => {
+    const handleNew = () => handleNewVoucher();
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        handleNewVoucher();
+      }
+    };
+    window.addEventListener("new_cash_entry", handleNew);
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      window.removeEventListener("new_cash_entry", handleNew);
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, []);
 
   // Voucher Header Fields (Matches Page 15 of transection.pdf)
   const [vchNo, setVchNo] = useState<string>("1");
@@ -880,15 +896,14 @@ export default function CashEntry() {
 
       </div>
 
-      {/* ── BOTTOM ACTION TOOLBAR (MATCHES SCREENSHOT PAGE 15 BUTTONS: New, Save, Print Receipt, Print Voucher, Remove, List, <, >, Find, Close) ── */}
+      {/* ── BOTTOM ACTION TOOLBAR ── */}
       <div style={{ background: "#f1f5f9", borderTop: "1px solid #cbd5e1", padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-        
         <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
-          <button onClick={handleNewVoucher} style={{ ...btn("#ffffff", "#334155"), padding: "5px 12px", fontSize: "11px", border: "1px solid #cbd5e1" }}>
-            New
+          <button onClick={handleNewVoucher} style={{ ...btn("#0284c7", "white"), padding: "5px 14px", fontSize: "11px", fontWeight: "700", border: "1px solid #0284c7" }} title="New Cash Voucher (Alt+N)">
+            ➕ New (Alt+N)
           </button>
 
-          <button onClick={handleSave} style={{ ...btn("#0284c7", "white"), padding: "5px 16px", fontSize: "11px", fontWeight: "700" }} title="Save Cash Voucher (F2)">
+          <button onClick={handleSave} style={{ ...btn("#16a34a", "white"), padding: "5px 16px", fontSize: "11px", fontWeight: "700" }} title="Save Cash Voucher (F2)">
             Save (F2)
           </button>
 
@@ -912,6 +927,7 @@ export default function CashEntry() {
           <button onClick={handlePrevVoucher} style={{ ...btn("#ffffff", "#334155"), padding: "5px 10px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Previous Cash Voucher">
             &lt;
           </button>
+
           <button onClick={handleNextVoucher} style={{ ...btn("#ffffff", "#334155"), padding: "5px 10px", fontSize: "11px", border: "1px solid #cbd5e1" }} title="Next Cash Voucher">
             &gt;
           </button>
@@ -921,11 +937,10 @@ export default function CashEntry() {
           </button>
         </div>
 
-        {/* Close Button */}
-        <button onClick={() => setShowForm(false)} style={{ ...btn("#475569", "white"), padding: "5px 16px", fontSize: "11px", fontWeight: "700" }}>
-          Close (Esc)
+        {/* Close / Clear Button */}
+        <button onClick={handleNewVoucher} style={{ ...btn("#475569", "white"), padding: "5px 16px", fontSize: "11px", fontWeight: "700" }} title="Reset / New Form (Esc)">
+          Clear (Esc)
         </button>
-
       </div>
 
       {/* ── FIND VOUCHER MODAL ── */}

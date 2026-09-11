@@ -55,6 +55,22 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
     }
   }, [openListOnMount]);
 
+  useEffect(() => {
+    const handleNew = () => openForm();
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        openForm();
+      }
+    };
+    window.addEventListener("new_purchase_challan", handleNew);
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      window.removeEventListener("new_purchase_challan", handleNew);
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, []);
+
   const closeDrawer = () => {
     setChallanListDrawer(false);
     if (onDrawerClosed) onDrawerClosed();
@@ -1156,24 +1172,20 @@ export default function PurchaseChallan({ setScannerTarget, setShowCameraScanner
               </button>
             )}
             <button
-              onClick={() => setShowForm(false)}
-              style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px", padding: "5px 10px", marginLeft: "auto" }}
+              onClick={() => openForm()}
+              style={{ ...btn("#2563eb", "white"), fontSize: "12px", padding: "5px 14px", fontWeight: "700" }}
+              title="New Purchase Challan (Alt+N)"
             >
-              <X size={13} /> Close
+              ➕ New (Alt+N)
             </button>
           </div>
         </div>
       )}
 
-      {/* Purchase Challans List (When form closed) */}
+      {/* Ensure form is always open */}
       {!showForm && (
-        <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)" }}>
-          <div style={{ fontSize: "44px", opacity: 0.5 }}>📦</div>
-          <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Challan#, Party, or Entry# to Open</p>
-          <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit, reprint, or convert a delivery challan into a purchase bill.</p>
-          <div style={{ marginTop: "16px", display: "flex", gap: "10px", justifyContent: "center" }}>
-            <button onClick={() => openForm()} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ New Purchase Challan</button>
-          </div>
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <button onClick={() => openForm()} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ Open Purchase Challan Form</button>
         </div>
       )}
 

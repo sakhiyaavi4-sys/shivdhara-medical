@@ -45,12 +45,28 @@ export default function BankEntry() {
   };
 
   // Form / Workstation State
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [activeVoucherId, setActiveVoucherId] = useState<string | null>(null);
   const [overviewSearchQuery, setOverviewSearchQuery] = useState("");
   const [showFindModal, setShowFindModal] = useState(false);
   const [showBankSelectModal, setShowBankSelectModal] = useState(false);
   const [currentTimeStr, setCurrentTimeStr] = useState("10:27:07");
+
+  useEffect(() => {
+    const handleNew = () => handleNewVoucher();
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        handleNewVoucher();
+      }
+    };
+    window.addEventListener("new_bank_entry", handleNew);
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      window.removeEventListener("new_bank_entry", handleNew);
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, []);
 
   // Selected Bank for this Entry
   const [selectedBank, setSelectedBank] = useState<any>(bankAccounts[0] || null);
@@ -1081,8 +1097,8 @@ export default function BankEntry() {
       <div style={{ background: "#f1f5f9", borderTop: "1px solid #cbd5e1", padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
         
         <div style={{ display: "flex", gap: "5px", alignItems: "center", flexWrap: "wrap" }}>
-          <button onClick={handleNewVoucher} style={{ ...btn("#ffffff", "#334155"), padding: "5px 10px", fontSize: "11px", border: "1px solid #cbd5e1" }}>
-            New
+          <button onClick={handleNewVoucher} style={{ ...btn("#0284c7", "white"), padding: "5px 12px", fontSize: "11px", fontWeight: "700", border: "1px solid #0284c7" }} title="New Bank Voucher (Alt+N)">
+            ➕ New (Alt+N)
           </button>
 
           <button onClick={handleSave} style={{ ...btn("#0284c7", "white"), padding: "5px 14px", fontSize: "11px", fontWeight: "700" }} title="Save Bank Voucher (F2)">
@@ -1130,9 +1146,9 @@ export default function BankEntry() {
           </button>
         </div>
 
-        {/* Close Button */}
-        <button onClick={() => setShowForm(false)} style={{ ...btn("#475569", "white"), padding: "5px 14px", fontSize: "11px", fontWeight: "700" }}>
-          Close (Esc)
+        {/* Close / Clear Button */}
+        <button onClick={handleNewVoucher} style={{ ...btn("#475569", "white"), padding: "5px 14px", fontSize: "11px", fontWeight: "700" }} title="Reset / New Form (Esc)">
+          Clear (Esc)
         </button>
 
       </div>

@@ -2181,7 +2181,13 @@ export default function OwnerPanel() {
               const isActive = activeSection === t.id;
               return (
                 <button key={t.id}
-                  onClick={() => { setActiveSection(t.id); setOwnerSubTab(""); }}
+                  onClick={() => {
+                    setActiveSection(t.id);
+                    setOwnerSubTab("");
+                    if (t.id === "purchase") openPurchaseForm();
+                    else if (t.id === "sales_pos") openSalesForm(false);
+                    else if (t.id === "purchase_return") openPurchaseReturnForm();
+                  }}
                   title={!isSidebarOpen ? t.label : ""}
                   style={{
                     padding: isSidebarOpen ? "12px 16px" : "12px", border: "none", background: isActive ? "#e0f7fa" : "transparent",
@@ -2248,7 +2254,7 @@ export default function OwnerPanel() {
               {id:"transaction", label:"Transaction", items:[
                 {label:"Sales Bill", action:()=>{setActiveSection("sales_pos");setTimeout(()=>openSalesForm(false),50);setActiveMenu(null);}},
                 {label:"Purchase Bill", action:()=>{setActiveSection("purchase");setTimeout(()=>openPurchaseForm(),50);setActiveMenu(null);}},
-                {label:"Purchase Return", action:()=>{setActiveSection("purchase_return");setActiveMenu(null);}},
+                {label:"Purchase Return", action:()=>{setActiveSection("purchase_return");setTimeout(()=>openPurchaseReturnForm(),50);setActiveMenu(null);}},
                 {label:"Purchase Challan", action:()=>{setActiveSection("purchase_challan");setActiveMenu(null);}},
                 {label:"Purchase Chln to Bill", action:()=>{setActiveSection("purchase_chln_to_bill");setActiveMenu(null);}},
                 {sep:true},
@@ -3853,24 +3859,20 @@ const pending = [];
                 </button>
               )}
               <button
-                onClick={() => setShowPurchaseForm(false)}
-                style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px", padding: "5px 10px", marginLeft: "auto" }}
+                onClick={() => openPurchaseForm()}
+                style={{ ...btn("#2563eb", "white"), fontSize: "12px", padding: "5px 14px", fontWeight: "700" }}
+                title="New Purchase Bill (Alt+N)"
               >
-                <X size={13} /> Close
+                ➕ New (Alt+N)
               </button>
             </div>
           </div>
         )}
 
-        {/* Purchase Bills List (When form closed) */}
+        {/* Ensure form is always open */}
         {!showPurchaseForm && (
-          <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)" }}>
-            <div style={{ fontSize: "44px", opacity: 0.5 }}>🛒</div>
-            <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Bill#, Party, or Entry# to Open</p>
-            <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit an existing purchase bill.</p>
-            <div style={{ marginTop: "16px", display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button onClick={openPurchaseForm} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ New Purchase Bill</button>
-            </div>
+          <div style={{ textAlign: "center", padding: "40px" }}>
+            <button onClick={openPurchaseForm} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ Open Purchase Form</button>
           </div>
         )}
 
@@ -4956,19 +4958,21 @@ const pending = [];
                   >
                     <Trash2 size={15} />
                   </button>
+                  <button
+                    onClick={() => openSalesForm(false)}
+                    style={{ ...btn("#2563eb", "white"), fontSize: "12px", padding: "5px 14px", fontWeight: "700" }}
+                    title="New Sales Bill (Alt+N)"
+                  >
+                    ➕ New (Alt+N)
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Sales Bills List is Hidden (Search to Edit Workflow) */}
+            {/* Ensure form is always open */}
             {!showSalesForm && (
-              <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)" }}>
-                <div style={{ fontSize: "44px", opacity: 0.5 }}>🧾</div>
-                <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Bill# or Patient Name to Open</p>
-                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit an existing bill, or click <strong>New Sale</strong>.</p>
-                <div style={{ marginTop: "16px", display: "flex", gap: "10px", justifyContent: "center" }}>
-                  <button onClick={() => openSalesForm(false)} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}><Plus size={15} /> New Sales Bill</button>
-                </div>
+              <div style={{ textAlign: "center", padding: "40px" }}>
+                <button onClick={() => openSalesForm(false)} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}><Plus size={15} /> Open Sales Bill Form</button>
               </div>
             )}
 
@@ -6833,24 +6837,20 @@ const pending = [];
                     </button>
                   )}
                   <button
-                    onClick={() => setShowPurchaseReturnForm(false)}
-                    style={{ ...btn("var(--color-border)", "var(--color-text-dark)"), fontSize: "12px", padding: "5px 10px", marginLeft: "auto" }}
+                    onClick={() => openPurchaseReturnForm()}
+                    style={{ ...btn("#2563eb", "white"), fontSize: "12px", padding: "5px 14px", fontWeight: "700" }}
+                    title="New Purchase Return (Alt+N)"
                   >
-                    <X size={13} /> Close
+                    ➕ New (Alt+N)
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Purchase Return List (When form closed) */}
+            {/* Ensure form is always open */}
             {!showPurchaseReturnForm && (
-              <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", background: "white", borderRadius: "8px", border: "1px dashed var(--color-border)" }}>
-                <div style={{ fontSize: "44px", opacity: 0.5 }}>↩️</div>
-                <p style={{ marginTop: "16px", fontWeight: "600", fontSize: "16px" }}>Search Return#, Party, or Ref Bill to Open</p>
-                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>Type in the search box above and press Enter to edit or reprint an existing debit note.</p>
-                <div style={{ marginTop: "16px", display: "flex", gap: "10px", justifyContent: "center" }}>
-                  <button onClick={() => openPurchaseReturnForm()} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ New Purchase Return</button>
-                </div>
+              <div style={{ textAlign: "center", padding: "40px" }}>
+                <button onClick={() => openPurchaseReturnForm()} style={{ ...btn("var(--color-primary)"), padding: "8px 16px" }}>➕ Open Purchase Return Form</button>
               </div>
             )}
 

@@ -183,7 +183,7 @@ export function MedicalStoreProvider({ children }) {
   const [quickQty, setQuickQty] = useState("");
 
   // ─── PURCHASE BILL ────────────────────────────────
-  const [showPurchaseForm, setShowPurchaseForm] = useState(false);
+  const [showPurchaseForm, setShowPurchaseForm] = useState(true);
   const [purchaseForm, setPurchaseForm] = useState({});
   const [purchaseItems, setPurchaseItems] = useState([]);
   const [expandedPurchase, setExpandedPurchase] = useState(null);
@@ -198,7 +198,7 @@ export function MedicalStoreProvider({ children }) {
   const [purchaseBillSearch, setPurchaseBillSearch] = useState("");
 
   // ─── SALES BILL (POS) ─────────────────────────────
-  const [showSalesForm, setShowSalesForm] = useState(false);
+  const [showSalesForm, setShowSalesForm] = useState(true);
   const [salesForm, setSalesForm] = useState({});
   const [salesItems, setSalesItems] = useState([]);
   const [salesItemSearch, setSalesItemSearch] = useState({});
@@ -254,7 +254,7 @@ export function MedicalStoreProvider({ children }) {
 
 
   // ─── PURCHASE RETURN ──────────────────────────────
-  const [showPurchaseReturnForm, setShowPurchaseReturnForm] = useState(false);
+  const [showPurchaseReturnForm, setShowPurchaseReturnForm] = useState(true);
   const [purchaseReturnForm, setPurchaseReturnForm] = useState({ supplierId: "", partyName: "", date: "", refBillNo: "", reason: "Expired", remarks: "" });
   const [purchaseReturnItems, setPurchaseReturnItems] = useState([]);
   const [purchaseReturns, setPurchaseReturns] = useState((() => { try { return JSON.parse(localStorage.getItem('store_purchase_returns') || 'null') || []; } catch (_) { return []; } })());
@@ -798,14 +798,35 @@ export function MedicalStoreProvider({ children }) {
         if (showPurchaseForm) { setShowPurchaseForm(false); return; } if (showSalesForm) { setShowSalesForm(false); return; } if (showItemForm) { setShowItemForm(false); setEditingItem(null); return; } if (showPaymentForm) { setShowPaymentForm(false); return; } if (showSupplierForm) { setShowSupplierForm(false); return; } if (showCart) { setShowCart(false); return; } if (quickStockItem) { setQuickStockItem(null); return; }
         return;
       }
+      if (e.altKey && !e.ctrlKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        if (activeSection === "purchase") {
+          openPurchaseForm();
+        } else if (activeSection === "purchase_return") {
+          openPurchaseReturnForm();
+        } else if (activeSection === "purchase_challan") {
+          window.dispatchEvent(new CustomEvent("new_purchase_challan"));
+        } else if (activeSection === "cash_entry") {
+          window.dispatchEvent(new CustomEvent("new_cash_entry"));
+        } else if (activeSection === "bank_entry" || activeSection === "bank") {
+          window.dispatchEvent(new CustomEvent("new_bank_entry"));
+        } else if (activeSection === "jv_entry") {
+          window.dispatchEvent(new CustomEvent("new_jv_entry"));
+        } else {
+          setActiveSection("sales_pos");
+          setOwnerSubTab("");
+          openSalesForm(false);
+        }
+        return;
+      }
       if (isTyping) return;
       if (!currentUser || currentUser.role !== "owner") return;
       if (e.altKey && !e.ctrlKey) {
         switch (e.key.toLowerCase()) {
           case "h": e.preventDefault(); setActiveSection("home"); setOwnerSubTab(""); break;
           case "i": e.preventDefault(); setActiveSection("inventory"); setOwnerSubTab(""); break;
-          case "p": e.preventDefault(); setActiveSection("purchase"); setOwnerSubTab(""); break;
-          case "s": e.preventDefault(); setActiveSection("sales_pos"); setOwnerSubTab(""); break;
+          case "p": e.preventDefault(); setActiveSection("purchase"); setOwnerSubTab(""); openPurchaseForm(); break;
+          case "s": e.preventDefault(); setActiveSection("sales_pos"); setOwnerSubTab(""); openSalesForm(false); break;
           case "y": e.preventDefault(); setActiveSection("payments"); setOwnerSubTab(""); break;
           case "r": e.preventDefault(); setActiveSection("reports"); setOwnerSubTab(""); break;
           case "m": e.preventDefault(); setActiveSection("masters"); setOwnerSubTab("suppliers"); break;
@@ -827,7 +848,17 @@ export function MedicalStoreProvider({ children }) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [currentUser, showPurchaseForm, showSalesForm, showItemForm, showPaymentForm, showSupplierForm, showCart, quickStockItem]);// eslint-disable-line
+  }, [currentUser, showPurchaseForm, showSalesForm, showItemForm, showPaymentForm, showSupplierForm, showCart, quickStockItem, activeSection]);// eslint-disable-line
+
+  useEffect(() => {
+    if (activeSection === "purchase") {
+      openPurchaseForm();
+    } else if (activeSection === "sales_pos") {
+      openSalesForm(false);
+    } else if (activeSection === "purchase_return") {
+      openPurchaseReturnForm();
+    }
+  }, [activeSection]);
 
   // ═══════════════════════════════════════════════════
   // AUTH
