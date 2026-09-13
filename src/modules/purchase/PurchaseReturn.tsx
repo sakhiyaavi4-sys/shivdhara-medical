@@ -1017,10 +1017,5 @@ export default function PurchaseReturn({ setScannerTarget, setShowCameraScanner 
               </div>
             )}
           </>
-        )}
-
-        {/* ══════════════════════════════════════════
-            OWNER: BANK ENTRY
-        ══════════════════════════════════════════ */}
   );
 }

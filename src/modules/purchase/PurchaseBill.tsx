@@ -1093,10 +1093,5 @@ export default function PurchaseBill({ setScannerTarget, setShowCameraScanner })
         )}
 
                   </>
-        )}
-
-        {/* ══════════════════════════════════════════
-            OWNER: SALES BILL (POS)
-        ══════════════════════════════════════════ */}
   );
 }
